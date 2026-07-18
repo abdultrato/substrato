@@ -177,35 +177,37 @@ type MetricItem = {
   value: number;
   bar: string;
   chip: string;
+  href: string;
   alert?: boolean;
 };
 
 function MetricPill({ m, loading }: { m: MetricItem; loading: boolean }) {
   return (
-    <div
-      className={`relative overflow-hidden rounded-xl border border-white/20 bg-white/25 px-2.5 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${m.alert ? "ring-1 ring-red-400/40" : ""}`}
+    <Link
+      href={m.href}
+      className={`relative flex min-w-0 items-center overflow-hidden rounded-md border border-white/20 bg-white/25 px-2 py-1.5 pl-3 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:bg-white/40 focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 ${m.alert ? "ring-1 ring-red-400/40" : ""}`}
     >
-      <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${m.bar}`} />
-      <div className="pl-1">
+      <span className={`absolute inset-y-0 left-0 w-1 rounded-l-md ${m.bar}`} />
+      <div className="min-w-0">
         {loading ? (
-          <div className="h-4 w-8 animate-pulse rounded bg-current/20" />
+          <div className="h-3 w-8 animate-pulse rounded bg-current/20" />
         ) : (
           <div
-            className={`text-base font-bold tabular-nums leading-none ${m.chip}`}
+            className={`text-sm font-bold tabular-nums leading-none ${m.chip}`}
           >
             {m.value}
           </div>
         )}
-        <div className="mt-0.5 text-[9px] leading-tight text-muted-foreground">
+        <div className="truncate text-[9px] leading-tight text-muted-foreground">
           {m.label}
         </div>
         {m.alert && (
-          <div className="mt-0.5 text-[9px] font-semibold text-red-600 dark:text-red-400">
+          <div className="truncate text-[8px] font-semibold leading-tight text-red-600 dark:text-red-400">
             ⚠ atenção
           </div>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -365,30 +367,35 @@ export default function PublicHealthDashboardPage() {
       value: s.vaccines,
       bar: "bg-emerald-500",
       chip: "text-emerald-700 dark:text-emerald-300",
+      href: "/public-health/vaccines",
     },
     {
       label: "Lotes ativos",
       value: s.active_lots,
       bar: "bg-amber-500",
       chip: "text-amber-700   dark:text-amber-300",
+      href: "/public-health/lots?status=ACTIVE",
     },
     {
       label: "Campanhas ativas",
       value: s.active_campaigns,
       bar: "bg-blue-500",
       chip: "text-blue-700    dark:text-blue-300",
+      href: "/public-health/campaigns?status=ACTIVE",
     },
     {
       label: "Imunizações (30d)",
       value: s.immunizations_30d,
       bar: "bg-teal-500",
       chip: "text-teal-700    dark:text-teal-300",
+      href: "/public-health/immunizations",
     },
     {
       label: "Reforços vencidos",
       value: s.due_boosters,
       bar: "bg-orange-500",
       chip: "text-orange-700  dark:text-orange-300",
+      href: "/public-health/immunizations",
       alert: s.due_boosters > 0,
     },
     {
@@ -396,6 +403,7 @@ export default function PublicHealthDashboardPage() {
       value: s.serious_aefi_open,
       bar: "bg-red-500",
       chip: "text-red-700     dark:text-red-300",
+      href: "/public-health/adverse-events?serious=true",
       alert: s.serious_aefi_open > 0,
     },
     {
@@ -403,6 +411,7 @@ export default function PublicHealthDashboardPage() {
       value: s.pending_notifications,
       bar: "bg-violet-500",
       chip: "text-violet-700 dark:text-violet-300",
+      href: "/public-health/notifications?status=PENDING",
       alert: s.pending_notifications > 0,
     },
     {
@@ -410,13 +419,14 @@ export default function PublicHealthDashboardPage() {
       value: s.low_stock_lots + s.cold_chain_breaches + s.expired_lots,
       bar: "bg-rose-500",
       chip: "text-rose-700 dark:text-rose-300",
+      href: "/public-health/lots",
       alert: s.low_stock_lots + s.cold_chain_breaches + s.expired_lots > 0,
     },
   ];
 
   return (
     <AppLayout requiredGroups={DASHBOARD_GROUPS}>
-      <div className="mx-auto w-[90%] space-y-2">
+      <div className="mx-auto w-full max-w-[97vw] space-y-2">
         {/* ── Hero ──────────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
           <div className="pointer-events-none absolute inset-0">
@@ -467,6 +477,14 @@ export default function PublicHealthDashboardPage() {
               </Link>
             </div>
           </div>
+
+          <div className="relative border-t border-white/20 px-3 py-1.5 dark:border-white/10">
+            <div className="grid grid-cols-8 gap-1 whitespace-nowrap">
+              {metrics.map((m) => (
+                <MetricPill key={m.label} m={m} loading={loading} />
+              ))}
+            </div>
+          </div>
         </div>
 
         {error && (
@@ -474,13 +492,6 @@ export default function PublicHealthDashboardPage() {
             {error}
           </div>
         )}
-
-        {/* ── Metrics ───────────────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-1.5 xl:grid-cols-8">
-          {metrics.map((m) => (
-            <MetricPill key={m.label} m={m} loading={loading} />
-          ))}
-        </div>
 
         {/* ── Queues ────────────────────────────────────────────── */}
         <div className="grid gap-2 xl:grid-cols-2">

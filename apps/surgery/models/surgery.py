@@ -186,7 +186,7 @@ class Surgery(NoNameCoreModel):
         verbose_name="Preço estimado", default=Decimal("0.00"))
     vat_percentage = models.DecimalField(
         db_column="vat_percentage",
-        verbose_name="IVA (%)", max_digits=5, decimal_places=2, default=Decimal("16.00"))
+        verbose_name="IVA (%)", max_digits=5, decimal_places=2, default=Decimal("5.00"))
     applies_vat_by_default = models.BooleanField(
         db_column="applies_vat_by_default",
         verbose_name="Aplicar IVA por padrão", default=True)

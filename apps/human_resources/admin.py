@@ -92,10 +92,11 @@ class ProfessionAdmin(CoreAdmin):
 
 @admin.register(Employee)
 class EmployeeAdmin(CoreAdmin):
-    list_display = ("custom_id", "name", "role", "profession", "status", "admission_date", "salario_base_display", "salario_liquido_display")
-    list_filter = ("status", "role", "profession", "gender", "payment_method")
-    search_fields = ("name", "custom_id", "email", "phone", "nuit", "inss_number", "document_number")
+    list_display = ("custom_id", "name", "role", "profession", "is_medical_doctor", "is_surgeon", "medical_specialty", "status", "admission_date", "salario_base_display", "salario_liquido_display")
+    list_filter = ("status", "role", "profession", "is_medical_doctor", "is_surgeon", "medical_specialty", "gender", "payment_method")
+    search_fields = ("name", "custom_id", "email", "phone", "nuit", "inss_number", "document_number", "medical_specialty__name")
     ordering = ("name",)
+    autocomplete_fields = ("role", "profession", "medical_specialty")
     inlines = [FamilyDependentInline, WorkScheduleInline, ContractInline, SalaryHistoryInline]
     fieldsets = (
         ("Dados pessoais", {
@@ -108,7 +109,7 @@ class EmployeeAdmin(CoreAdmin):
             "fields": ("email", "phone", "emergency_contact_name", "emergency_contact_phone"),
         }),
         ("Dados laborais", {
-            "fields": ("role", "profession", "admission_date", "status"),
+            "fields": ("role", "profession", "is_medical_doctor", "is_surgeon", "medical_specialty", "admission_date", "status"),
         }),
         ("Pagamento", {
             "fields": ("nib", "payment_method", "nominal_salary", "salary_increase", "base_month_hours"),

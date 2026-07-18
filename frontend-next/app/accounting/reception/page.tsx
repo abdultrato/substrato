@@ -20,6 +20,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageSizeInput from "@/components/ui/PageSizeInput"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import { formatInvoiceStatus } from "@/lib/billingStatus"
 import { GROUPS } from "@/lib/rbac"
 
 const GLASS =
@@ -138,7 +139,7 @@ function CheckinCard({ r }: { r: Row }) {
               <FileText size={11} className="shrink-0" />
               <span className="font-medium text-foreground">{r.invoice_code || `#${r.invoice}`}</span>
               <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-semibold ${invBadge}`}>
-                {r.invoice_status_display || r.invoice_status}
+                {r.invoice_status_display || formatInvoiceStatus(r.invoice_status)}
               </span>
             </div>
           ) : (

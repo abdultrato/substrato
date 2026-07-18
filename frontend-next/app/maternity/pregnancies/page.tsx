@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Baby, BedDouble, Calendar, Heart, Loader2, Plus, Search, Stethoscope, User, X } from "lucide-react";
+import { ArrowLeft, Baby, BedDouble, Calendar, Heart, Loader2, Plus, Search, Stethoscope, User, X } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import PageSizeInput from "@/components/ui/PageSizeInput";
@@ -147,38 +147,35 @@ export default function MaternityPregnanciesListPage() {
 
   return (
     <AppLayout requiredGroups={REQUIRED_GROUPS}>
-      <div className="w-full space-y-3 px-1">
+      <div className="w-full space-y-2 px-1">
 
         {/* ── Cabeçalho ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-pink-500" />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+          <div className="flex flex-nowrap items-center gap-2 px-3 py-2 pl-5">
             <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-md shadow-pink-500/20">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-md shadow-pink-500/20">
                 <Baby size={17} />
               </span>
-              <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">Gestações</h1>
-                <p className="text-[11px] text-muted-foreground">
+              <div className="min-w-0">
+                <h1 className="truncate text-base font-bold leading-tight text-foreground">Gestações</h1>
+                <p className="whitespace-nowrap text-[11px] text-muted-foreground">
                   {loading ? "A carregar…" : `${total} registo${total !== 1 ? "s" : ""}`}
                 </p>
               </div>
             </div>
+            <Link href="/maternity/"
+              className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-2.5 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground">
+              <ArrowLeft size={13} /> Voltar
+            </Link>
             <Link href="/maternity/pregnancies/new"
-              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-pink-500 to-rose-600 px-4 text-sm font-semibold text-white shadow-sm shadow-pink-500/20 transition hover:opacity-90">
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-gradient-to-br from-pink-500 to-rose-600 px-3 text-xs font-semibold text-white shadow-sm shadow-pink-500/20 transition hover:opacity-90">
               <Plus size={15} /> Nova gestação
             </Link>
-          </div>
-        </section>
-
-        {/* ── Filtros ── */}
-        <section className={`relative ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3 pl-5">
-            <div className="relative w-48">
+            <div className="relative min-w-[12rem] flex-1">
               <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input type="text" placeholder="Pesquisar…"
-                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+                className="h-8 w-full rounded-md border border-border bg-background/60 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                 value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
               {search && (
                 <button type="button" onClick={() => { setSearch(""); setPage(1); }}
@@ -188,7 +185,7 @@ export default function MaternityPregnanciesListPage() {
               )}
             </div>
             <select aria-label="Estado"
-              className={`h-9 w-48 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition ${statusFilter ? "text-foreground" : "text-muted-foreground"}`}
+              className={`h-8 w-44 shrink-0 rounded-md border border-border bg-background/60 px-2 text-xs focus:outline-none focus:ring-2 focus:ring-pink-500/40 ${statusFilter ? "text-foreground" : "text-muted-foreground"}`}
               value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
               <option value="">Estado: todos</option>
               <option value="ACOMP">Em acompanhamento</option>
@@ -198,11 +195,11 @@ export default function MaternityPregnanciesListPage() {
             </select>
             {(search || statusFilter) && (
               <button type="button" onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); }}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 text-sm text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground">
+                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-2 text-xs text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground">
                 <X size={13} /> Limpar
               </button>
             )}
-            <div className="inline-flex h-9 items-center gap-1.5" title="Registos por página">
+            <div className="inline-flex h-8 shrink-0 items-center gap-1" title="Registos por página">
               <PageSizeInput
                 value={pageSize}
                 onChange={(v) => { setPageSize(v); setPage(1); }}

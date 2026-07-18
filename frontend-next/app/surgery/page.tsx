@@ -57,6 +57,16 @@ interface ModuleEntry {
 
 const MODULES: ModuleEntry[] = [
   {
+    key: "add-surgery",
+    label: "Adicionar cirurgia",
+    description:
+      "Criar uma cirurgia com paciente, equipa, sala, procedimentos, data e faturação.",
+    href: "/surgery/surgeries/new",
+    icon: Plus,
+    bar: "border-l-rose-500",
+    iconBg: "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-300",
+  },
+  {
     key: "requests",
     label: "Pedidos cirúrgicos",
     description:
@@ -550,7 +560,7 @@ export default function SurgeryPage() {
                 Hoje <ArrowRight size={12} />
               </Link>
               <Link
-                href="/surgery/large-surgeries/new"
+                href="/surgery/surgeries/new"
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-red-600 px-2.5 text-xs font-semibold text-white shadow-sm transition hover:from-rose-700 hover:to-red-700"
               >
                 <Plus size={12} /> Nova cirurgia

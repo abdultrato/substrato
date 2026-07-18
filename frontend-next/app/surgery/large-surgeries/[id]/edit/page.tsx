@@ -446,7 +446,7 @@ export default function LargeSurgeryEditPage() {
   const [endedAt, setEndedAt] = useState("")
   const [completedAt, setCompletedAt] = useState("")
   const [estimatedPrice, setEstimatedPrice] = useState("0.00")
-  const [vatPct, setVatPct] = useState("16.00")
+  const [vatPct, setVatPct] = useState("5.00")
 
   const toDatetimeLocal = (v: any) => {
     if (!v) return ""
@@ -474,7 +474,7 @@ export default function LargeSurgeryEditPage() {
       setEndedAt(toDatetimeLocal(d.ended_at))
       setCompletedAt(toDatetimeLocal(d.completed_at))
       setEstimatedPrice(d.estimated_price || "0.00")
-      setVatPct(d.vat_percentage || "16.00")
+      setVatPct(d.vat_percentage || "5.00")
 
       const procedureIds: number[] = d.procedures || []
       if (procedureIds.length) {

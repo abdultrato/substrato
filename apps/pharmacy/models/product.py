@@ -59,7 +59,7 @@ class Product(CoreModel):
         verbose_name="IVA (%)",  # Rótulo
         max_digits=5,  # Dígitos totais (permite 100.00)
         decimal_places=2,  # Casas decimais
-        default=Decimal("16.00"),  # Percentual padrão
+        default=Decimal("5.00"),  # Percentual padrão
         validators=[  # Regras de validação
             MinValueValidator(Decimal("0.00")),  # Não permite menor que 0%
             MaxValueValidator(Decimal("100.00")),  # Nem maior que 100%

@@ -93,8 +93,8 @@ function minuteOfDay(v: string) {
   return d.getHours() * 60 + d.getMinutes()
 }
 
-// Place surgery block on timeline: top/height in px (1 min = 2px)
-const MIN_PX = 2
+// Place surgery block on timeline in a compact daily view.
+const MIN_PX = 1
 const HOUR_PX = 60 * MIN_PX
 const TIMELINE_START = 7 * 60 // 7h
 
@@ -319,7 +319,7 @@ export default function SurgerySchedulesPage() {
         {loading ? (
           <div className="flex h-32 items-center justify-center text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : surgeries.length === 0 ? (
-          <div className={`flex flex-col items-center gap-2 py-14 ${GLASS}`}>
+          <div className={`flex flex-col items-center gap-1 py-7 ${GLASS}`}>
             <CalendarDays size={28} className="text-[var(--gray-300)]" />
             <p className="text-sm text-[var(--gray-400)]">Nenhuma cirurgia agendada para este dia.</p>
             <Link href="/surgery/schedules/new"
@@ -361,7 +361,7 @@ export default function SurgerySchedulesPage() {
                     {surgeries.map(s => {
                       const block = layout.get(s.id)!
                       const top = Math.max(0, block.startMin - TIMELINE_START) * MIN_PX
-                      const height = Math.max(36, (block.endMin - block.startMin) * MIN_PX)
+                      const height = Math.max(24, (block.endMin - block.startMin) * MIN_PX)
                       const colW = 100 / block.totalCols
                       const left = `${block.col * colW}%`
                       const width = `calc(${colW}% - 4px)`
@@ -369,7 +369,7 @@ export default function SurgerySchedulesPage() {
 
                       return (
                         <Link key={s.id} href={`/surgery/small-surgeries/${s.id}`}
-                          className={`absolute rounded-lg border-l-4 px-2 py-1 transition hover:z-10 hover:brightness-95 ${colorClass}`}
+                          className={`absolute rounded-md border-l-4 px-1.5 py-0.5 transition hover:z-10 hover:brightness-95 ${colorClass}`}
                           style={{ top: `${top}px`, height: `${height}px`, left, width }}>
                           <div className="flex h-full flex-col justify-between overflow-hidden">
                             <div>
@@ -379,17 +379,17 @@ export default function SurgerySchedulesPage() {
                                   {s.patient_name}
                                 </span>
                               </div>
-                              {height >= 44 && (
+                              {height >= 34 && (
                                 <p className="mt-0.5 truncate pl-3 text-[9px] leading-tight text-[var(--gray-500)]">
                                   {(s.procedure_names || []).slice(0, 1).join(", ") || s.procedure || "—"}
                                 </p>
                               )}
-                              {height >= 60 && s.surgeon_names?.length > 0 && (
+                              {height >= 48 && s.surgeon_names?.length > 0 && (
                                 <p className="mt-0.5 truncate pl-3 text-[9px] leading-tight text-[var(--gray-400)]">
                                   {s.surgeon_names[0].name}
                                 </p>
                               )}
-                              {height >= 76 && (() => { const p = calcPrice(s); return p ? (
+                              {height >= 62 && (() => { const p = calcPrice(s); return p ? (
                                 <p className="mt-0.5 pl-3 text-[9px] font-semibold leading-tight text-teal-600 dark:text-teal-400">
                                   {fmtMT(p.total)}{p.vat > 0 ? ` (c/ ${p.vat}% IVA)` : ""}
                                 </p>
@@ -399,7 +399,7 @@ export default function SurgerySchedulesPage() {
                               <span className="text-[9px] tabular-nums text-[var(--gray-400)]">
                                 {fmtTime(s.scheduled_for)}
                               </span>
-                              {s.priority && height >= 44 && (
+                              {s.priority && height >= 34 && (
                                 <span className={`rounded border px-1 text-[8px] font-semibold leading-tight ${PRIORITY_BADGE[s.priority] || ""}`}>
                                   {PRIORITY_LABEL[s.priority] || s.priority}
                                 </span>
@@ -416,10 +416,10 @@ export default function SurgerySchedulesPage() {
           })()
         ) : (
           /* ── LIST VIEW ── */
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-2 xl:grid-cols-3">
             {surgeries.map(s => (
               <Link key={s.id} href={`/surgery/small-surgeries/${s.id}`}
-                className={`relative flex items-center gap-3 overflow-hidden rounded-xl border-l-4 px-3 py-2.5 transition hover:brightness-95 ${STATUS_COLOR[s.status] || "border-l-slate-400 bg-slate-50/60"} border border-white/30 shadow-sm backdrop-blur-sm dark:border-white/10`}>
+                className={`relative flex items-center gap-2 overflow-hidden rounded-lg border-l-4 px-2 py-1.5 transition hover:brightness-95 ${STATUS_COLOR[s.status] || "border-l-slate-400 bg-slate-50/60"} border border-white/30 shadow-sm backdrop-blur-sm dark:border-white/10`}>
                 {/* time */}
                 <div className="flex w-12 shrink-0 flex-col items-center">
                   <Clock size={11} className="mb-0.5 text-[var(--gray-400)]" />
@@ -428,16 +428,16 @@ export default function SurgerySchedulesPage() {
                   </span>
                 </div>
 
-                <span className="h-10 w-px bg-white/30 dark:bg-white/10" />
+                <span className="h-8 w-px bg-white/30 dark:bg-white/10" />
 
                 {/* content */}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[s.status] || "bg-slate-400"}`} />
-                    <span className="font-medium text-[13px] text-foreground truncate">{s.patient_name}</span>
+                    <span className="truncate text-[11px] font-semibold text-foreground">{s.patient_name}</span>
                     <span className="text-[10px] text-[var(--gray-400)] shrink-0">{s.custom_id}</span>
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-3.5">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 pl-3.5">
                     {(s.procedure_names?.length > 0 || s.procedure) && (
                       <span className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
                         <Scissors size={9} className="text-violet-400" />
@@ -461,7 +461,7 @@ export default function SurgerySchedulesPage() {
                 </div>
 
                 {/* badges */}
-                <div className="flex shrink-0 flex-col items-end gap-1">
+                <div className="flex shrink-0 flex-col items-end gap-0.5">
                   {(() => { const p = calcPrice(s); return p ? (
                     <span className="text-[11px] font-semibold tabular-nums text-teal-600 dark:text-teal-400">
                       {fmtMT(p.total)}
@@ -488,7 +488,7 @@ export default function SurgerySchedulesPage() {
               ? `/surgery/large-surgeries/${s.id}`
               : `/surgery/small-surgeries/${s.id}`
           return (
-            <div ref={filteredRef} className="space-y-1.5">
+            <div ref={filteredRef} className="space-y-1">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">
                   {labels[kpiFilter]} — {items.length} cirurgia{items.length !== 1 ? "s" : ""}
@@ -497,52 +497,56 @@ export default function SurgerySchedulesPage() {
                   className="text-[11px] text-[var(--gray-400)] hover:text-foreground">✕ Fechar</button>
               </div>
               {items.length === 0 ? (
-                <div className={`flex items-center justify-center py-8 text-sm text-[var(--gray-400)] ${GLASS}`}>
+                <div className={`flex items-center justify-center py-5 text-sm text-[var(--gray-400)] ${GLASS}`}>
                   Nenhuma cirurgia neste grupo.
                 </div>
-              ) : items.map(s => (
-                <Link key={s.id} href={sizeHref(s)}
-                  className={`relative flex items-center gap-3 overflow-hidden rounded-xl border-l-4 px-3 py-2.5 transition hover:brightness-95 ${STATUS_COLOR[s.status] || "border-l-slate-400 bg-slate-50/60"} border border-white/30 shadow-sm backdrop-blur-sm dark:border-white/10`}>
-                  <div className="flex w-12 shrink-0 flex-col items-center">
-                    <Clock size={11} className="mb-0.5 text-[var(--gray-400)]" />
-                    <span className="text-[12px] font-semibold tabular-nums text-foreground">{fmtTime(s.scheduled_for)}</span>
-                  </div>
-                  <span className="h-10 w-px bg-white/30 dark:bg-white/10" />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[s.status] || "bg-slate-400"}`} />
-                      <span className="font-medium text-[13px] text-foreground truncate">{s.patient_name}</span>
-                      <span className="text-[10px] text-[var(--gray-400)] shrink-0">{s.custom_id}</span>
-                    </div>
-                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-3.5">
-                      {(s.procedure_names?.length > 0 || s.procedure) && (
-                        <span className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
-                          <Scissors size={9} className="text-violet-400" />
-                          {(s.procedure_names || []).slice(0, 2).join(", ") || s.procedure}
+              ) : (
+                <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-2 xl:grid-cols-3">
+                  {items.map(s => (
+                    <Link key={s.id} href={sizeHref(s)}
+                      className={`relative flex items-center gap-2 overflow-hidden rounded-lg border-l-4 px-2 py-1.5 transition hover:brightness-95 ${STATUS_COLOR[s.status] || "border-l-slate-400 bg-slate-50/60"} border border-white/30 shadow-sm backdrop-blur-sm dark:border-white/10`}>
+                      <div className="flex w-12 shrink-0 flex-col items-center">
+                        <Clock size={11} className="mb-0.5 text-[var(--gray-400)]" />
+                        <span className="text-[12px] font-semibold tabular-nums text-foreground">{fmtTime(s.scheduled_for)}</span>
+                      </div>
+                      <span className="h-8 w-px bg-white/30 dark:bg-white/10" />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[s.status] || "bg-slate-400"}`} />
+                          <span className="truncate text-[11px] font-semibold text-foreground">{s.patient_name}</span>
+                          <span className="shrink-0 text-[10px] text-[var(--gray-400)]">{s.custom_id}</span>
+                        </div>
+                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 pl-3.5">
+                          {(s.procedure_names?.length > 0 || s.procedure) && (
+                            <span className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                              <Scissors size={9} className="text-violet-400" />
+                              {(s.procedure_names || []).slice(0, 2).join(", ") || s.procedure}
+                            </span>
+                          )}
+                          {s.surgeon_names?.length > 0 && (
+                            <span className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                              <Stethoscope size={9} className="text-emerald-400" />
+                              {s.surgeon_names[0].name}
+                              {s.surgeon_names.length > 1 && ` +${s.surgeon_names.length - 1}`}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-0.5">
+                        {(() => { const p = calcPrice(s); return p ? (
+                          <span className="text-[10px] font-semibold tabular-nums text-teal-600 dark:text-teal-400">{fmtMT(p.total)}</span>
+                        ) : null })()}
+                        <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${PRIORITY_BADGE[s.priority] || "border-slate-200 bg-slate-50 text-slate-500"}`}>
+                          {PRIORITY_LABEL[s.priority] || s.priority || "—"}
                         </span>
-                      )}
-                      {s.surgeon_names?.length > 0 && (
-                        <span className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
-                          <Stethoscope size={9} className="text-emerald-400" />
-                          {s.surgeon_names[0].name}
-                          {s.surgeon_names.length > 1 && ` +${s.surgeon_names.length - 1}`}
+                        <span className="text-[10px] font-medium text-[var(--gray-500)]">
+                          {STATUS_LABEL[s.status] || s.status}
                         </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    {(() => { const p = calcPrice(s); return p ? (
-                      <span className="text-[11px] font-semibold tabular-nums text-teal-600 dark:text-teal-400">{fmtMT(p.total)}</span>
-                    ) : null })()}
-                    <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${PRIORITY_BADGE[s.priority] || "border-slate-200 bg-slate-50 text-slate-500"}`}>
-                      {PRIORITY_LABEL[s.priority] || s.priority || "—"}
-                    </span>
-                    <span className="text-[10px] font-medium text-[var(--gray-500)]">
-                      {STATUS_LABEL[s.status] || s.status}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           )
         })()}

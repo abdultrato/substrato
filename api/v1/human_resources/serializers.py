@@ -78,6 +78,17 @@ PROFESSION_ALIASES = {
 EMPLOYEE_ALIASES = {
     "id_custom": "custom_id",
     "nome": "name",
+    "medico": "is_medical_doctor",
+    "médico": "is_medical_doctor",
+    "e_medico": "is_medical_doctor",
+    "é_médico": "is_medical_doctor",
+    "cirurgiao": "is_surgeon",
+    "cirurgião": "is_surgeon",
+    "e_cirurgiao": "is_surgeon",
+    "é_cirurgião": "is_surgeon",
+    "especialidade": "medical_specialty",
+    "especialidade_medica": "medical_specialty",
+    "especialidade_médica": "medical_specialty",
     "funcionario": "name",
     "funcionário": "name",
     "cargo": "role",
@@ -447,6 +458,8 @@ class EmployeeSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer
     legacy_input_aliases = EMPLOYEE_ALIASES
     role_name = serializers.CharField(source="role.name", read_only=True, default=None)
     profession_name = serializers.CharField(source="profession.name", read_only=True, default=None)
+    medical_specialty_name = serializers.CharField(source="medical_specialty.name", read_only=True, default=None)
+    medical_specialty_code = serializers.CharField(source="medical_specialty.custom_id", read_only=True, default=None)
     ordinary_hour_value = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
     extraordinary_hour_value = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
     salary_base = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
@@ -460,6 +473,8 @@ class EmployeeSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer
             *CORE_READ_ONLY_FIELDS,
             "role_name",
             "profession_name",
+            "medical_specialty_name",
+            "medical_specialty_code",
             "salary_base",
             "salary_liquido",
             "salary_allowances_value",

@@ -91,13 +91,13 @@ function Card({ icon: Icon, title, accent, children }: {
   icon: React.ElementType; title: string; accent?: string; children: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-      {accent && <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${accent}`} />}
-      <div className="flex items-center gap-1.5 border-b border-border/50 px-3 py-1.5 pl-4">
+    <section className="relative min-w-0 overflow-hidden rounded-md border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+      {accent && <span className={`absolute inset-y-0 left-0 w-1 rounded-l-md ${accent}`} />}
+      <div className="flex min-w-0 items-center gap-1.5 whitespace-nowrap border-b border-border/50 px-2.5 py-1 pl-3.5">
         <Icon size={11} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
-        <h2 className="text-[11px] font-semibold text-foreground">{title}</h2>
+        <h2 className="truncate text-[11px] font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="p-3 pl-4">{children}</div>
+      <div className="p-2 pl-3">{children}</div>
     </section>
   );
 }
@@ -105,9 +105,35 @@ function Card({ icon: Icon, title, accent, children }: {
 function Row({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === null || value === undefined || value === "") return null;
   return (
-    <div className="flex items-start gap-2 py-0.5">
-      <span className="w-36 shrink-0 text-[10px] text-muted-foreground">{label}</span>
-      <span className="text-[11px] text-foreground">{value}</span>
+    <div className="grid min-w-0 grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-2 py-0.5 whitespace-nowrap">
+      <span className="min-w-0 truncate text-[10px] text-muted-foreground">{label}</span>
+      <span className="min-w-0 truncate text-[11px] text-foreground">{value}</span>
+    </div>
+  );
+}
+
+function HeaderMetric({
+  label,
+  value,
+  accent,
+  tone,
+}: {
+  label: string;
+  value: React.ReactNode;
+  accent: string;
+  tone?: string;
+}) {
+  return (
+    <div className="relative flex min-w-0 items-center overflow-hidden rounded-md border border-white/20 bg-white/25 px-2 py-1.5 pl-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+      <span className={`absolute inset-y-0 left-0 w-1 rounded-l-md ${accent}`} />
+      <div className="min-w-0">
+        <div className={`truncate text-sm font-bold leading-none ${tone ?? "text-foreground"}`}>
+          {value}
+        </div>
+        <div className="truncate text-[9px] leading-tight text-muted-foreground">
+          {label}
+        </div>
+      </div>
     </div>
   );
 }
@@ -161,7 +187,7 @@ export default function LotDetailPage() {
 
   return (
     <AppLayout requiredGroups={DETAIL_GROUPS}>
-      <div className="mx-auto w-[90%] space-y-2">
+      <div className="mx-auto w-full max-w-[97vw] space-y-2">
 
         {/* ── Hero ──────────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
@@ -216,70 +242,81 @@ export default function LotDetailPage() {
               </Link>
             </div>
           </div>
-        </div>
 
-        {/* ── Alertas ───────────────────────────────────────────── */}
-        {(expired || breach) && (
-          <div className="flex flex-wrap gap-2">
-            {expired && (
-              <div className="flex flex-1 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
-                <AlertTriangle size={13} className="shrink-0" />
-                Lote expirado em {fmtDate(rec.expiration_date)} — não administrar. Considere recolha ou descarte.
+          <div className="relative border-t border-white/20 px-3 py-1.5 dark:border-white/10">
+            <div className="grid grid-cols-8 gap-1 whitespace-nowrap">
+              <HeaderMetric label="Estado" value={sm.label} accent={sm.bar} tone={expired ? "text-red-700 dark:text-red-300" : undefined} />
+              <HeaderMetric label="Cadeia fria" value={cm.label} accent={breach ? "bg-red-500" : "bg-sky-500"} tone={breach ? "text-red-700 dark:text-red-300" : "text-sky-700 dark:text-sky-300"} />
+              <HeaderMetric label="Recebidas" value={received} accent="bg-indigo-500" />
+              <HeaderMetric label="Disponíveis" value={available} accent="bg-emerald-500" tone="text-emerald-700 dark:text-emerald-300" />
+              <HeaderMetric label="Reservadas" value={rec.reserved_doses || 0} accent="bg-amber-500" tone="text-amber-700 dark:text-amber-300" />
+              <HeaderMetric label="Validade" value={fmtDate(rec.expiration_date)} accent={expired ? "bg-red-500" : soon ? "bg-amber-500" : "bg-teal-500"} tone={expired ? "text-red-700 dark:text-red-300" : soon ? "text-amber-700 dark:text-amber-300" : "text-teal-700 dark:text-teal-300"} />
+              <HeaderMetric label="Recebido em" value={fmtDate(rec.received_at)} accent="bg-blue-500" />
+              <HeaderMetric label="Temperatura" value={rec.storage_temperature_c != null ? `${rec.storage_temperature_c} °C` : "—"} accent={breach ? "bg-red-500" : "bg-cyan-500"} />
+            </div>
+          </div>
+
+          <div className="relative border-t border-white/20 px-3 py-1.5 dark:border-white/10">
+            {isOffPath ? (
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-semibold ${sm.chip}`}>
+                  {sm.emoji} {sm.label}
+                </span>
+                <span className="truncate text-muted-foreground">
+                  Lote fora do ciclo normal: recebido → ativo → esgotado.
+                </span>
               </div>
-            )}
-            {breach && (
-              <div className="flex flex-1 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
-                <Snowflake size={13} className="shrink-0" />
-                Quebra de cadeia fria detetada — avaliar viabilidade das doses antes de uso.
+            ) : (
+              <div className="flex items-center gap-0">
+                {LIFECYCLE.map((step, idx) => {
+                  const sm2 = STATUS_META[step];
+                  const done = currentStep > idx;
+                  const active = currentStep === idx;
+                  const isLast = idx === LIFECYCLE.length - 1;
+                  return (
+                    <div key={step} className="flex flex-1 items-center">
+                      <div className="flex min-w-0 flex-col items-center gap-1">
+                        <div className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold transition ${
+                          active ? `${sm2.bar} text-white shadow-sm` :
+                          done ? "bg-emerald-500 text-white" :
+                          "bg-border text-muted-foreground"
+                        }`}>
+                          {done ? "✓" : idx + 1}
+                        </div>
+                        <span className={`text-center text-[9px] leading-tight ${active ? "font-semibold text-foreground" : done ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                          {sm2.label}
+                        </span>
+                      </div>
+                      {!isLast && (
+                        <div className={`mx-1 h-0.5 flex-1 rounded-full ${done ? "bg-emerald-400" : "bg-border"}`} />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
-        )}
 
-        {/* ── Ciclo de vida ─────────────────────────────────────── */}
-        <div className="rounded-xl border border-white/20 bg-white/25 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-          {isOffPath ? (
-            <div className="flex items-center gap-2 text-[11px]">
-              <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${sm.chip}`}>
-                {sm.emoji} {sm.label}
-              </span>
-              <span className="text-muted-foreground">
-                Lote fora do ciclo normal (recebido → ativo → esgotado).
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-0">
-              {LIFECYCLE.map((step, idx) => {
-                const sm2 = STATUS_META[step];
-                const done = currentStep > idx;
-                const active = currentStep === idx;
-                const isLast = idx === LIFECYCLE.length - 1;
-                return (
-                  <div key={step} className="flex flex-1 items-center">
-                    <div className="flex min-w-0 flex-col items-center gap-1">
-                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold transition ${
-                        active ? `${sm2.bar} text-white shadow-sm` :
-                        done ? "bg-emerald-500 text-white" :
-                        "bg-border text-muted-foreground"
-                      }`}>
-                        {done ? "✓" : idx + 1}
-                      </div>
-                      <span className={`text-center text-[9px] leading-tight ${active ? "font-semibold text-foreground" : done ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
-                        {sm2.label}
-                      </span>
-                    </div>
-                    {!isLast && (
-                      <div className={`mx-1 h-0.5 flex-1 rounded-full ${done ? "bg-emerald-400" : "bg-border"}`} />
-                    )}
-                  </div>
-                );
-              })}
+          {(expired || breach) && (
+            <div className="relative grid grid-cols-2 gap-1 border-t border-white/20 px-3 py-1.5 dark:border-white/10">
+              {expired && (
+                <div className="flex min-w-0 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+                  <AlertTriangle size={12} className="shrink-0" />
+                  <span className="truncate">Lote expirado em {fmtDate(rec.expiration_date)} — não administrar.</span>
+                </div>
+              )}
+              {breach && (
+                <div className="flex min-w-0 items-center gap-2 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[10px] text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+                  <Snowflake size={12} className="shrink-0" />
+                  <span className="truncate">Quebra de cadeia fria detetada — avaliar viabilidade das doses.</span>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* ── Cards ─────────────────────────────────────────────── */}
-        <div className="grid gap-2 lg:grid-cols-2">
+        <div className="grid grid-cols-2 gap-2">
 
           {/* Vacina e lote */}
           <Card icon={Syringe} title="Vacina e lote" accent={sm.bar}>
@@ -308,17 +345,17 @@ export default function LotDetailPage() {
 
           {/* Doses */}
           <Card icon={PackageCheck} title="Doses" accent="bg-indigo-500">
-            <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="rounded-lg border border-border/50 bg-background/50 py-1.5">
+            <div className="space-y-1.5">
+              <div className="grid grid-cols-3 gap-1.5 text-center">
+                <div className="rounded-md border border-border/50 bg-background/50 py-1">
                   <div className="text-sm font-bold text-foreground">{received}</div>
                   <div className="text-[9px] text-muted-foreground">Recebidas</div>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-background/50 py-1.5">
+                <div className="rounded-md border border-border/50 bg-background/50 py-1">
                   <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{available}</div>
                   <div className="text-[9px] text-muted-foreground">Disponíveis</div>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-background/50 py-1.5">
+                <div className="rounded-md border border-border/50 bg-background/50 py-1">
                   <div className="text-sm font-bold text-amber-600 dark:text-amber-400">{rec.reserved_doses || 0}</div>
                   <div className="text-[9px] text-muted-foreground">Reservadas</div>
                 </div>
@@ -345,7 +382,7 @@ export default function LotDetailPage() {
               <Row label="Versão" value={`v${rec.version}`} />
               <Row label="Criado em" value={fmtDate(rec.created_at)} />
               <Row label="Actualizado" value={fmtDate(rec.updated_at)} />
-              <Row label="Observações" value={rec.notes || null} />
+              <Row label="Observações" value={rec.notes ? <span title={rec.notes}>{rec.notes}</span> : null} />
             </div>
           </Card>
 

@@ -78,6 +78,16 @@ BASE_ALIASES = {
 
 SURGICAL_PROCEDURE_ALIASES = {
     **BASE_ALIASES,
+    "is_surgical": "is_surgical",
+    "procedimento_eh_cirurgico": "is_surgical",
+    "procedimento_é_cirúrgico": "is_surgical",
+    "eh_cirurgico": "is_surgical",
+    "é_cirúrgico": "is_surgical",
+    "cirurgico": "is_surgical",
+    "cirúrgico": "is_surgical",
+    "tipo_cirurgia": "surgery_type",
+    "porte_cirurgico": "surgery_type",
+    "porte_cirúrgico": "surgery_type",
     "procedimento": "name",
     "procedimento_cirurgico": "name",
     "procedimento_cirúrgico": "name",
@@ -167,6 +177,7 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     preoperative_diagnosis = serializers.CharField(allow_blank=True, allow_null=True, required=False, default="")
     postoperative_diagnosis = serializers.CharField(allow_blank=True, allow_null=True, required=False, default="")
     procedure_names = serializers.SerializerMethodField(method_name="get_procedure_names")
+    procedure_details = serializers.SerializerMethodField(method_name="get_procedure_details")
     procedures_price_total = serializers.SerializerMethodField(method_name="get_procedures_price_total")
     procedures_vat_percentage = serializers.SerializerMethodField(method_name="get_procedures_vat_percentage")
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
@@ -190,6 +201,7 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
             "operating_room_name",
             "ward_name",
             "procedure_names",
+            "procedure_details",
             "procedures_price_total",
             "procedures_vat_percentage",
             "invoice_id",
@@ -277,6 +289,21 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
         except Exception:
             return []
 
+    def get_procedure_details(self, obj: Surgery) -> list[dict]:
+        try:
+            return [
+                {
+                    "id": item.id,
+                    "name": item.name,
+                    "surgery_type": item.surgery_type,
+                    "base_price": str(item.base_price or "0.00"),
+                    "vat_percentage": str(item.vat_percentage or "0.00"),
+                }
+                for item in obj.procedures.all()
+            ]
+        except Exception:
+            return []
+
     def get_procedures_price_total(self, obj: Surgery) -> str:
         try:
             from decimal import Decimal
@@ -325,6 +352,15 @@ class SurgicalProcedureSerializer(LegacyAliasSerializerMixin, serializers.ModelS
         model = SurgicalProcedure
         fields = "__all__"
         read_only_fields = (*CORE_READ_ONLY_FIELDS, "default_materials_detail")
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        is_surgical = attrs.get("is_surgical")
+        if is_surgical is None and self.instance is not None:
+            is_surgical = getattr(self.instance, "is_surgical", True)
+        if is_surgical is False:
+            attrs["surgery_type"] = "AMBAS"
+        return attrs
 
     def get_default_materials_detail(self, obj):
         try:
@@ -411,7 +447,6 @@ def _sync_procedure_consumptions(surgery_instance) -> None:
         SurgicalConsumption.objects.filter(surgery=surgery_instance).values_list("product_id", flat=True)
     )
 
-    to_create = []
     seen: set[int] = set()
     for proc in surgery_instance.procedures.prefetch_related("material_entries__product").all():
         for entry in proc.material_entries.select_related("product").all():
@@ -419,17 +454,15 @@ def _sync_procedure_consumptions(surgery_instance) -> None:
             if pid in existing_product_ids or pid in seen:
                 continue
             seen.add(pid)
-            to_create.append(
-                SurgicalConsumption(
-                    surgery=surgery_instance,
-                    product_id=pid,
-                    quantity=entry.quantity,
-                    unit_cost=entry.product.sale_price or 0,
-                )
+            SurgicalConsumption.objects.get_or_create(
+                surgery=surgery_instance,
+                product_id=pid,
+                defaults={
+                    "quantity": entry.quantity,
+                    "unit_cost": entry.product.sale_price or 0,
+                    "charged_price": entry.product.sale_price or 0,
+                },
             )
-
-    if to_create:
-        SurgicalConsumption.objects.bulk_create(to_create, ignore_conflicts=True)
 
 
 class SmallSurgerySerializer(BaseSurgerySerializer):

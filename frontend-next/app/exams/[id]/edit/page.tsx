@@ -253,7 +253,7 @@ export default function EditExamPage() {
   const [sector, setSector]   = useState("Bioquimica");
   const [method, setMethod]   = useState("");
   const [price, setPrice]     = useState("");
-  const [vatPct, setVatPct]   = useState("16.00");
+  const [vatPct, setVatPct]   = useState("5.00");
   const [appliesVat, setAppliesVat] = useState(true);
   const [tat, setTat]         = useState("24");
   const [sampleTypeId, setSampleTypeId] = useState<number | null>(null);
@@ -278,7 +278,7 @@ export default function EditExamPage() {
       setSector(exam.sector ?? "Bioquimica");
       setMethod(exam.method ?? "");
       setPrice(exam.price ?? "");
-      setVatPct(exam.vat_percentage ?? "16.00");
+      setVatPct(exam.vat_percentage ?? "5.00");
       setAppliesVat(exam.applies_vat_by_default ?? true);
       setTat(String(exam.turnaround_hours ?? 24));
       if (exam.sample_type) { setSampleTypeId(exam.sample_type); setSampleTypeLabel(exam.sample_type_name ?? ""); }

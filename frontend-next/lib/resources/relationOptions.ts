@@ -171,6 +171,7 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   source_location: { endpoint: "/warehouse/storage_location/", labelFields: ["code", "name", ...DEFAULT_LABEL_FIELDS] },
   source_storage: { endpoint: "/bloodbank/storage/", labelFields: ["name", "location", ...DEFAULT_LABEL_FIELDS] },
   specialty: { endpoint: "/consultations/specialty/", labelFields: ["name", "base_price", ...DEFAULT_LABEL_FIELDS] },
+  medical_specialty: { endpoint: "/consultations/specialty/", labelFields: ["name", "custom_id", ...DEFAULT_LABEL_FIELDS] },
   sponsor_company: { endpoint: "/external_entities/empresa/", labelFields: ["name", "nuit", ...DEFAULT_LABEL_FIELDS] },
   stock_transfer: { endpoint: "/warehouse/stock_transfer/", labelFields: ["custom_id", "status", ...DEFAULT_LABEL_FIELDS] },
   storage: { endpoint: "/bloodbank/storage/", labelFields: ["name", "location", ...DEFAULT_LABEL_FIELDS] },

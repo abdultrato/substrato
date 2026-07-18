@@ -21,9 +21,10 @@ import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
+import { surgeryProcedureGroupLabel } from "@/lib/surgeryLabels"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
-const GLASS = "rounded-xl border border-violet-200 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+const GLASS = "rounded-lg border border-violet-200 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
 const DONE_STATUSES = new Set([
   "SURGERY_COMPLETED", "CONCLUIDA", "CLOSED", "IN_RECOVERY",
@@ -93,7 +94,7 @@ function fmtMoney(v: any) {
 function Field({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   if (!value && value !== 0) return null
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col">
       <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)]">{label}</span>
       <span className={`text-[12px] font-medium text-[var(--text)] ${mono ? "font-mono" : ""}`}>{value}</span>
     </div>
@@ -106,7 +107,7 @@ function SurfaceCard({ title, icon, accent = "bg-sky-400", children }: {
   return (
     <section className={`relative overflow-hidden ${GLASS}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-      <div className="flex flex-col gap-2.5 px-3 py-3 pl-4">
+      <div className="flex flex-col gap-1 px-2 py-1.5 pl-4">
         <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
           {icon}<span>{title}</span>
         </div>
@@ -181,6 +182,7 @@ export default function SmallSurgeryDetailPage() {
   // derived fields
   const surgeonNames: { id: number; name: string }[] = data.surgeon_names || []
   const procedureNames: string[] = data.procedure_names || []
+  const procedureGroupLabel = surgeryProcedureGroupLabel(data.procedure_details || [], data.surgery_size)
   // prefer sum of procedure base_prices; fall back to surgery-level estimated_price
   const estimatedPrice = parseFloat(data.procedures_price_total || data.estimated_price || "0")
   const vatPct = parseFloat(data.procedures_vat_percentage || data.vat_percentage || "0")
@@ -188,12 +190,12 @@ export default function SmallSurgeryDetailPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-full max-w-5xl space-y-3 px-1">
+      <div className="mx-auto w-full max-w-[98vw] space-y-1 px-1">
 
         {/* header */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className={`absolute left-0 top-0 h-full w-1 ${statusAccent(status)}`} />
-          <div className="flex items-center justify-between gap-3 px-4 py-3 pl-5">
+          <div className="flex items-center justify-between gap-2 px-3 py-2 pl-5">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
                 <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
@@ -202,7 +204,7 @@ export default function SmallSurgeryDetailPage() {
                 <span>/</span>
                 <span className="font-semibold text-foreground">{code}</span>
               </div>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
+              <div className="mt-0.5 flex flex-wrap items-center gap-1">
                 <h1 className="font-display text-base font-semibold text-foreground">
                   {procedureNames.length > 0 ? procedureNames.join(", ") : (data.procedure || code)}
                 </h1>
@@ -216,15 +218,15 @@ export default function SmallSurgeryDetailPage() {
                 ) : null}
                 {data.surgery_size ? (
                   <span className="rounded-full border border-violet-200 bg-violet-50/80 px-2 py-0.5 text-[9px] font-semibold text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300">
-                    {SURGERY_SIZE_LABEL[data.surgery_size] || data.surgery_size}
+                    {procedureGroupLabel}
                   </span>
                 ) : null}
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               {priceWithVat > 0 && (
-                <div className="flex flex-col items-end gap-0.5 border-r border-white/30 pr-3 dark:border-white/10">
+                <div className="flex flex-col items-end border-r border-white/30 pr-2 dark:border-white/10">
                   <span className="text-[10px] text-[var(--gray-500)]">Total c/ IVA {vatPct > 0 ? `(${vatPct}%)` : ""}</span>
                   <span className="text-[13px] font-semibold text-violet-700 dark:text-violet-300">
                     {priceWithVat.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT
@@ -255,11 +257,11 @@ export default function SmallSurgeryDetailPage() {
         </section>
 
         {/* masonry — CSS columns so cards flow naturally into the shortest column */}
-        <div style={{ columns: "2", columnGap: "0.75rem" }}>
+        <div style={{ columns: "2", columnGap: "0.25rem" }}>
 
-          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+          <div style={{ breakInside: "avoid", marginBottom: "0.25rem" }}>
             <SurfaceCard title="Paciente" icon={<User size={13} />} accent="bg-sky-400">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                 <div className="col-span-2">
                   <Field label="Nome" value={data.patient_name} />
                 </div>
@@ -268,12 +270,12 @@ export default function SmallSurgeryDetailPage() {
             </SurfaceCard>
           </div>
 
-          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+          <div style={{ breakInside: "avoid", marginBottom: "0.25rem" }}>
             <SurfaceCard title="Procedimentos" icon={<Scissors size={13} />} accent="bg-violet-400">
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1">
                 {procedureNames.length > 0
                   ? procedureNames.map((p, i) => (
-                    <div key={i} className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 dark:bg-white/[0.03]">
+                    <div key={i} className="flex items-center gap-1.5 rounded-md border border-white/20 bg-white/20 px-2 py-1 dark:bg-white/[0.03]">
                       <Scissors size={11} className="shrink-0 text-violet-400" />
                       <span className="text-[12px] font-medium text-[var(--text)]">{p}</span>
                     </div>
@@ -285,11 +287,11 @@ export default function SmallSurgeryDetailPage() {
           </div>
 
           {surgeonNames.length > 0 && (
-            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <div style={{ breakInside: "avoid", marginBottom: "0.25rem" }}>
               <SurfaceCard title="Cirurgiões" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1">
                   {surgeonNames.map(s => (
-                    <div key={s.id} className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 dark:bg-white/[0.03]">
+                    <div key={s.id} className="flex items-center gap-1.5 rounded-md border border-white/20 bg-white/20 px-2 py-1 dark:bg-white/[0.03]">
                       <Stethoscope size={11} className="shrink-0 text-[var(--gray-400)]" />
                       <span className="text-[12px] font-medium text-[var(--text)]">{s.name}</span>
                     </div>
@@ -299,15 +301,15 @@ export default function SmallSurgeryDetailPage() {
             </div>
           )}
 
-          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+          <div style={{ breakInside: "avoid", marginBottom: "0.25rem" }}>
             <SurfaceCard title="Financeiro" icon={<CreditCard size={13} />} accent="bg-teal-400">
-              <div className="grid gap-2">
+              <div className="grid gap-1">
                 {estimatedPrice > 0 ? (
                   <>
                     <Field label="Preço base" value={estimatedPrice.toLocaleString("pt-PT", { minimumFractionDigits: 2 }) + " MT"} />
                     {vatPct > 0 && <Field label="IVA" value={`${vatPct}%`} />}
                     {priceWithVat > 0 && (
-                      <div className="mt-1 flex items-center justify-between rounded-lg border border-teal-200/50 bg-teal-50/40 px-3 py-2 dark:border-teal-700/20 dark:bg-teal-900/10">
+                      <div className="mt-0.5 flex items-center justify-between rounded-md border border-teal-200/50 bg-teal-50/40 px-2 py-1 dark:border-teal-700/20 dark:bg-teal-900/10">
                         <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Total c/ IVA</span>
                         <span className="text-[13px] font-semibold text-teal-700 dark:text-teal-300">
                           {priceWithVat.toLocaleString("pt-PT", { minimumFractionDigits: 2 })} MT
@@ -324,9 +326,9 @@ export default function SmallSurgeryDetailPage() {
           </div>
 
           {data.ward_name && (
-            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <div style={{ breakInside: "avoid", marginBottom: "0.25rem" }}>
               <SurfaceCard title="Bloco operatório" icon={<Building2 size={13} />} accent="bg-cyan-400">
-                <div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 dark:bg-white/[0.03]">
+                <div className="flex items-center gap-1.5 rounded-md border border-white/20 bg-white/20 px-2 py-1 dark:bg-white/[0.03]">
                   <Building2 size={11} className="shrink-0 text-[var(--gray-400)]" />
                   <span className="text-[12px] font-medium text-[var(--text)]">{data.ward_name}</span>
                 </div>
@@ -335,13 +337,13 @@ export default function SmallSurgeryDetailPage() {
           )}
 
           {consumptions.length > 0 && (
-            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <div style={{ breakInside: "avoid", marginBottom: "0.25rem" }}>
               <SurfaceCard title="Materiais e produtos" icon={<Package size={13} />} accent="bg-amber-400">
                 <div className="flex flex-col gap-1">
                   {consumptions.map(c => {
                     const total = parseFloat(c.unit_cost) * parseFloat(c.quantity)
                     return (
-                      <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 dark:bg-white/[0.03]">
+                      <div key={c.id} className="flex items-center justify-between gap-1.5 rounded-md border border-white/20 bg-white/20 px-2 py-1 dark:bg-white/[0.03]">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <Package size={11} className="shrink-0 text-amber-400" />
                           <span className="truncate text-[12px] font-medium text-[var(--text)]">{c.product_name}</span>
@@ -360,7 +362,7 @@ export default function SmallSurgeryDetailPage() {
                   {(() => {
                     const grand = consumptions.reduce((s, c) => s + parseFloat(c.unit_cost) * parseFloat(c.quantity), 0)
                     return grand > 0 ? (
-                      <div className="mt-1 flex items-center justify-between rounded-lg border border-amber-200/50 bg-amber-50/40 px-3 py-1.5 dark:border-amber-700/20 dark:bg-amber-900/10">
+                      <div className="mt-0.5 flex items-center justify-between rounded-md border border-amber-200/50 bg-amber-50/40 px-2 py-1 dark:border-amber-700/20 dark:bg-amber-900/10">
                         <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Total materiais</span>
                         <span className="text-[12px] font-semibold text-amber-700 dark:text-amber-300">
                           {grand.toLocaleString("pt-PT", { minimumFractionDigits: 2 })} MT
@@ -374,9 +376,9 @@ export default function SmallSurgeryDetailPage() {
           )}
 
           {(data.preoperative_diagnosis || data.postoperative_diagnosis) && (
-            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <div style={{ breakInside: "avoid", marginBottom: "0.25rem" }}>
               <SurfaceCard title="Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
-                <div className="grid gap-2">
+                <div className="grid gap-1">
                   {data.preoperative_diagnosis && <Field label="Pré-operatório" value={data.preoperative_diagnosis} />}
                   {data.postoperative_diagnosis && <Field label="Pós-operatório" value={data.postoperative_diagnosis} />}
                 </div>
@@ -384,9 +386,9 @@ export default function SmallSurgeryDetailPage() {
             </div>
           )}
 
-          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+          <div style={{ breakInside: "avoid", marginBottom: "0.25rem" }}>
             <SurfaceCard title="Auditoria" icon={<CalendarClock size={13} />} accent="bg-slate-400">
-              <div className="grid gap-2">
+              <div className="grid gap-1">
                 <Field label="Código" value={code} mono />
                 <Field label="Criado em" value={fmtDate(data.created_at)} />
                 <Field label="Atualizado em" value={fmtDate(data.updated_at)} />
@@ -399,8 +401,8 @@ export default function SmallSurgeryDetailPage() {
         {/* cronologia full-width */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className={`absolute left-0 top-0 h-full w-1 ${statusAccent(status)}`} />
-          <div className="px-4 py-3 pl-5">
-            <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+          <div className="px-3 py-2 pl-5">
+            <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
               <Clock3 size={13} />
               <span>Cronologia cirúrgica</span>
               <span className={`ml-2 rounded-full border px-2 py-0.5 text-[9px] font-semibold ${statusBadge(status)}`}>
@@ -417,7 +419,7 @@ export default function SmallSurgeryDetailPage() {
               ].map((step, i, arr) => (
                 <div key={step.label} className="flex flex-1 flex-col">
                   <div className="flex items-center">
-                    <span className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 shadow-sm ${
+                    <span className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 shadow-sm ${
                       step.date ? `border-white/60 ${step.dotColor} dark:border-white/20` : "border-white/40 bg-white/30 dark:border-white/10 dark:bg-white/[0.06]"}`}>
                       {step.date
                         ? <CheckCircle2 size={13} className="text-white" />
@@ -427,7 +429,7 @@ export default function SmallSurgeryDetailPage() {
                       <span className={`h-0.5 flex-1 ${step.date ? `${step.lineColor} opacity-60` : "bg-white/25 dark:bg-white/10"}`} />
                     )}
                   </div>
-                  <div className="mt-2 pr-2">
+                  <div className="mt-1 pr-1">
                     <p className={`text-[11px] font-semibold ${step.date ? step.textColor : "text-[var(--gray-400)]"}`}>{step.label}</p>
                     <p className={`mt-0.5 text-[10px] ${step.date ? "text-[var(--gray-500)]" : "text-[var(--gray-300)]"}`}>
                       {step.date ? fmtDate(step.date) : "Pendente"}

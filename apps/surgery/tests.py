@@ -247,7 +247,7 @@ def test_surgical_invoice_uses_billing_items_as_authoritative_lines():
         description="Taxa de sala operatória",
         quantity=Decimal("1.00"),
         unit_price=Decimal("500.00"),
-        vat_percentage=Decimal("16.00"),
+        vat_percentage=Decimal("5.00"),
         status=SurgicalBillingItem.Status.READY,
     )
 
@@ -261,7 +261,7 @@ def test_surgical_invoice_uses_billing_items_as_authoritative_lines():
 
     assert invoice.items.count() == 1
     assert invoice.subtotal == Decimal("500.00")
-    assert invoice.total == Decimal("580.00")
+    assert invoice.total == Decimal("525.00")
     assert surgery.billing_items.first().status == SurgicalBillingItem.Status.INVOICED
 
 
@@ -275,7 +275,7 @@ def test_surgical_invoice_falls_back_to_procedures_and_consumptions():
         description="Sutura complexa",
         status=SurgeryProcedureItem.Status.COMPLETED,
         unit_price=Decimal("200.00"),
-        vat_percentage=Decimal("16.00"),
+        vat_percentage=Decimal("5.00"),
     )
     material = SurgicalMaterial.objects.create(
         tenant=tenant,
@@ -299,7 +299,7 @@ def test_surgical_invoice_falls_back_to_procedures_and_consumptions():
 
     assert invoice.items.count() == 2
     assert invoice.subtotal == Decimal("300.00")
-    assert invoice.total == Decimal("348.00")
+    assert invoice.total == Decimal("315.00")
     assert surgery.consumptions.first().billing_status == SurgicalConsumption.BillingStatus.BILLED
 
 

@@ -391,7 +391,7 @@ class Command(BaseCommand):
                 quantity=quantity,
                 unit_price=unit_price,
                 applies_vat=applies_vat,
-                vat_percentage=Decimal("16.00") if applies_vat else Decimal("0.00"),
+                vat_percentage=Decimal("5.00") if applies_vat else Decimal("0.00"),
             )
 
         invoice.refresh_from_db()

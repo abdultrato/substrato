@@ -7,13 +7,7 @@ import { CalendarDays, Receipt, User } from "lucide-react"
 import MoneyValue from "@/components/ui/MoneyValue"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useRelationLabels } from "@/hooks/useRelationLabels"
-
-const STATUS_META: Record<string, { label: string; accent: string; badge: string }> = {
-  RASC: { label: "Rascunho", accent: "bg-slate-400", badge: "border-slate-300/50 bg-slate-500/15 text-slate-600 dark:text-slate-300" },
-  EMIT: { label: "Emitida", accent: "bg-sky-500", badge: "border-sky-300/50 bg-sky-500/15 text-sky-700 dark:text-sky-400" },
-  PAGA: { label: "Paga", accent: "bg-emerald-500", badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
-  CANC: { label: "Cancelada", accent: "bg-rose-500", badge: "border-rose-300/50 bg-rose-500/15 text-rose-600 dark:text-rose-400" },
-}
+import { invoiceStatusMeta } from "@/lib/billingStatus"
 
 const ORIGIN_LABELS: Record<string, string> = {
   CLI: "Clínica",
@@ -93,7 +87,7 @@ export default function InvoiceDetails({
   const code = String(data?.custom_id || data?.id_custom || data?.id || "").trim()
   const title = code ? `#${code}` : t("Fatura", "Invoice")
   const status = String(data?.status || "").toUpperCase()
-  const meta = STATUS_META[status]
+  const meta = invoiceStatusMeta(status)
   const origin = String(data?.origin || "").toUpperCase()
   const originLabel = ORIGIN_LABELS[origin] || origin
 

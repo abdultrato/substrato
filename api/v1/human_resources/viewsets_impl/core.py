@@ -92,11 +92,11 @@ class ProfessionViewSet(TenantScopedModelViewSet):
 
 
 class EmployeeViewSet(TenantScopedModelViewSet):
-    queryset = Employee.objects.select_related("role", "profession").all()
+    queryset = Employee.objects.select_related("role", "profession", "medical_specialty").all()
     serializer_class = EmployeeSerializer
     filterset_class = EmployeeFilter
-    search_fields = ["custom_id", "name", "profession__name", "email", "phone"]
-    ordering_fields = ["name", "profession__name", "admission_date", "status", "created_at"]
+    search_fields = ["custom_id", "name", "profession__name", "medical_specialty__name", "email", "phone"]
+    ordering_fields = ["name", "profession__name", "medical_specialty__name", "admission_date", "status", "created_at"]
     ordering = ["name"]
 
     def _set_employee_status(self, employee: Employee, status_value: str):
@@ -523,4 +523,3 @@ __all__ = [
     "VacationViewSet",
     "WorkScheduleViewSet",
 ]
-

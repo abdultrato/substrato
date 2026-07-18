@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import { formatInvoiceStatus } from "@/lib/billingStatus"
 import { abbreviateMiddleNames } from "@/lib/formatName"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import {
@@ -1153,7 +1154,7 @@ export default function ConsultationsPage() {
                     <span className="text-xs text-muted-foreground">{t("Sem fatura", "No invoice")}</span>
                   )}
                   {r.invoice_status ? (
-                    <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">{r.invoice_status}</span>
+                    <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">{formatInvoiceStatus(r.invoice_status)}</span>
                   ) : null}
                   {isProformaInvoice ? (
                     <span className="rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400">{t("Proforma", "Proforma")}</span>

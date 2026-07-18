@@ -113,9 +113,10 @@ function DropdownPortal({ anchorRef, portalRef, open, children }: {
   )
 }
 
-function SearchSelect({ label, placeholder, endpoint, labelField = "name", value, onChange, required }: {
+function SearchSelect({ label, placeholder, endpoint, labelField = "name", value, onChange, required, displayLabel }: {
   label: string; placeholder: string; endpoint: string; labelField?: string
   value: number | null; onChange: (id: number | null, label: string) => void; required?: boolean
+  displayLabel?: string
 }) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<any[]>([])
@@ -162,8 +163,8 @@ function SearchSelect({ label, placeholder, endpoint, labelField = "name", value
       <div ref={ref}>
         <div className={`${inputCls} flex cursor-pointer items-center justify-between gap-1 ${value ? "border-violet-300/60 dark:border-violet-700/40" : ""}`}
           onClick={() => setOpen(o => !o)}>
-          {value && selectedLabel
-            ? <span className="truncate font-medium text-[var(--text)]">{selectedLabel}</span>
+          {value && (selectedLabel || displayLabel)
+            ? <span className="truncate font-medium text-[var(--text)]">{selectedLabel || displayLabel}</span>
             : <span className="text-[var(--gray-400)]">{placeholder}</span>}
           <div className="flex shrink-0 items-center gap-1">
             {value ? <button type="button" onClick={clear} className="text-[var(--gray-400)] hover:text-rose-500"><X size={11} /></button> : null}
@@ -293,9 +294,18 @@ function ProcedureMultiSelect({ selected, onChange, surgerySize }: {
   )
 }
 
-function SurgeonMultiSelect({ selected, onChange }: {
-  selected: { id: number; name: string }[]
-  onChange: (items: { id: number; name: string }[]) => void
+type SurgeonOption = {
+  id: number
+  name: string
+  specialty_id?: number | null
+  specialty_name?: string | null
+  specialty_code?: string | null
+}
+
+function SurgeonMultiSelect({ selected, onChange, onSpecialtyFromSurgeon }: {
+  selected: SurgeonOption[]
+  onChange: (items: SurgeonOption[]) => void
+  onSpecialtyFromSurgeon?: (specialtyId: number, specialtyName: string) => void
 }) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<any[]>([])
@@ -315,7 +325,7 @@ function SurgeonMultiSelect({ selected, onChange }: {
 
   const search = useCallback(async (q: string) => {
     try {
-      const d = await apiFetch<any>(`/consultations/doctors/?search=${encodeURIComponent(q)}&limit=20`)
+      const d = await apiFetch<any>(`/consultations/doctors/?is_surgeon=true&search=${encodeURIComponent(q)}&limit=20`)
       setResults(Array.isArray(d) ? d : (d.results || []))
     } catch { setResults([]) }
   }, [])
@@ -325,7 +335,14 @@ function SurgeonMultiSelect({ selected, onChange }: {
   function toggle(item: any) {
     const exists = selected.find(s => s.id === item.id)
     if (exists) onChange(selected.filter(s => s.id !== item.id))
-    else onChange([...selected, { id: item.id, name: item.name }])
+    else {
+      const specialtyId = Number(item.specialty_id || 0)
+      const specialtyName = String(item.specialty_name || "").trim()
+      const specialtyCode = String(item.specialty_code || "").trim()
+      const specialtyLabel = [specialtyName, specialtyCode].filter(Boolean).join(" — ")
+      onChange([...selected, { id: item.id, name: item.name, specialty_id: specialtyId || null, specialty_name: specialtyName, specialty_code: specialtyCode }])
+      if (specialtyId && specialtyLabel) onSpecialtyFromSurgeon?.(specialtyId, specialtyLabel)
+    }
   }
 
   return (
@@ -336,6 +353,7 @@ function SurgeonMultiSelect({ selected, onChange }: {
             {selected.map(s => (
               <span key={s.id} className="inline-flex items-center gap-1 rounded-md border border-emerald-300/60 bg-emerald-50/80 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
                 {s.name}
+                {s.specialty_name ? <span className="opacity-65">· {s.specialty_name}</span> : null}
                 <button type="button" onClick={() => onChange(selected.filter(x => x.id !== s.id))} className="hover:text-rose-500"><X size={9} /></button>
               </span>
             ))}
@@ -360,6 +378,9 @@ function SurgeonMultiSelect({ selected, onChange }: {
                   onMouseDown={e => { e.preventDefault(); toggle(item) }}>
                   <Stethoscope size={11} className="shrink-0 text-[var(--gray-400)]" />
                   <span className="text-[var(--text)]">{item.name}</span>
+                  {item.specialty_name ? (
+                    <span className="ml-auto truncate text-[10px] font-medium text-violet-500">{item.specialty_name}</span>
+                  ) : null}
                 </div>
               ))}
           </div>
@@ -412,6 +433,10 @@ function ReviewRow({ label, value }: { label: string; value: React.ReactNode }) 
   )
 }
 
+function teamRoleLabel(role: string) {
+  return TEAM_ROLES.find((item) => item.value === role)?.label || role
+}
+
 /* ── main page ──────────────────────────────────────────────────── */
 
 type TeamMember = { tempId: string; employeeId: number | null; employeeName: string; role: string }
@@ -430,7 +455,7 @@ export default function SmallSurgeryNewPage() {
   const [surgerySize, setSurgerySize] = useState("PEQUENA")
 
   // step 2
-  const [surgeons, setSurgeons] = useState<{ id: number; name: string }[]>([])
+  const [surgeons, setSurgeons] = useState<SurgeonOption[]>([])
   const [specialty, setSpecialty] = useState<number | null>(null)
   const [specialtyLabel, setSpecialtyLabel] = useState("")
   const [operatingRoom, setOperatingRoom] = useState<number | null>(null)
@@ -523,47 +548,45 @@ export default function SmallSurgeryNewPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-full max-w-2xl space-y-2 px-1 py-1">
+      <div className="mx-auto w-full max-w-[98vw] space-y-2 px-1 py-1">
 
         {/* header */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
-          <div className="flex items-center justify-between gap-3 px-4 py-3 pl-5">
-            <div>
-              <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
-                <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
-                <span>/</span>
-                <Link href="/surgery/small-surgeries" className="hover:text-foreground">Pequenas cirurgias</Link>
-                <span>/</span>
-                <span className="font-semibold text-foreground">Nova cirurgia</span>
-              </div>
-              <h1 className="mt-0.5 font-display text-base font-semibold text-foreground">Nova pequena cirurgia</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              {totalPrice > 0 && (
-                <div className="flex flex-col items-end gap-0.5">
-                  <span className="text-[10px] text-[var(--gray-500)]">Preço total (IVA 5%)</span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[13px] font-semibold text-violet-700 dark:text-violet-300">
-                      {(totalPrice * 1.05).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT
-                    </span>
-                    <span className="text-[10px] text-[var(--gray-400)]">
-                      ({totalPrice.toLocaleString("pt-PT")} + IVA)
-                    </span>
-                  </div>
+          <div className="flex flex-col gap-2 px-4 py-2.5 pl-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
+                  <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
+                  <span>/</span>
+                  <Link href="/surgery/small-surgeries" className="hover:text-foreground">Pequenas cirurgias</Link>
+                  <span>/</span>
+                  <span className="font-semibold text-foreground">Nova cirurgia</span>
                 </div>
-              )}
-              <Link href="/surgery/small-surgeries"
-                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
-                <ArrowLeft size={11} /> Cancelar
-              </Link>
+                <h1 className="mt-0.5 font-display text-base font-semibold text-foreground">Nova pequena cirurgia</h1>
+              </div>
+              <div className="flex items-center gap-3">
+                {totalPrice > 0 && (
+                  <div className="flex flex-col items-end gap-0.5">
+                    <span className="text-[10px] text-[var(--gray-500)]">Preço total (IVA 5%)</span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[13px] font-semibold text-violet-700 dark:text-violet-300">
+                        {(totalPrice * 1.05).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT
+                      </span>
+                      <span className="text-[10px] text-[var(--gray-400)]">
+                        ({totalPrice.toLocaleString("pt-PT")} + IVA)
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <Link href="/surgery/small-surgeries"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
+                  <ArrowLeft size={11} /> Cancelar
+                </Link>
+              </div>
             </div>
+            <StepBar current={step} />
           </div>
-        </section>
-
-        {/* step bar */}
-        <section className={`${GLASS} px-3 py-2.5`}>
-          <StepBar current={step} />
         </section>
 
         {/* error */}
@@ -658,10 +681,18 @@ export default function SmallSurgeryNewPage() {
                 </div>
               </div>
 
-              <SurgeonMultiSelect selected={surgeons} onChange={setSurgeons} />
+              <SurgeonMultiSelect
+                selected={surgeons}
+                onChange={setSurgeons}
+                onSpecialtyFromSurgeon={(specialtyId, label) => {
+                  setSpecialty(specialtyId)
+                  setSpecialtyLabel(label)
+                }}
+              />
 
               <SearchSelect label="Especialidade" placeholder="Pesquisar especialidade..."
                 endpoint="/consultations/specialty/" labelField="name"
+                displayLabel={specialtyLabel}
                 value={specialty} onChange={(v, l) => { setSpecialty(v); setSpecialtyLabel(l) }} />
 
               <SearchSelect label="Bloco operatório" placeholder="Pesquisar enfermaria / bloco..."
@@ -813,7 +844,21 @@ export default function SmallSurgeryNewPage() {
                   <ReviewRow label="Cirurgiões" value={surgeons.length > 0 ? surgeons.map(s => s.name).join(", ") : null} />
                   <ReviewRow label="Especialidade" value={specialtyLabel || null} />
                   <ReviewRow label="Bloco" value={operatingRoomLabel || null} />
-                  <ReviewRow label="Equipa" value={team.length > 0 ? `${team.length} membro(s)` : null} />
+                  <ReviewRow label="Equipa" value={team.length > 0
+                    ? (
+                      <span className="flex flex-wrap gap-1">
+                        {team.map((member) => (
+                          <span
+                            key={member.tempId}
+                            className="inline-flex max-w-full items-center gap-1 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
+                          >
+                            <span className="truncate">{member.employeeName}</span>
+                            <span className="shrink-0 opacity-70">· {teamRoleLabel(member.role)}</span>
+                          </span>
+                        ))}
+                      </span>
+                    )
+                    : null} />
                   <ReviewRow label="Agendada para" value={scheduledFor ? new Date(scheduledFor).toLocaleString("pt-PT") : null} />
                   {totalPrice > 0 && <ReviewRow label="Preço estimado" value={`${totalPrice.toLocaleString("pt-PT")} MT`} />}
                 </div>

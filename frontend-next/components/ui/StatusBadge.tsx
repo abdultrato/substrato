@@ -1,3 +1,5 @@
+import { formatInvoiceStatus, invoiceStatusMeta } from "@/lib/billingStatus"
+
 interface Props {
   status?: string | null
   label?: string
@@ -24,11 +26,13 @@ export default function StatusBadge ( { status, label }: Props ) {
   if ( !status && !label ) return null
 
   const key = ( status ?? label ?? "" ).toUpperCase()
-  const style = styles[key] ?? "border-border bg-muted text-foreground-2"
+  const invoiceMeta = invoiceStatusMeta(status)
+  const style = invoiceMeta?.badge ?? styles[key] ?? "border-border bg-muted text-foreground-2"
+  const display = label ?? (invoiceMeta ? formatInvoiceStatus(status) : status)
 
   return (
     <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold ${style}`}>
-      {label ?? status}
+      {display}
     </span>
   )
 }

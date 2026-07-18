@@ -23,7 +23,12 @@ import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS } from "@/lib/rbac";
 
 const OCCUPATIONAL_PROVENANCE = "Medicina Ocupacional";
-const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE];
+const VIEW_GROUPS = [
+  GROUPS.ADMIN,
+  GROUPS.RECEPCAO,
+  GROUPS.CONTABILIDADE,
+  GROUPS.MEDICINA_OCUPACIONAL,
+];
 
 type PatientRow = Record<string, any>;
 
@@ -57,7 +62,7 @@ function MetricPill({
   tone: string;
 }) {
   return (
-    <div className={`min-w-[7.5rem] rounded-lg border px-2.5 py-1.5 ${tone}`}>
+    <div className={`min-w-[7rem] rounded-md border px-2 py-1 ${tone}`}>
       <div className="text-[10px] font-medium text-muted-foreground">{label}</div>
       <div className="text-base font-bold leading-tight text-foreground">{value}</div>
     </div>
@@ -72,15 +77,15 @@ function OccupationalPatientCard({ patient, accent }: { patient: PatientRow; acc
       className="group relative block overflow-hidden rounded-lg border border-white/40 bg-white/20 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
     >
       <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} />
-      <div className="flex min-w-0 items-center gap-2 px-3 py-2 pl-4">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-[11px] font-bold text-primary">
+      <div className="flex min-w-0 items-center gap-1.5 px-2 py-1.5 pl-3">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[10px] font-bold text-primary">
           {patientInitials(patient.name)}
         </span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-foreground">
             {display(patient.name)}
           </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Building2 size={11} />
               {display(patient.origin_company_name, "Sem empresa")}
@@ -91,7 +96,7 @@ function OccupationalPatientCard({ patient, accent }: { patient: PatientRow; acc
             </span>
           </div>
         </div>
-        <div className="hidden min-w-[5.5rem] text-right text-[11px] text-muted-foreground sm:block">
+        <div className="hidden min-w-[5rem] text-right text-[10px] text-muted-foreground sm:block">
           <div className="font-semibold text-foreground">{display(patient.custom_id || patient.id)}</div>
           <div>{display(patient.contact, "Sem contacto")}</div>
         </div>
@@ -204,9 +209,9 @@ export default function MedicinaOcupacionalPage() {
 
   return (
     <AppLayout requiredGroups={VIEW_GROUPS}>
-      <div className="mx-auto w-full max-w-[96rem] space-y-3 px-1 pb-4">
+      <div className="mx-auto w-full max-w-[97vw] space-y-1 px-0 pb-1">
         <section className="rounded-xl border border-teal-200/50 bg-white/20 shadow-sm backdrop-blur-sm dark:border-teal-900/40 dark:bg-white/[0.04]">
-          <div className="grid gap-2 px-3 py-2 lg:grid-cols-[minmax(16rem,1fr)_minmax(18rem,0.8fr)_auto] lg:items-center">
+          <div className="grid gap-1 px-2 py-1 lg:grid-cols-[minmax(16rem,1fr)_minmax(18rem,0.8fr)_auto] lg:items-center">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-teal-500/12 text-teal-700 dark:text-teal-300">
@@ -236,7 +241,7 @@ export default function MedicinaOcupacionalPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:flex lg:justify-end">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:flex lg:justify-end">
               <MetricPill
                 label="Pacientes"
                 value={listLoading ? "..." : totalItems}
@@ -260,7 +265,7 @@ export default function MedicinaOcupacionalPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-teal-200/60 px-3 py-2 dark:border-teal-900/40">
+          <div className="flex flex-wrap items-center justify-between gap-1 border-t border-teal-200/60 px-2 py-1 dark:border-teal-900/40">
             <p className="min-w-0 text-[11px] text-muted-foreground">
               <span className="font-semibold text-foreground">Registo centralizado</span>
               {" — "}Novos pacientes ocupacionais entram pela Recepção com proveniência de Medicina Ocupacional.
@@ -281,7 +286,7 @@ export default function MedicinaOcupacionalPage() {
         ) : null}
 
         {/* Ações rápidas — logo após o cabeçalho */}
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-4 gap-1 whitespace-nowrap">
           {[
             { title: "Criar requisição laboratorial", href: "/requests/new", icon: FilePlus2, accent: "bg-violet-500" },
             { title: "Prontuário e cardex", href: "/medical-records", icon: ScrollText, accent: "bg-sky-500" },
@@ -293,19 +298,19 @@ export default function MedicinaOcupacionalPage() {
               <Link
                 key={action.href}
                 href={action.href}
-                className="relative flex items-center gap-2 overflow-hidden rounded-lg border border-white/40 bg-white/20 px-3 py-2 pl-4 text-sm font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-primary/30 hover:bg-white/30 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                className="relative flex min-w-0 items-center gap-1.5 overflow-hidden rounded-lg border border-white/40 bg-white/20 px-2 py-1.5 pl-3 text-sm font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-primary/30 hover:bg-white/30 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
               >
                 <span className={`absolute inset-y-0 left-0 w-1 ${action.accent}`} />
-                <Icon size={15} className="text-muted-foreground" />
+                <Icon size={15} className="shrink-0 text-muted-foreground" />
                 <span className="min-w-0 flex-1 truncate">{action.title}</span>
-                <ArrowRight size={14} className="text-muted-foreground" />
+                <ArrowRight size={14} className="shrink-0 text-muted-foreground" />
               </Link>
             );
           })}
         </div>
 
-        <section className="rounded-xl border border-white/40 bg-white/20 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <section className="rounded-xl border border-white/40 bg-white/20 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Pacientes ocupacionais</h2>
                 <p className="text-[11px] text-muted-foreground">
@@ -328,7 +333,7 @@ export default function MedicinaOcupacionalPage() {
                 Carregando pacientes...
               </div>
             ) : patients.length ? (
-              <div className="grid gap-2 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid gap-1 md:grid-cols-2 2xl:grid-cols-3">
                 {patients.map((patient, index) => (
                   <OccupationalPatientCard
                     key={patient.id || patient.custom_id || index}
@@ -343,7 +348,7 @@ export default function MedicinaOcupacionalPage() {
               </div>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-1 border-t border-border/60 pt-1">
               <span className="text-xs text-muted-foreground">
                 {debouncedSearch ? `Filtro activo: ${debouncedSearch}` : "Sem filtro de pesquisa"}
               </span>

@@ -60,7 +60,7 @@ def test_item_discount_and_tax_amounts():
                 "quantity": Decimal("1"),
                 "unit_price": Decimal("100.00"),
                 "discount_rate": Decimal("10.00"),
-                "tax_rate": Decimal("16.00"),
+                "tax_rate": Decimal("5.00"),
             }
         ],
     )

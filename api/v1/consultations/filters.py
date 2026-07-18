@@ -31,7 +31,7 @@ class MedicalConsultationFilter(SafeFilterSet):
 class DoctorFilter(SafeFilterSet):
     class Meta:
         model = Employee
-        fields = ["name", "profession", "role", "status", "created_at"]
+        fields = ["name", "profession", "role", "is_medical_doctor", "is_surgeon", "medical_specialty", "status", "created_at"]
 
 
 class ConsultationSpecialtyFilter(SafeFilterSet):

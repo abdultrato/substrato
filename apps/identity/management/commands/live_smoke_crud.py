@@ -400,7 +400,7 @@ class Command(BaseCommand):
             name=f"Especialidade Smoke {suffix}",
             description=f"Especialidade de smoke {suffix}",
             base_price=Decimal("1500.00"),
-            vat_percentage=Decimal("16.00"),
+            vat_percentage=Decimal("5.00"),
             active=True,
         )
 
@@ -587,7 +587,7 @@ class Command(BaseCommand):
             name=f"Procedimento Smoke {suffix}",
             description=f"Procedimento de teste {suffix}",
             base_price=Decimal("10000.00"),
-            vat_percentage=Decimal("16.00"),
+            vat_percentage=Decimal("5.00"),
             applies_vat_by_default=True,
             active=True,
         )
@@ -603,7 +603,7 @@ class Command(BaseCommand):
             procedure=f"Cirurgia smoke {suffix}",
             description=f"Cirurgia de teste {suffix}",
             estimated_price=Decimal("12000.00"),
-            vat_percentage=Decimal("16.00"),
+            vat_percentage=Decimal("5.00"),
             applies_vat_by_default=True,
             scheduled_for=timezone.now() + timedelta(days=index),
             surgery_size=Surgery.Size.SMALL if index % 2 else Surgery.Size.LARGE,

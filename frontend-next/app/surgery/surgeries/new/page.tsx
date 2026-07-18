@@ -33,6 +33,7 @@ const GLASS =
 
 const inputClass =
   "h-8 w-full rounded-md border border-border bg-background/60 px-2 text-xs text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-2 focus:ring-rose-500/40";
+const lockedInputClass = `${inputClass} disabled:cursor-not-allowed disabled:bg-muted/70 disabled:text-muted-foreground disabled:opacity-80`;
 
 const textareaClass =
   "min-h-20 w-full resize-y rounded-md border border-border bg-background/60 px-2 py-1.5 text-xs leading-5 text-foreground outline-none transition placeholder:text-muted-foreground focus:ring-2 focus:ring-rose-500/40";
@@ -45,11 +46,14 @@ type Option = {
   employee_code?: string;
   base_price?: string | number;
   vat_percentage?: string | number;
+  applies_vat_by_default?: boolean;
   surgery_type?: string;
   room_type?: string;
   status?: string;
+  active?: boolean;
   sterile?: boolean;
   capacity?: number;
+  is_surgical?: boolean;
 };
 
 type FieldProps = {
@@ -275,6 +279,7 @@ export default function CreateSurgeryPage() {
   const [roomId, setRoomId] = useState<number | null>(null);
   const [roomQuery, setRoomQuery] = useState("");
   const [procedureIds, setProcedureIds] = useState<number[]>([]);
+  const [selectedProcedureRows, setSelectedProcedureRows] = useState<Option[]>([]);
   const [procedureQuery, setProcedureQuery] = useState("");
   const debouncedProcedureQuery = useDebounce(procedureQuery, 250);
   const [specialtyId, setSpecialtyId] = useState<number | null>(null);
@@ -289,7 +294,7 @@ export default function CreateSurgeryPage() {
   const [postoperativeDiagnosis, setPostoperativeDiagnosis] = useState("");
   const [description, setDescription] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState("");
-  const [vatPercentage, setVatPercentage] = useState("16.00");
+  const [vatPercentage, setVatPercentage] = useState("5.00");
   const [appliesVat, setAppliesVat] = useState(true);
 
   useEffect(() => {
@@ -305,14 +310,14 @@ export default function CreateSurgeryPage() {
             pageSize: 200,
             query: { status: "AVAILABLE", sterile: "true" },
           }),
-          apiFetchList<Option>("/surgery/surgical_procedure/", { page: 1, pageSize: 300, query: { active: "true" } }),
+          apiFetchList<Option>("/surgery/surgical_procedure/", { page: 1, pageSize: 300, query: { is_surgical: "true" } }),
           apiFetchList<Option>("/consultations/specialty/", { page: 1, pageSize: 200 }),
         ]);
         if (!mounted) return;
         setPatients(patientRes.items);
         setEmployees(employeeRes.items);
         setRooms(roomRes.items.filter((room) => room.status === "AVAILABLE" && room.sterile !== false));
-        setProcedures(procedureRes.items);
+        setProcedures(procedureRes.items.filter((item) => item.active !== false && item.is_surgical !== false));
         setSpecialties(specialtyRes.items);
       } catch (err: any) {
         if (mounted) setError(err?.message || "Não foi possível carregar os dados de apoio.");
@@ -331,8 +336,8 @@ export default function CreateSurgeryPage() {
     async function loadProcedures() {
       try {
         const query: Record<string, string> = {
-          active: "true",
           for_surgery_size: surgerySize,
+          is_surgical: "true",
         };
         if (debouncedProcedureQuery.trim()) query.search = debouncedProcedureQuery.trim();
         const { items } = await apiFetchList<Option>("/surgery/surgical_procedure/", {
@@ -340,7 +345,7 @@ export default function CreateSurgeryPage() {
           pageSize: 50,
           query,
         });
-        if (mounted) setProcedures(items);
+        if (mounted) setProcedures(items.filter((item) => item.active !== false && item.is_surgical !== false));
       } catch {
         if (mounted) setProcedures([]);
       }
@@ -354,7 +359,8 @@ export default function CreateSurgeryPage() {
   const selectedPatient = patients.find((item) => item.id === patientId) || null;
   const selectedSurgeons = employees.filter((item) => surgeonIds.includes(item.id));
   const selectedRoom = rooms.find((item) => item.id === roomId) || null;
-  const selectedProcedures = procedures.filter((item) => procedureIds.includes(item.id));
+  const selectedProcedures = selectedProcedureRows.filter((item) => procedureIds.includes(item.id));
+  const procedureDrivenClassification = procedureIds.length > 0;
   const selectedSpecialty = specialties.find((item) => item.id === specialtyId) || null;
   const proceduresTotal = selectedProcedures.reduce((acc, item) => acc + toNumber(item.base_price), 0);
   const totalEstimate = toNumber(estimatedPrice) || proceduresTotal;
@@ -419,6 +425,25 @@ export default function CreateSurgeryPage() {
 
   function toggleId(list: number[], id: number) {
     return list.includes(id) ? list.filter((item) => item !== id) : [...list, id];
+  }
+
+  function applyProcedureDefaults(chosen: Option[]) {
+    if (chosen.length === 0) return;
+    const hasLarge = chosen.some((item) => item.surgery_type === "GRANDE");
+    const hasSmall = chosen.some((item) => item.surgery_type === "PEQUENA");
+    if (hasLarge) {
+      setSurgerySize("GRANDE");
+      setClassification("MAJOR");
+    } else if (hasSmall) {
+      setSurgerySize("PEQUENA");
+      setClassification("MINOR");
+    }
+    const priceTotal = chosen.reduce((sum, item) => sum + toNumber(item.base_price), 0);
+    if (priceTotal > 0) setEstimatedPrice(priceTotal.toFixed(2));
+    const vatSource = chosen.find((item) => item.vat_percentage !== undefined && item.vat_percentage !== null);
+    if (vatSource) setVatPercentage(String(vatSource.vat_percentage));
+    const vatFlagSource = chosen.find((item) => item.applies_vat_by_default !== undefined);
+    if (vatFlagSource) setAppliesVat(vatFlagSource.applies_vat_by_default !== false);
   }
 
   return (
@@ -516,20 +541,20 @@ export default function CreateSurgeryPage() {
           <Card title="Classificação e data" icon={ShieldCheck} accent="bg-amber-500">
             <div className="grid grid-cols-1 gap-1 min-[520px]:grid-cols-2 xl:grid-cols-4">
               <Field label="Porte">
-                <select value={surgerySize} onChange={(event) => setSurgerySize(event.target.value)} className={inputClass}>
+                <select value={surgerySize} onChange={(event) => setSurgerySize(event.target.value)} className={lockedInputClass} disabled={procedureDrivenClassification}>
                   <option value="PEQUENA">Pequena</option>
                   <option value="GRANDE">Grande</option>
                 </select>
               </Field>
               <Field label="Prioridade">
-                <select value={priority} onChange={(event) => setPriority(event.target.value)} className={inputClass}>
+                <select value={priority} onChange={(event) => setPriority(event.target.value)} className={lockedInputClass} disabled={procedureDrivenClassification}>
                   <option value="ELECTIVE">Eletiva</option>
                   <option value="URGENT">Urgente</option>
                   <option value="EMERGENCY">Emergência</option>
                 </select>
               </Field>
               <Field label="Classificação">
-                <select value={classification} onChange={(event) => setClassification(event.target.value)} className={inputClass}>
+                <select value={classification} onChange={(event) => setClassification(event.target.value)} className={lockedInputClass} disabled={procedureDrivenClassification}>
                   <option value="AMBULATORY">Ambulatória</option>
                   <option value="DAY_SURGERY">Cirurgia de dia</option>
                   <option value="INPATIENT">Com internamento</option>
@@ -555,16 +580,17 @@ export default function CreateSurgeryPage() {
                 </select>
               </Field>
               <Field label="Preço estimado">
-                <input type="number" step="0.01" value={estimatedPrice} onChange={(event) => setEstimatedPrice(event.target.value)} className={inputClass} placeholder={money(proceduresTotal)} />
+                <input type="number" step="0.01" value={estimatedPrice} onChange={(event) => setEstimatedPrice(event.target.value)} className={lockedInputClass} placeholder={money(proceduresTotal)} disabled={procedureDrivenClassification} />
               </Field>
               <Field label="IVA (%)">
-                <input type="number" step="0.01" value={vatPercentage} onChange={(event) => setVatPercentage(event.target.value)} className={inputClass} />
+                <input type="number" step="0.01" value={vatPercentage} onChange={(event) => setVatPercentage(event.target.value)} className={lockedInputClass} disabled={procedureDrivenClassification} />
               </Field>
               <Field label="Aplicar IVA">
                 <button
                   type="button"
                   onClick={() => setAppliesVat((current) => !current)}
-                  className={`inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border px-2 text-xs font-semibold ${appliesVat ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-border bg-background/60 text-muted-foreground"}`}
+                  disabled={procedureDrivenClassification}
+                  className={`inline-flex h-8 w-full items-center justify-center gap-1 rounded-md border px-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-80 ${appliesVat ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-border bg-background/60 text-muted-foreground"}`}
                 >
                   <CheckCircle2 size={13} /> {appliesVat ? "Sim" : "Não"}
                 </button>
@@ -584,9 +610,10 @@ export default function CreateSurgeryPage() {
                   // O porte é derivado dos procedimentos escolhidos (GRANDE domina).
                   const next = toggleId(procedureIds, item.id);
                   setProcedureIds(next);
-                  const chosen = procedures.filter((p) => next.includes(p.id));
-                  if (chosen.some((p) => p.surgery_type === "GRANDE")) setSurgerySize("GRANDE");
-                  else if (chosen.some((p) => p.surgery_type === "PEQUENA")) setSurgerySize("PEQUENA");
+                  const known = [...selectedProcedureRows.filter((p) => p.id !== item.id), item];
+                  const chosen = known.filter((p) => next.includes(p.id));
+                  setSelectedProcedureRows(chosen);
+                  applyProcedureDefaults(chosen);
                 }}
                 placeholder="Pesquisar procedimento..." emptyLabel="Nenhum procedimento encontrado."
                 error={errors.procedure}
@@ -599,7 +626,18 @@ export default function CreateSurgeryPage() {
             {selectedProcedures.length ? (
               <div className="mt-1 grid grid-cols-1 gap-1 md:grid-cols-3">
                 {selectedProcedures.map((item) => (
-                  <button key={item.id} type="button" onClick={() => setProcedureIds((current) => current.filter((id) => id !== item.id))} className="rounded border border-border bg-background/50 px-2 py-1 text-left text-[10px] hover:bg-muted">
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      const next = procedureIds.filter((id) => id !== item.id);
+                      const chosen = selectedProcedureRows.filter((row) => row.id !== item.id);
+                      setProcedureIds(next);
+                      setSelectedProcedureRows(chosen);
+                      applyProcedureDefaults(chosen);
+                    }}
+                    className="rounded border border-border bg-background/50 px-2 py-1 text-left text-[10px] hover:bg-muted"
+                  >
                     <span className="block truncate font-semibold">{labelFor(item)}</span>
                     <span className="block text-muted-foreground">{money(toNumber(item.base_price))} MZN · {item.surgery_type || "AMBAS"}</span>
                   </button>

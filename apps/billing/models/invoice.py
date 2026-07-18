@@ -724,7 +724,7 @@ class Invoice(NoNameCoreModel):
                         description=item_description,
                         quantity=consumption.quantity,
                         unit_price=consumption.charged_price,
-                        vat_percentage=Decimal("16.00"),
+                        vat_percentage=Decimal("5.00"),
                         applies_vat=True,
                     )
                     consumption.billing_status = consumption.BillingStatus.BILLED

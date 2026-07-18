@@ -102,8 +102,8 @@ export default function SpecialtyDiagnosticsHubPage({
   const headerMeta = SPECIALTY_HEADER_META[specialty]
 
   return (
-    <AppLayout requiredGroups={requiredGroups}>
-      <div className="space-y-2">
+    <AppLayout requiredGroups={requiredGroups} fullWidth>
+      <div className="mx-auto w-full max-w-none space-y-2">
         {error ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {error}
@@ -117,6 +117,8 @@ export default function SpecialtyDiagnosticsHubPage({
           icon={headerMeta.icon}
           iconClass={headerMeta.iconClass}
           barClass={headerMeta.barClass}
+          metricsNowrap
+          actionsNowrap
           metrics={[
             { label: "Equipamentos", value: metricValue || equipment, href: `${resourceBasePath}/equipment`, icon: Wrench, accentClass: "border-l-slate-500", iconClass: "bg-slate-500/15 text-slate-600 dark:text-slate-300" },
             { label: "Consultas", value: metricValue || consultations, href: `/consultations?sector=${specialty}`, icon: CalendarClock, accentClass: "border-l-cyan-500", iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300" },

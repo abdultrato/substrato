@@ -52,7 +52,7 @@ from ..serializers import (
 
 
 class DoctorsViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
-    queryset = Employee.objects.select_related("role", "profession").all()
+    queryset = Employee.objects.select_related("role", "profession", "medical_specialty").all()
     serializer_class = DoctorSerializer
     filterset_class = DoctorFilter
     permission_classes = [IsAuthenticated]
@@ -62,8 +62,12 @@ class DoctorsViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Re
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # Doctors are employees with a role flagged as doctor and active.
-        return qs.filter(role__is_doctor=True, status="ATIVO").distinct()
+        # Doctors are employees explicitly marked as doctors or carrying a doctor role.
+        qs = qs.filter(Q(is_medical_doctor=True) | Q(role__is_doctor=True), status="ATIVO").distinct()
+        is_surgeon = (self.request.query_params.get("is_surgeon") or "").strip().lower()
+        if is_surgeon in {"1", "true", "t", "yes", "sim"}:
+            qs = qs.filter(is_surgeon=True)
+        return qs
 
 
 def _specialty_as_drf_error(exc: DjangoValidationError) -> ValidationError:
@@ -430,7 +434,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                     description=item.description or getattr(item.catalog, "name", "") or "Procedimento de enfermagem",
                     quantity=item.quantity,
                     unit_price=getattr(getattr(item, "value", None), "unit_price", item.unit_price),
-                    vat_percentage=getattr(getattr(item, "catalog", None), "vat_percentage", None) or Decimal("16.00"),
+                    vat_percentage=getattr(getattr(item, "catalog", None), "vat_percentage", None) or Decimal("5.00"),
                     applies_vat=getattr(getattr(item, "catalog", None), "applies_vat_by_default", True),
                     selected=default_selected,
                     kind="procedure_item",

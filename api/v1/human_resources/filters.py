@@ -34,7 +34,7 @@ class ProfessionFilter(SafeFilterSet):
 class EmployeeFilter(SafeFilterSet):
     class Meta:
         model = Employee
-        fields = ["role", "profession", "status", "admission_date", "created_at"]
+        fields = ["role", "profession", "is_medical_doctor", "is_surgeon", "medical_specialty", "status", "admission_date", "created_at"]
 
 
 class DisciplinaryProcessFilter(SafeFilterSet):
@@ -154,4 +154,3 @@ FILTER_MAP = {
     "folha_run": PayrollRunFilter,
     "folha_item": PayrollItemFilter,
 }
-

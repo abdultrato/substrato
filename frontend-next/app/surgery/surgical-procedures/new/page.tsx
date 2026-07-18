@@ -32,7 +32,6 @@ const TYPE_LABEL: Record<string, string> = {
 const SURGERY_TYPE_OPTIONS: { value: SurgeryType; label: string; description: string; color: string }[] = [
   { value: "PEQUENA", label: "Pequena cirurgia", description: "Baixa complexidade, ambulatório ou internamento curto.", color: "blue" },
   { value: "GRANDE", label: "Grande cirurgia", description: "Alta complexidade com bloco operatório e internamento.", color: "violet" },
-  { value: "AMBAS", label: "Ambas", description: "Aplicável a pequenas e grandes cirurgias.", color: "slate" },
 ]
 
 function fmtMT(n: number) {
@@ -54,7 +53,8 @@ export default function NewSurgicalProcedurePage() {
   const [vatPct, setVatPct] = useState("5")
   const [appliesVat, setAppliesVat] = useState(true)
   const [active, setActive] = useState(true)
-  const [surgeryType, setSurgeryType] = useState<SurgeryType>("AMBAS")
+  const [isSurgical, setIsSurgical] = useState(true)
+  const [surgeryType, setSurgeryType] = useState<SurgeryType>("PEQUENA")
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -136,6 +136,7 @@ export default function NewSurgicalProcedurePage() {
     const errs: Record<string, string> = {}
     if (!name.trim()) errs.name = "Nome obrigatório."
     if (!basePrice || isNaN(parseFloat(basePrice))) errs.basePrice = "Preço inválido."
+    if (isSurgical && !["PEQUENA", "GRANDE"].includes(surgeryType)) errs.surgeryType = "Escolha se é pequena ou grande cirurgia."
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     setSaving(true); setErrors({})
@@ -149,7 +150,8 @@ export default function NewSurgicalProcedurePage() {
           vat_percentage: vatPct || "0",
           applies_vat_by_default: appliesVat,
           active,
-          surgery_type: surgeryType,
+          is_surgical: isSurgical,
+          surgery_type: isSurgical ? surgeryType : "AMBAS",
           default_materials_detail: materials.map(m => ({ id: m.id, qty: m.qty })),
         }),
       })
@@ -227,8 +229,31 @@ export default function NewSurgicalProcedurePage() {
               <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
                 <Stethoscope size={11} /><span>Indicação do procedimento</span>
               </div>
-              <div className="grid gap-1 sm:grid-cols-3">
-                {SURGERY_TYPE_OPTIONS.map(opt => {
+              <div className="mb-1.5 grid gap-1 sm:grid-cols-2">
+                {[
+                  { value: true, label: "Cirúrgico", description: "Entra no catálogo das cirurgias." },
+                  { value: false, label: "Não cirúrgico", description: "Fica fora da selecção de cirurgias." },
+                ].map(opt => {
+                  const selected = isSurgical === opt.value
+                  return (
+                    <button key={String(opt.value)} type="button" onClick={() => {
+                      setIsSurgical(opt.value)
+                      if (opt.value && surgeryType === "AMBAS") setSurgeryType("PEQUENA")
+                    }}
+                      className={`rounded-lg border p-2 text-left transition ${selected ? "border-emerald-400 bg-emerald-50/60 dark:border-emerald-700/50 dark:bg-emerald-900/15" : "border-border bg-card/50 hover:bg-muted"}`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`h-2 w-2 rounded-full ${selected ? "bg-emerald-500" : "bg-slate-300"}`} />
+                        <span className="text-[11px] font-semibold text-foreground">{opt.label}</span>
+                        {selected && <Check size={10} className="ml-auto shrink-0 text-emerald-500" />}
+                      </div>
+                      <p className="text-[10px] leading-snug text-[var(--gray-400)]">{opt.description}</p>
+                    </button>
+                  )
+                })}
+              </div>
+              {isSurgical ? (
+                <div className="grid gap-1 sm:grid-cols-2">
+                  {SURGERY_TYPE_OPTIONS.map(opt => {
                   const selected = surgeryType === opt.value
                   const colorMap: Record<string, string> = {
                     blue: selected
@@ -258,7 +283,9 @@ export default function NewSurgicalProcedurePage() {
                     </button>
                   )
                 })}
-              </div>
+                </div>
+              ) : null}
+              {errors.surgeryType && <p className="mt-1 text-[11px] text-rose-500">{errors.surgeryType}</p>}
             </div>
           </div>
         </section>
@@ -396,7 +423,7 @@ export default function NewSurgicalProcedurePage() {
 
                 {/* portal dropdown */}
                 {matOpen && matRect && matResults.length > 0 && typeof document !== "undefined" && createPortal(
-                  <div style={{ position: "fixed", top: matRect.bottom + 4, left: matRect.left, width: matRect.width, zIndex: 9999 }}
+                  <div style={{ position: "fixed", top: matRect.bottom + 4, left: matRect.left, width: matRect.width, zIndex: 2147483647 }}
                     className="rounded-xl border border-border bg-card shadow-xl">
                     {matResults.map(item => {
                       const already = materials.some(m => m.id === item.id)

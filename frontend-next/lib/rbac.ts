@@ -84,6 +84,17 @@ const GROUP_SYNONYMS: Record<string, string[]> = {
     "smi nurse",
   ],
   Médico: ["medico", "médico", "doctor", "physician", "clinico", "clínico"],
+  "Medicina Ocupacional": [
+    "medicina ocupacional",
+    "medicina_ocupacional",
+    "medicina-ocupacional",
+    "med ocupacional",
+    "med. oc.",
+    "med oc",
+    "moc",
+    "occupational medicine",
+    "workplace health",
+  ],
   "Técnico de Farmácia": [
     "tecnico de farmacia",
     "técnico de farmácia",
@@ -417,7 +428,12 @@ export const WORKSPACES: WorkspaceDef[] = [
     label: "Medicina Ocupacional",
     href: "/occupational-medicine",
     description: "Registos ocupacionais e fluxos de requisição.",
-    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.RECEPCAO,
+      GROUPS.CONTABILIDADE,
+      GROUPS.MEDICINA_OCUPACIONAL,
+    ],
   },
   {
     key: "accounting",

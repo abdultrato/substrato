@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
+import { ReactNode, useEffect, useMemo, useState, type CSSProperties } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -52,10 +52,6 @@ export default function AppLayout ( {
     const [navOpen, setNavOpen] = useState( false )
     const [accessResolutionReady, setAccessResolutionReady] = useState( true )
     const [showRestrictionNotice, setShowRestrictionNotice] = useState( false )
-    const [subNavVisible, setSubNavVisible] = useState( true )
-    const mainRef = useRef<HTMLElement>( null )
-    const lastScrollY = useRef( 0 )
-    const lockUntil = useRef( 0 )
     const contentFrameStyle = {
         "--layout-right": rightAside ? rightAsideWidth : "0px",
     } as CSSProperties
@@ -115,26 +111,6 @@ export default function AppLayout ( {
             document.body.style.overflow = ""
         }
     }, [navOpen] )
-
-    useEffect( () => {
-        const el = mainRef.current
-        if ( !el ) return
-        function onScroll () {
-            if ( Date.now() < lockUntil.current ) return
-            const y = el.scrollTop
-            const delta = y - lastScrollY.current
-            if ( Math.abs( delta ) < 6 ) return
-            const next = delta < 0 || y < 40
-            setSubNavVisible( ( prev ) => {
-                if ( prev === next ) return prev
-                lockUntil.current = Date.now() + 400
-                return next
-            } )
-            lastScrollY.current = y
-        }
-        el.addEventListener( "scroll", onScroll, { passive: true } )
-        return () => el.removeEventListener( "scroll", onScroll )
-    }, [] )
 
     function handleMenuClick () {
         setNavOpen( true )
@@ -241,13 +217,9 @@ export default function AppLayout ( {
                 style={contentFrameStyle}
             >
                 <div className="sticky top-0 z-[200] shrink-0">
-                    <Header user={user} onMenuClick={handleMenuClick} scrolledDown={!subNavVisible} />
+                    <Header user={user} onMenuClick={handleMenuClick} scrolledDown={false} />
 
-                    <div
-                        className={`-mt-px overflow-hidden transition-all duration-300 ease-in-out ${
-                            subNavVisible ? "max-h-32 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
-                        }`}
-                    >
+                    <div className="-mt-px overflow-visible">
                         {subNav ?? (
                             <>
                                 <SectionSubNav />
@@ -257,7 +229,7 @@ export default function AppLayout ( {
                     </div>
                 </div>
 
-                <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
+                <main data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
                     <div className={`page-transition ${fullWidth ? "w-full" : "mx-auto w-workspace max-w-workspace"}`}>
                         {isUnauthorized ? (
                             <div className="mx-auto mb-3 w-full max-w-workspace rounded-2xl border border-amber-300/60 bg-amber-50/85 px-4 py-3 text-sm text-amber-950 shadow-sm backdrop-blur-sm dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-100">

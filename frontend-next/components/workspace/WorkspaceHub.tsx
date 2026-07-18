@@ -51,6 +51,8 @@ type WorkspaceHubProps = {
   backLabel?: string
   /** Renderiza as ações numa linha única, sem quebra. */
   actionsNowrap?: boolean
+  /** Renderiza os indicadores numa linha compacta: rótulo e valor lado a lado. */
+  metricsNowrap?: boolean
   /** Conteúdo extra compacto dentro do cartão de cabeçalho, abaixo das métricas. */
   headerPanels?: ReactNode
 }
@@ -69,6 +71,7 @@ export default function WorkspaceHub({
   backHref,
   backLabel,
   actionsNowrap,
+  metricsNowrap,
   headerPanels,
 }: WorkspaceHubProps) {
   const { tr } = useLanguage()
@@ -106,7 +109,13 @@ export default function WorkspaceHub({
           ) : null}
         </div>
 
-        <div className={`grid gap-1 ${dense ? "mt-1 grid-cols-4 md:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-12" : "mt-4 grid-cols-2 sm:grid-cols-4"}`}>
+        <div
+          className={
+            metricsNowrap
+              ? "mt-1 grid grid-cols-1 gap-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7"
+              : `grid gap-1 ${dense ? "mt-1 grid-cols-4 md:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-12" : "mt-4 grid-cols-2 sm:grid-cols-4"}`
+          }
+        >
           {metrics.map((item) => (
             <MetricCard
               key={item.label}
@@ -118,6 +127,7 @@ export default function WorkspaceHub({
               iconClass={item.iconClass}
               href={item.href}
               dense={dense}
+              inlineNowrap={metricsNowrap}
             />
           ))}
         </div>
@@ -125,7 +135,7 @@ export default function WorkspaceHub({
         {headerPanels ? <div className={dense ? "mt-1" : "mt-3"}>{headerPanels}</div> : null}
       </div>
 
-      <div className={actionsNowrap ? "grid grid-cols-5 gap-1.5" : "grid grid-cols-2 gap-1.5 xl:grid-cols-4"}>
+      <div className={actionsNowrap ? "grid grid-cols-1 gap-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7" : "grid grid-cols-2 gap-1.5 xl:grid-cols-4"}>
         {actions.map((item) => (
           <ActionTile
             key={item.href}
@@ -136,6 +146,7 @@ export default function WorkspaceHub({
             accentClass={item.accentClass}
             iconClass={item.iconClass}
             dense={dense}
+            inlineNowrap={actionsNowrap}
           />
         ))}
       </div>

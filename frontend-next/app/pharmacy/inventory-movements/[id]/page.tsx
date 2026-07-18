@@ -86,15 +86,18 @@ function lotId(movement?: Movement | null) {
 function lotLabel(movement?: Movement | null, lot?: Lot | null) {
   if (lot) return lot.lot_number || lot.custom_id || `Lote ${lot.id}`;
   if (typeof movement?.lot === "object" && movement.lot) return movement.lot.lot_number || movement.lot.custom_id || `Lote ${movement.lot.id}`;
-  return movement?.lote_numero || movement?.lot_number || movement?.lote || movement?.lot || "Lote não informado";
+  if (movement?.lote_numero || movement?.lot_number || movement?.lote) return String(movement.lote_numero || movement.lot_number || movement.lote);
+  if (typeof movement?.lot === "number") return `Lote ${movement.lot}`;
+  return "Lote não informado";
 }
 
 function productLabel(movement?: Movement | null, lot?: Lot | null) {
   if (lot?.product_name) return lot.product_name;
   if (typeof lot?.product === "object" && lot.product) return lot.product.name || lot.product.custom_id || `Produto ${lot.product.id}`;
   if (typeof movement?.product === "object" && movement.product) return movement.product.name || movement.product.custom_id || `Produto ${movement.product.id}`;
+  if (typeof movement?.product === "number") return `Produto ${movement.product}`;
   if (typeof movement?.lot === "object" && movement.lot?.product_name) return movement.lot.product_name;
-  return movement?.produto_nome || movement?.product_name || movement?.product || movement?.name || "Produto não informado";
+  return movement?.produto_nome || movement?.product_name || movement?.name || "Produto não informado";
 }
 
 function movementType(movement?: Movement | null) {

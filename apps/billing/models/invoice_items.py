@@ -323,7 +323,7 @@ class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
     def _resolve_reference_vat_percentage(self) -> Decimal:
         """
         Resolve IVA (%) a partir da referência do item.
-        Mantém 16% como padrão defensivo (compatível com o comportamento anterior),
+        Mantém 5% como padrão defensivo,
         permitindo configurar IVA individual por item no catálogo.
         """
         if self.item_type == self.TipoItem.EXAME and self.exam_id:
@@ -348,14 +348,14 @@ class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
             catalog = getattr(self.procedure_item, "catalog", None)
             if catalog is not None:
                 return getattr(catalog, "vat_percentage", None) or Decimal("0.00")
-            return Decimal("16.00")
+            return Decimal("5.00")
 
         if self.item_type == self.TipoItem.PROCEDIMENTO_MATERIAL and self.procedure_material_id:
             product = getattr(self.procedure_material, "product", None)
             return getattr(product, "vat_percentage", None) or Decimal("0.00")
 
         if self.item_type == self.TipoItem.AJUSTE:
-            return Decimal("16.00")
+            return Decimal("5.00")
 
         return Decimal("0.00")
 

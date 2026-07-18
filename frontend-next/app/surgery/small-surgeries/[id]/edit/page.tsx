@@ -27,7 +27,7 @@ import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 
-const GLASS = "rounded-xl border border-violet-200 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+const GLASS = "rounded-lg border border-violet-200 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
 /* ── helpers ──────────────────────────────────────────────────── */
 
@@ -93,8 +93,8 @@ function SurfaceCard({ title, icon, accent = "bg-sky-400", children }: {
 }) {
   return (
     <section className={`relative ${GLASS}`}>
-      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${accent}`} />
-      <div className="flex flex-col gap-3 px-3 py-3 pl-4">
+      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${accent}`} />
+      <div className="flex flex-col gap-1 px-2 py-1.5 pl-4">
         <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
           {icon}<span>{title}</span>
         </div>
@@ -113,7 +113,7 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
   )
 }
 
-const inputCls = "w-full rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-[12px] text-[var(--text)] placeholder-[var(--gray-400)] backdrop-blur-sm focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/[0.06]"
+const inputCls = "w-full rounded-md border border-white/30 bg-white/40 px-2 py-1 text-[12px] text-[var(--text)] placeholder-[var(--gray-400)] backdrop-blur-sm focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/[0.06]"
 const selectCls = `${inputCls} cursor-pointer`
 
 /* Portal dropdown — mounts directly on document.body via createPortal */
@@ -270,8 +270,8 @@ function SearchSelect({
 function ProcedureMultiSelect({
   selected, onChange, surgerySize,
 }: {
-  selected: { id: number; name: string; base_price?: string; surgery_type?: string }[]
-  onChange: (items: { id: number; name: string; base_price?: string; surgery_type?: string }[]) => void
+  selected: ProcedureOption[]
+  onChange: (items: ProcedureOption[]) => void
   surgerySize: string
 }) {
   const [query, setQuery] = useState("")
@@ -311,7 +311,14 @@ function ProcedureMultiSelect({
     if (exists) {
       onChange(selected.filter(s => s.id !== item.id))
     } else {
-      onChange([...selected, { id: item.id, name: item.name, base_price: item.base_price, surgery_type: item.surgery_type }])
+      onChange([...selected, {
+        id: item.id,
+        name: item.name,
+        base_price: item.base_price,
+        vat_percentage: item.vat_percentage,
+        applies_vat_by_default: item.applies_vat_by_default,
+        surgery_type: item.surgery_type,
+      }])
     }
   }
 
@@ -394,7 +401,7 @@ function TeamMemberRow({
   onChangeRole: (role: string) => void
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2 py-1.5 dark:bg-white/[0.03]">
+    <div className="flex items-center gap-1.5 rounded-md border border-white/20 bg-white/20 px-2 py-1 dark:bg-white/[0.03]">
       <User size={12} className="shrink-0 text-[var(--gray-400)]" />
       <span className="flex-1 truncate text-[12px] text-[var(--text)]">{member.employeeName || "—"}</span>
       <select
@@ -493,6 +500,19 @@ type TeamMember = {
 type MatItem = { id: number; name: string; type: string; sale_price: string; qty: number }
 const MAT_TYPE_LABEL: Record<string, string> = { CONS: "Consumível", FARM: "Farmácia", MED: "Medicamento", OUT: "Outro" }
 function fmtMT(n: number) { return n.toLocaleString("pt-PT", { minimumFractionDigits: 2 }) + " MT" }
+function toNumber(value: unknown) {
+  const n = Number(String(value ?? "0").replace(",", "."))
+  return Number.isFinite(n) ? n : 0
+}
+
+type ProcedureOption = {
+  id: number
+  name: string
+  base_price?: string | number
+  vat_percentage?: string | number
+  applies_vat_by_default?: boolean
+  surgery_type?: string
+}
 
 export default function SmallSurgeryEditPage() {
   const params = useParams()
@@ -510,7 +530,7 @@ export default function SmallSurgeryEditPage() {
   const [patientLabel, setPatientLabel] = useState("")
 
   // 2 — procedures (multi)
-  const [procedures, setProcedures] = useState<{ id: number; name: string; base_price?: string; surgery_type?: string }[]>([])
+  const [procedures, setProcedures] = useState<ProcedureOption[]>([])
 
   // 3 — surgeons (M2M) + specialty
   const [surgeons, setSurgeons] = useState<{ id: number; name: string }[]>([])
@@ -558,7 +578,12 @@ export default function SmallSurgeryEditPage() {
   const [endedAt, setEndedAt] = useState("")
   const [completedAt, setCompletedAt] = useState("")
   const [estimatedPrice, setEstimatedPrice] = useState("0.00")
-  const [vatPct, setVatPct] = useState("16.00")
+  const [vatPct, setVatPct] = useState("5.00")
+
+  const proceduresPriceTotal = procedures.reduce((sum, item) => sum + toNumber(item.base_price), 0)
+  const effectiveEstimatedPrice = proceduresPriceTotal > 0 ? proceduresPriceTotal.toFixed(2) : estimatedPrice
+  const procedureVat = procedures.find((item) => item.vat_percentage !== undefined && item.vat_percentage !== null)?.vat_percentage
+  const effectiveVatPct = procedureVat !== undefined && procedureVat !== null ? String(procedureVat) : vatPct
 
 
   const toDatetimeLocal = (v: any) => {
@@ -587,8 +612,8 @@ export default function SmallSurgeryEditPage() {
       setStartedAt(toDatetimeLocal(d.started_at))
       setEndedAt(toDatetimeLocal(d.ended_at))
       setCompletedAt(toDatetimeLocal(d.completed_at))
-      setEstimatedPrice(d.estimated_price || "0.00")
-      setVatPct(d.vat_percentage || "16.00")
+      setEstimatedPrice(d.procedures_price_total || d.estimated_price || "0.00")
+      setVatPct(d.procedures_vat_percentage || d.vat_percentage || "5.00")
 
       // Load procedure names — fetch all and match by ID
       const procedureIds: number[] = d.procedures || []
@@ -598,7 +623,14 @@ export default function SmallSurgeryEditPage() {
         const mapped = procedureIds.map((pid: number) => {
           const found = all.find((p: any) => p.id === pid)
           return found
-            ? { id: found.id, name: found.name, base_price: found.base_price, surgery_type: found.surgery_type }
+            ? {
+              id: found.id,
+              name: found.name,
+              base_price: found.base_price,
+              vat_percentage: found.vat_percentage,
+              applies_vat_by_default: found.applies_vat_by_default,
+              surgery_type: found.surgery_type,
+            }
             : { id: pid, name: `#${pid}` }
         })
         setProcedures(mapped)
@@ -751,8 +783,8 @@ export default function SmallSurgeryEditPage() {
           started_at: startedAt ? new Date(startedAt).toISOString() : null,
           ended_at: endedAt ? new Date(endedAt).toISOString() : null,
           completed_at: completedAt ? new Date(completedAt).toISOString() : null,
-          estimated_price: estimatedPrice,
-          vat_percentage: vatPct,
+          estimated_price: effectiveEstimatedPrice,
+          vat_percentage: effectiveVatPct,
         }),
       })
       setSuccess(true)
@@ -762,7 +794,7 @@ export default function SmallSurgeryEditPage() {
     } finally {
       setSaving(false)
     }
-  }, [id, patient, procedures, team, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, estimatedPrice, vatPct, router])
+  }, [id, patient, procedures, team, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, effectiveEstimatedPrice, effectiveVatPct, router])
 
   if (loading) {
     return (
@@ -774,12 +806,12 @@ export default function SmallSurgeryEditPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-full max-w-5xl space-y-3 px-1">
+      <div className="mx-auto w-full max-w-[98vw] space-y-1 px-1">
 
         {/* header */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
-          <div className="flex h-full items-center justify-between gap-3 px-4 py-3 pl-5">
+          <div className="flex h-full items-center justify-between gap-2 px-3 py-2 pl-5">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
                 <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
@@ -792,16 +824,16 @@ export default function SmallSurgeryEditPage() {
               </div>
               <h1 className="mt-0.5 font-display text-base font-semibold text-foreground">Editar cirurgia</h1>
             </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <div className="flex items-center gap-2">
-                <div className="flex flex-col items-end gap-0.5">
+            <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <div className="flex flex-col items-end">
                   <label className="text-[10px] text-[var(--gray-500)]">Preço (MT)</label>
-                  <input type="number" step="0.01" value={estimatedPrice} readOnly
+                  <input type="number" step="0.01" value={effectiveEstimatedPrice} readOnly
                     className="h-6 w-24 rounded border border-white/30 bg-white/20 px-2 text-right text-[11px] text-[var(--text)] opacity-70 backdrop-blur-sm dark:bg-white/[0.04]" />
                 </div>
-                <div className="flex flex-col items-end gap-0.5">
+                <div className="flex flex-col items-end">
                   <label className="text-[10px] text-[var(--gray-500)]">IVA (%)</label>
-                  <input type="number" step="0.01" value={vatPct} readOnly
+                  <input type="number" step="0.01" value={effectiveVatPct} readOnly
                     className="h-6 w-16 rounded border border-white/30 bg-white/20 px-2 text-right text-[11px] text-[var(--text)] opacity-70 backdrop-blur-sm dark:bg-white/[0.04]" />
                 </div>
                 <div className="h-6 w-px bg-[var(--gray-200)] dark:bg-white/10" />
@@ -826,16 +858,16 @@ export default function SmallSurgeryEditPage() {
         </section>
 
         {error ? (
-          <div className="rounded-xl border border-rose-300/50 bg-rose-50/60 px-4 py-3 text-sm text-rose-800 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
+          <div className="rounded-lg border border-rose-300/50 bg-rose-50/60 px-3 py-1.5 text-sm text-rose-800 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
             {error}
           </div>
         ) : null}
 
         {/* masonry — 2 colunas independentes */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-1">
 
           {/* col esquerda: 1, 3, 5, 7 */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
 
             <SurfaceCard title="1 · Paciente" icon={<User size={13} />} accent="bg-sky-400">
               <SearchSelect
@@ -866,7 +898,7 @@ export default function SmallSurgeryEditPage() {
             </SurfaceCard>
 
             <SurfaceCard title="5 · Equipa cirúrgica" icon={<Users size={13} />} accent="bg-indigo-400">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1">
                 {team.length === 0 && (
                   <p className="text-[11px] text-[var(--gray-400)]">Sem membros — clique em &quot;+ Adicionar&quot;.</p>
                 )}
@@ -888,8 +920,8 @@ export default function SmallSurgeryEditPage() {
                       + Adicionar membro da equipa
                     </button>
                   ) : (
-                    <div className="rounded-lg border border-white/30 bg-white/40 p-2 backdrop-blur-sm dark:bg-white/[0.06]">
-                      <div className="mb-1.5 flex items-center gap-2">
+                    <div className="rounded-md border border-white/30 bg-white/40 p-1.5 backdrop-blur-sm dark:bg-white/[0.06]">
+                      <div className="mb-1 flex items-center gap-1.5">
                         <select
                           className="rounded border border-white/20 bg-transparent px-1.5 py-0.5 text-[11px] text-[var(--text)] focus:outline-none"
                           value={teamRole}
@@ -937,7 +969,7 @@ export default function SmallSurgeryEditPage() {
           </div>
 
           {/* col direita: 2, 4, 6, 8 */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
 
             <SurfaceCard title="2 · Procedimentos cirúrgicos" icon={<Scissors size={13} />} accent="bg-violet-400">
               <ProcedureMultiSelect selected={procedures} onChange={setProcedures} surgerySize="PEQUENA" />
@@ -960,7 +992,7 @@ export default function SmallSurgeryEditPage() {
 
             <SurfaceCard title="6 · Materiais e produtos" icon={<Package size={13} />} accent="bg-amber-400">
               <div ref={matRef} className="relative">
-                <div className="flex h-8 items-center gap-2 rounded-lg border border-white/30 bg-white/40 px-2.5 backdrop-blur-sm focus-within:border-amber-400 dark:border-white/10 dark:bg-white/[0.06]">
+                <div className="flex h-7 items-center gap-1.5 rounded-md border border-white/30 bg-white/40 px-2 backdrop-blur-sm focus-within:border-amber-400 dark:border-white/10 dark:bg-white/[0.06]">
                   <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
                   <input value={matQuery} onChange={e => setMatQuery(e.target.value)}
                     onFocus={() => { if (matResults.length > 0) { const r = matRef.current?.getBoundingClientRect(); if (r) { setMatRect(r); setMatOpen(true) } } }}
@@ -970,7 +1002,7 @@ export default function SmallSurgeryEditPage() {
                 </div>
 
                 {pending && (
-                  <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/80 px-3 py-2 dark:border-amber-700/40 dark:bg-amber-900/15">
+                  <div className="mt-1 flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50/80 px-2 py-1 dark:border-amber-700/40 dark:bg-amber-900/15">
                     <div className="flex-1 min-w-0">
                       <p className="truncate text-[12px] font-semibold text-amber-900 dark:text-amber-200">{pending.name}</p>
                       <p className="text-[10px] text-amber-700/70">{fmtMT(parseFloat(pending.sale_price || "0"))} / un.</p>
@@ -995,11 +1027,11 @@ export default function SmallSurgeryEditPage() {
 
                 {matOpen && matRect && matResults.length > 0 && typeof document !== "undefined" && createPortal(
                   <div style={{ position: "fixed", top: matRect.bottom + 4, left: matRect.left, width: matRect.width, zIndex: 9999 }}
-                    className="rounded-xl border border-border bg-card shadow-xl">
+                    className="rounded-lg border border-border bg-card shadow-xl">
                     {matResults.filter(r => !consumptions.some(c => c.product === r.id)).map(item => (
                       <button key={item.id} type="button"
                         onMouseDown={e => { e.preventDefault(); setMatOpen(false); setPending(item) }}
-                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left first:rounded-t-xl last:rounded-b-xl hover:bg-amber-50/60 dark:hover:bg-amber-900/10">
+                        className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left first:rounded-t-lg last:rounded-b-lg hover:bg-amber-50/60 dark:hover:bg-amber-900/10">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-[12px] font-medium text-foreground">{item.name}</span>
                           <span className="text-[10px] text-[var(--gray-400)]">{MAT_TYPE_LABEL[item.type] || item.type}</span>
@@ -1016,9 +1048,9 @@ export default function SmallSurgeryEditPage() {
               </div>
 
               {consumptions.length > 0 ? (
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-1 flex flex-wrap gap-1">
                   {consumptions.map(c => (
-                    <div key={c.id} className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 dark:border-amber-700/30 dark:bg-amber-900/10">
+                    <div key={c.id} className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 dark:border-amber-700/30 dark:bg-amber-900/10">
                       <span className="text-[11px] font-medium text-amber-800 dark:text-amber-300">{c.product_name}</span>
                       {parseFloat(c.quantity) > 1 && (
                         <span className="rounded-full bg-amber-200/60 px-1.5 py-px text-[9px] font-bold text-amber-700 dark:bg-amber-800/30">×{c.quantity}</span>
@@ -1049,11 +1081,11 @@ export default function SmallSurgeryEditPage() {
         </div>
 
         {/* ── 7+8 · full-width row no fundo ── */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-1">
 
           {/* 9 · Estado e agendamento — ocupa o espaço disponível */}
           <SurfaceCard title="9 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
-            <div className="grid grid-cols-7 gap-3">
+            <div className="grid grid-cols-7 gap-1">
               <FieldRow label="Estado">
                 <div className="w-full rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 text-[12px] text-[var(--text)] opacity-70 dark:bg-white/[0.04]">
                   {STATUS_CHOICES.find(c => c.value === status)?.label || status || "—"}

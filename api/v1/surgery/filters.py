@@ -73,14 +73,14 @@ class SurgicalProcedureFilter(SafeFilterSet):
 
     class Meta:
         model = SurgicalProcedure
-        fields = ["name", "active", "created_at", "surgery_type"]
+        fields = ["name", "active", "created_at", "surgery_type", "is_surgical"]
 
     def filter_for_surgery_size(self, queryset, name, value):
         normalized = str(value or "").strip().upper()
         if normalized in {"PEQUENA", "GRANDE"}:
-            return queryset.filter(Q(surgery_type=normalized) | Q(surgery_type="AMBAS"))
+            return queryset.filter(is_surgical=True).filter(Q(surgery_type=normalized) | Q(surgery_type="AMBAS"))
         if normalized == "AMBAS":
-            return queryset.filter(surgery_type="AMBAS")
+            return queryset.filter(is_surgical=True, surgery_type="AMBAS")
         return queryset
 
 

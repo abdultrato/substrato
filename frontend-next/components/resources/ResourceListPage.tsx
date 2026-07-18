@@ -15,6 +15,7 @@ import useDebounce from "@/hooks/useDebounce"
 import { useRelationLabels } from "@/hooks/useRelationLabels"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
+import { formatInvoiceStatus } from "@/lib/billingStatus"
 import { buildListFields, type FormField } from "@/lib/openapi/formBuilder"
 import { fieldLabel } from "@/lib/ui/fieldLabels"
 import { canManageUserByHierarchy, GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -240,6 +241,16 @@ function summarizeObject(value: Record<string, any>): string {
 
 function formatListValue(key: string, value: any): string {
   if (valueIsEmpty(value)) return "-"
+  const normalizedKey = String(key || "").toLowerCase()
+  if (
+    normalizedKey === "invoice_status" ||
+    normalizedKey === "estado_fatura" ||
+    normalizedKey === "estado_factura" ||
+    normalizedKey === "fatura_status" ||
+    normalizedKey === "factura_status"
+  ) {
+    return formatInvoiceStatus(value)
+  }
   if (typeof value === "boolean") return fmtBool(value)
   if (looksLikeDateKey(key) || looksLikeDateValue(value)) return fmtDate(value)
   if (Array.isArray(value)) {

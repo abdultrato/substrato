@@ -21,7 +21,6 @@ type SurgeryType = "PEQUENA" | "GRANDE" | "AMBAS"
 const SURGERY_TYPE_OPTIONS: { value: SurgeryType; label: string; description: string; color: string }[] = [
   { value: "PEQUENA", label: "Pequena cirurgia", description: "Baixa complexidade, ambulatório ou internamento curto.", color: "blue" },
   { value: "GRANDE", label: "Grande cirurgia", description: "Alta complexidade com bloco operatório e internamento.", color: "violet" },
-  { value: "AMBAS", label: "Ambas", description: "Aplicável a pequenas e grandes cirurgias.", color: "slate" },
 ]
 
 const TYPE_LABEL: Record<string, string> = {
@@ -54,7 +53,8 @@ export default function SurgicalProcedureDetailPage() {
   const [vatPct, setVatPct] = useState("")
   const [appliesVat, setAppliesVat] = useState(true)
   const [active, setActive] = useState(true)
-  const [surgeryType, setSurgeryType] = useState<SurgeryType>("AMBAS")
+  const [isSurgical, setIsSurgical] = useState(true)
+  const [surgeryType, setSurgeryType] = useState<SurgeryType>("PEQUENA")
 
   // materials
   const [materials, setMaterials] = useState<MatItem[]>([])
@@ -81,6 +81,7 @@ export default function SurgicalProcedureDetailPage() {
       setVatPct(res.vat_percentage || "")
       setAppliesVat(res.applies_vat_by_default ?? true)
       setActive(res.active ?? true)
+      setIsSurgical(res.is_surgical ?? true)
       setSurgeryType((res.surgery_type as SurgeryType) || "AMBAS")
       setMaterials(
         (res.default_materials_detail || []).map((m: any) => ({
@@ -187,6 +188,7 @@ export default function SurgicalProcedureDetailPage() {
     const errs: Record<string, string> = {}
     if (!name.trim()) errs.name = "Nome obrigatório."
     if (!basePrice || isNaN(parseFloat(basePrice))) errs.basePrice = "Preço inválido."
+    if (isSurgical && !["PEQUENA", "GRANDE"].includes(surgeryType)) errs.surgeryType = "Escolha se é pequena ou grande cirurgia."
     if (Object.keys(errs).length) { setErrors(errs); return }
 
     setSaving(true); setErrors({})
@@ -200,7 +202,8 @@ export default function SurgicalProcedureDetailPage() {
           vat_percentage: vatPct || "0",
           applies_vat_by_default: appliesVat,
           active,
-          surgery_type: surgeryType,
+          is_surgical: isSurgical,
+          surgery_type: isSurgical ? surgeryType : "AMBAS",
         }),
       })
       setSaved(true)
@@ -352,15 +355,38 @@ export default function SurgicalProcedureDetailPage() {
             </div>
           </section>
 
-          {/* tipo de cirurgia */}
+          {/* vínculo cirúrgico e porte */}
           <section className={`relative overflow-hidden ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
             <div className="px-4 py-3 pl-5">
               <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <Stethoscope size={13} /><span>Tipo de cirurgia</span>
+                <Stethoscope size={13} /><span>Vínculo cirúrgico e porte</span>
               </div>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {SURGERY_TYPE_OPTIONS.map(opt => {
+              <div className="mb-2 grid gap-2 sm:grid-cols-2">
+                {[
+                  { value: true, label: "Cirúrgico", description: "Entra no catálogo das cirurgias." },
+                  { value: false, label: "Não cirúrgico", description: "Fica fora da selecção de cirurgias." },
+                ].map(opt => {
+                  const selected = isSurgical === opt.value
+                  return (
+                    <button key={String(opt.value)} type="button" onClick={() => {
+                      setIsSurgical(opt.value)
+                      if (opt.value && surgeryType === "AMBAS") setSurgeryType("PEQUENA")
+                    }}
+                      className={`rounded-xl border p-3 text-left transition ${selected ? "border-emerald-400 bg-emerald-50/60 dark:border-emerald-700/50 dark:bg-emerald-900/15" : "border-border bg-card/50 hover:bg-muted"}`}>
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${selected ? "bg-emerald-500" : "bg-slate-300"}`} />
+                        <span className="text-[12px] font-semibold text-foreground">{opt.label}</span>
+                        {selected && <Check size={11} className="ml-auto shrink-0 text-emerald-500" />}
+                      </div>
+                      <p className="text-[10px] leading-relaxed text-[var(--gray-400)]">{opt.description}</p>
+                    </button>
+                  )
+                })}
+              </div>
+              {isSurgical ? (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {SURGERY_TYPE_OPTIONS.map(opt => {
                   const selected = surgeryType === opt.value
                   const colorMap: Record<string, string> = {
                     blue: selected
@@ -396,7 +422,9 @@ export default function SurgicalProcedureDetailPage() {
                     </button>
                   )
                 })}
-              </div>
+                </div>
+              ) : null}
+              {errors.surgeryType && <p className="mt-1 text-[11px] text-rose-500">{errors.surgeryType}</p>}
             </div>
           </section>
 
@@ -473,7 +501,7 @@ export default function SurgicalProcedureDetailPage() {
 
               {/* portal dropdown */}
               {matOpen && matRect && matResults.length > 0 && typeof document !== "undefined" && createPortal(
-                <div style={{ position: "fixed", top: matRect.bottom + 4, left: matRect.left, width: matRect.width, zIndex: 9999 }}
+                <div style={{ position: "fixed", top: matRect.bottom + 4, left: matRect.left, width: matRect.width, zIndex: 2147483647 }}
                   className="rounded-xl border border-border bg-card shadow-xl">
                   {matResults.map(item => {
                     const already = materials.some(m => m.id === item.id)

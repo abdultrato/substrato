@@ -4,13 +4,7 @@ import Link from "next/link"
 import { CalendarDays, ChevronRight, Receipt } from "lucide-react"
 
 import { useLanguage } from "@/hooks/useLanguage"
-
-const STATUS_META: Record<string, { label: string; accent: string; badge: string }> = {
-  RASC: { label: "Rascunho", accent: "bg-slate-400", badge: "border-slate-300/50 bg-slate-500/15 text-slate-600 dark:text-slate-300" },
-  EMIT: { label: "Emitida", accent: "bg-sky-500", badge: "border-sky-300/50 bg-sky-500/15 text-sky-700 dark:text-sky-400" },
-  PAGA: { label: "Paga", accent: "bg-emerald-500", badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
-  CANC: { label: "Cancelada", accent: "bg-rose-500", badge: "border-rose-300/50 bg-rose-500/15 text-rose-600 dark:text-rose-400" },
-}
+import { invoiceStatusMeta } from "@/lib/billingStatus"
 
 const ORIGIN_LABELS: Record<string, string> = {
   CLI: "Clínica",
@@ -55,7 +49,7 @@ export default function InvoiceListCard({
   const code = String(row?.custom_id || row?.id_custom || row?.id || "").trim()
   const title = code ? `#${code}` : t("Fatura", "Invoice")
   const status = String(row?.status || "").toUpperCase()
-  const meta = STATUS_META[status]
+  const meta = invoiceStatusMeta(status)
   const origin = String(row?.origin || "").toUpperCase()
   const originLabel = ORIGIN_LABELS[origin]
   const total = formatMoney(row?.total ?? row?.total_a_pagar)

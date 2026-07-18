@@ -645,7 +645,7 @@ class Command(BaseCommand):
                     custom_id=cid,
                     name=name,
                     price=Decimal(price),
-                    vat_percentage=Decimal("16.00"),
+                    vat_percentage=Decimal("5.00"),
                     applies_vat_by_default=True,
                     turnaround_hours=tat,
                     method=method,

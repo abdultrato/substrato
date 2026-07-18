@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 
 import { useLanguage } from "@/hooks/useLanguage"
+import { formatInvoiceStatus } from "@/lib/billingStatus"
 import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
 import { useRelationLabels } from "@/hooks/useRelationLabels"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
@@ -158,6 +159,16 @@ function fmtValue(
   depth = 0
 ): string {
   if (value === null || value === undefined || value === "") return "-"
+  const normalizedKey = String(key || "").toLowerCase()
+  if (
+    normalizedKey === "invoice_status" ||
+    normalizedKey === "estado_fatura" ||
+    normalizedKey === "estado_factura" ||
+    normalizedKey === "fatura_status" ||
+    normalizedKey === "factura_status"
+  ) {
+    return formatInvoiceStatus(value)
+  }
   if (typeof value === "boolean") return value ? tr("Sim") : tr("Não")
   if (typeof value === "number") return String(value)
 

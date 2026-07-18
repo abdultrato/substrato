@@ -86,8 +86,8 @@ class CirurgiaAdmin(BaseCirurgiaAdmin):
 @admin.register(SurgicalProcedure)
 class ProcedimentoCirurgicoAdmin(CoreAdmin):
     """Catálogo de procedimentos cirúrgicos."""
-    list_display = ("name", "base_price", "vat_percentage", "applies_vat_by_default", "active", "created_at")
-    list_filter = ("active", "deleted")
+    list_display = ("name", "is_surgical", "surgery_type", "base_price", "vat_percentage", "applies_vat_by_default", "active", "created_at")
+    list_filter = ("is_surgical", "surgery_type", "active", "deleted")
     search_fields = ("name", "description", "custom_id")
     ordering = ("name",)
 

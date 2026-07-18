@@ -252,7 +252,7 @@ export default function NewExamPage() {
   const [sector, setSector]   = useState("Bioquimica");
   const [method, setMethod]   = useState("");
   const [price, setPrice]     = useState("");
-  const [vatPct, setVatPct]   = useState("16.00");
+  const [vatPct, setVatPct]   = useState("5.00");
   const [appliesVat, setAppliesVat] = useState(true);
   const [tat, setTat]         = useState("24");
   const [sampleTypeId, setSampleTypeId] = useState<number | null>(null);

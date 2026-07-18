@@ -53,6 +53,13 @@ class SurgicalProcedure(CoreModel):
         db_index=True,
     )
 
+    is_surgical = models.BooleanField(
+        db_column="is_surgical",
+        verbose_name="Procedimento cirúrgico",
+        default=True,
+        db_index=True,
+    )
+
     description = models.TextField(
 
         db_column="description",
@@ -77,7 +84,7 @@ class SurgicalProcedure(CoreModel):
         verbose_name="IVA (%)",
         max_digits=5,
         decimal_places=2,
-        default=Decimal("16.00"),
+        default=Decimal("5.00"),
     )
 
     applies_vat_by_default = models.BooleanField(
@@ -117,4 +124,3 @@ class SurgicalProcedure(CoreModel):
 
     def __str__(self) -> str:
         return self.name or f"Procedimento Cirúrgico {self.pk}"
-

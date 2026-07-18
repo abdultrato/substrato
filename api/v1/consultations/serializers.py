@@ -66,10 +66,51 @@ MEDICAL_CONSULTATION_ALIASES = {
 class DoctorSerializer(serializers.ModelSerializer):
     role_name = serializers.CharField(source="role.name", read_only=True)
     profession_name = serializers.CharField(source="profession.name", read_only=True)
+    specialty_id = serializers.SerializerMethodField()
+    specialty_name = serializers.SerializerMethodField()
+    specialty_code = serializers.SerializerMethodField()
 
     class Meta:
         model = Employee
-        fields = ["id", "custom_id", "name", "profession", "profession_name", "role", "role_name"]
+        fields = [
+            "id",
+            "custom_id",
+            "name",
+            "profession",
+            "profession_name",
+            "role",
+            "role_name",
+            "specialty_id",
+            "specialty_name",
+            "specialty_code",
+        ]
+
+    def _latest_specialty(self, obj: Employee) -> ConsultationSpecialty | None:
+        if getattr(obj, "medical_specialty_id", None):
+            return obj.medical_specialty
+        if hasattr(obj, "_doctor_latest_specialty"):
+            return getattr(obj, "_doctor_latest_specialty")
+        consultation = (
+            MedicalConsultation.objects.filter(doctor=obj, specialty__isnull=False)
+            .select_related("specialty")
+            .order_by("-scheduled_for", "-created_at")
+            .first()
+        )
+        specialty = consultation.specialty if consultation else None
+        setattr(obj, "_doctor_latest_specialty", specialty)
+        return specialty
+
+    def get_specialty_id(self, obj: Employee) -> int | None:
+        specialty = self._latest_specialty(obj)
+        return getattr(specialty, "id", None) if specialty else None
+
+    def get_specialty_name(self, obj: Employee) -> str:
+        specialty = self._latest_specialty(obj)
+        return getattr(specialty, "name", "") if specialty else ""
+
+    def get_specialty_code(self, obj: Employee) -> str:
+        specialty = self._latest_specialty(obj)
+        return getattr(specialty, "custom_id", "") if specialty else ""
 
 
 class MedicalConsultationSerializer(serializers.ModelSerializer):

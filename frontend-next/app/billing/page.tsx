@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ArrowRight, BadgeCheck, ClipboardList, CreditCard, FileText, ReceiptText } from "lucide-react"
+import { ArrowRight, BadgeCheck, ClipboardList, CreditCard, FileText, Receipt } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import MetricCard from "@/components/ui/MetricCard"
@@ -51,7 +51,7 @@ const FLOW = [
     title: "Recibo",
     description: "Comprovativo gerado apenas depois da fatura paga.",
     href: "/receipts",
-    icon: ReceiptText,
+    icon: Receipt,
     accent: "border-l-rose-500",
   },
 ]

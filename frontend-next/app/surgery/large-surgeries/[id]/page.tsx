@@ -22,6 +22,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
+import { surgeryProcedureGroupLabel } from "@/lib/surgeryLabels"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
 const GLASS = "rounded-xl border border-indigo-200 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
@@ -186,6 +187,7 @@ export default function LargeSurgeryDetailPage() {
 
   const surgeonNames: { id: number; name: string }[] = data.surgeon_names || []
   const procedureNames: string[] = data.procedure_names || []
+  const procedureGroupLabel = surgeryProcedureGroupLabel(data.procedure_details || [], data.surgery_size)
   const estimatedPrice = parseFloat(data.procedures_price_total || data.estimated_price || "0")
   const vatPct = parseFloat(data.procedures_vat_percentage || data.vat_percentage || "0")
   const priceWithVat = estimatedPrice > 0 ? estimatedPrice * (1 + vatPct / 100) : 0
@@ -219,7 +221,7 @@ export default function LargeSurgeryDetailPage() {
                   </span>
                 ) : null}
                 <span className="rounded-full border border-indigo-200 bg-indigo-50/80 px-2 py-0.5 text-[9px] font-semibold text-indigo-700 dark:border-indigo-700/30 dark:bg-indigo-900/20 dark:text-indigo-300">
-                  Grande cirurgia
+                  {procedureGroupLabel}
                 </span>
               </div>
             </div>

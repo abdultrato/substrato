@@ -130,7 +130,7 @@ class MedicalExam(TenantPropagationMixin, CoreModel):
         verbose_name="IVA (%)",
         max_digits=5,
         decimal_places=2,
-        default=Decimal("16.00"),
+        default=Decimal("5.00"),
         validators=[
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("100.00")),

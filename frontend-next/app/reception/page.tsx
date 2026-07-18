@@ -40,6 +40,7 @@ import useAuthGuard from "@/hooks/useAuthGuard";
 import { useAuth } from "@/hooks/useAuth";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { apiFetch } from "@/lib/api";
+import { formatInvoiceStatus } from "@/lib/billingStatus";
 import { GROUPS } from "@/lib/rbac";
 import { PatientIntakeWizard } from "@/components/reception/PatientIntakeWizard";
 import ReceptionSearch from "@/components/reception/ReceptionSearch";
@@ -1083,7 +1084,7 @@ function SearchResultCard({ item }: { item: ReceptionSearchRow }) {
           </span>
         ) : null}
         {item.invoice_status_display || item.invoice_status ? (
-          <span>Fatura: {item.invoice_status_display || item.invoice_status}</span>
+          <span>Fatura: {item.invoice_status_display || formatInvoiceStatus(item.invoice_status)}</span>
         ) : null}
       </div>
     </Link>

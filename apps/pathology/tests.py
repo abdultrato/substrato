@@ -88,7 +88,7 @@ def test_staining_updates_slide_and_billing_event_calculates_totals():
         event_type=PathologyBillingEvent.EventType.SPECIAL_STAIN,
         quantity=Decimal("2.00"),
         unit_price=Decimal("100.00"),
-        vat_percentage=Decimal("16.00"),
+        vat_percentage=Decimal("5.00"),
     )
 
     slide.refresh_from_db()

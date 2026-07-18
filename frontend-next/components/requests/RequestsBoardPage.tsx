@@ -310,6 +310,7 @@ export default function RequestsBoardPage() {
   const [data, setData] = useState<Row[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [quickFilter, setQuickFilter] = useState<"total" | "pending" | "analysing" | "validated" | "critical">("total")
   const debouncedSearch = useDebounce(search, 300)
   const safeRefreshToken = useSafeDataRefreshSignal()
 
@@ -369,6 +370,25 @@ export default function RequestsBoardPage() {
     critical: data.filter((row) => row?.has_critical_result || row?.possui_resultado_critico).length,
   }), [byStatus, data])
 
+  const filteredData = useMemo(() => {
+    if (quickFilter === "pending") return data.filter((row) => getStatus(row) === "pendente")
+    if (quickFilter === "analysing") return data.filter((row) => getStatus(row) === "em_analise")
+    if (quickFilter === "validated") return data.filter((row) => getStatus(row) === "validado")
+    if (quickFilter === "critical") return data.filter((row) => row?.has_critical_result || row?.possui_resultado_critico)
+    return data
+  }, [data, quickFilter])
+
+  const filteredByStatus = useMemo(() => {
+    const map = new Map<string, Row[]>()
+    for (const row of filteredData) {
+      const s = getStatus(row)
+      const bucket = map.get(s)
+      if (bucket) bucket.push(row)
+      else map.set(s, [row])
+    }
+    return map
+  }, [filteredData])
+
   const columns: ColumnDef[] = useMemo(() => {
     const pipeline: ColumnDef[] = [
       {
@@ -419,7 +439,7 @@ export default function RequestsBoardPage() {
   }, [showCancelled])
 
   function columnRows(col: ColumnDef): Row[] {
-    return col.statuses.flatMap((s) => byStatus.get(s) ?? [])
+    return col.statuses.flatMap((s) => filteredByStatus.get(s) ?? [])
   }
 
   function rowHref(row: Row): string {
@@ -427,6 +447,7 @@ export default function RequestsBoardPage() {
   }
 
   const reportHref = `/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent("Área Clínica")}&resource=${encodeURIComponent("Requisição")}`
+  const isQuickFiltered = quickFilter !== "total"
   const visibleCount = columns.reduce((acc, col) => acc + columnRows(col).length, 0)
   // Colunas sem requisições ficam ocultas para o quadro só mostrar etapas com conteúdo.
   const visibleColumns = columns.filter((col) => columnRows(col).length > 0)
@@ -491,16 +512,23 @@ export default function RequestsBoardPage() {
 
           <div className="flex flex-wrap items-center gap-1 border-t border-white/20 px-3 py-1.5 pl-4 dark:border-white/10">
             {[
-              { label: t("Total", "Total"), count: stats.total, cls: "border-sky-200/50 bg-sky-100/30 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-300" },
-              { label: t("Pendentes", "Pending"), count: stats.pending, cls: "border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300" },
-              { label: t("Em análise", "Analysing"), count: stats.analysing, cls: "border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300" },
-              { label: t("Validadas", "Validated"), count: stats.validated, cls: "border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300" },
-              { label: t("Críticas", "Critical"), count: stats.critical, cls: "border-rose-200/50 bg-rose-100/30 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300" },
+              { key: "total" as const, label: t("Total", "Total"), count: stats.total, cls: "border-sky-200/50 bg-sky-100/30 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-300" },
+              { key: "pending" as const, label: t("Pendentes", "Pending"), count: stats.pending, cls: "border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300" },
+              { key: "analysing" as const, label: t("Em análise", "Analysing"), count: stats.analysing, cls: "border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300" },
+              { key: "validated" as const, label: t("Validadas", "Validated"), count: stats.validated, cls: "border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300" },
+              { key: "critical" as const, label: t("Críticas", "Critical"), count: stats.critical, cls: "border-rose-200/50 bg-rose-100/30 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300" },
             ].map((item) => (
-              <span key={item.label} className={`inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold backdrop-blur-xl ${item.cls}`}>
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => setQuickFilter(item.key)}
+                className={`inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold backdrop-blur-xl transition hover:-translate-y-px hover:shadow-sm ${
+                  item.cls
+                } ${quickFilter === item.key ? "ring-2 ring-sky-500/30" : ""}`}
+              >
                 {item.label}
                 <strong className="text-[11px] tabular-nums">{item.count}</strong>
-              </span>
+              </button>
             ))}
             <button
               type="button"
@@ -521,6 +549,7 @@ export default function RequestsBoardPage() {
                 onClick={() => {
                   setSearch("")
                   setShowCancelled(false)
+                  setQuickFilter("total")
                 }}
                 className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/40 px-2 py-0.5 text-[10px] font-semibold text-foreground transition hover:bg-white/60 dark:border-white/10 dark:bg-white/10"
               >
@@ -536,11 +565,23 @@ export default function RequestsBoardPage() {
           </div>
         )}
 
-        {/* Board: colunas por etapa do pipeline (totais reais por estado) */}
+        {/* Board: colunas por etapa do pipeline; filtros rápidos usam grelha curta. */}
         {loadingData ? (
           <div className="rounded-xl border border-white/20 bg-white/30 px-4 py-8 text-sm text-muted-foreground shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
             {t("Carregando...", "Loading...")}
           </div>
+        ) : isQuickFiltered ? (
+          filteredData.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs text-muted-foreground">
+              {t("Sem requisições para mostrar com os filtros actuais.", "No requests to show with the current filters.")}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredData.map((row) => (
+                <RequestCard key={row.id} row={row} href={rowHref(row)} />
+              ))}
+            </div>
+          )
         ) : visibleColumns.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs text-muted-foreground">
             {t("Sem requisições para mostrar com os filtros actuais.", "No requests to show with the current filters.")}

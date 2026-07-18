@@ -916,7 +916,7 @@ class Command(BaseCommand):
                 category=category,
                 type=type_cycle[(idx - 1) % len(type_cycle)],
                 sale_price=Decimal("15.00") + Decimal((idx % 70) * 2),
-                vat_percentage=Decimal("16.00"),
+                vat_percentage=Decimal("5.00"),
                 applies_vat_by_default=True,
             )
             products.append(product)
@@ -1142,7 +1142,7 @@ class Command(BaseCommand):
                 name=name,
                 turnaround_hours=12 + (idx % 72),
                 price=Decimal("120.00") + Decimal(idx * 2),
-                vat_percentage=Decimal("16.00"),
+                vat_percentage=Decimal("5.00"),
                 applies_vat_by_default=True,
                 method=methods[(idx - 1) % len(methods)] if methods else "ELISA",
                 sector=sectors[(idx - 1) % len(sectors)] if sectors else None,
@@ -1233,7 +1233,7 @@ class Command(BaseCommand):
                 defaults={
                     "description": f"Especialidade {name}",
                     "base_price": Decimal("600.00") + Decimal(idx * 15),
-                    "vat_percentage": Decimal("16.00"),
+                    "vat_percentage": Decimal("5.00"),
                     "sector": infer_consultation_sector(name),
                     "active": True,
                 },
@@ -1309,7 +1309,7 @@ class Command(BaseCommand):
                 name=name,
                 description="Procedimento cirúrgico do catálogo institucional.",
                 base_price=Decimal("3000.00") + Decimal(idx * 25),
-                vat_percentage=Decimal("16.00"),
+                vat_percentage=Decimal("5.00"),
                 applies_vat_by_default=True,
                 active=True,
             )
@@ -1343,7 +1343,7 @@ class Command(BaseCommand):
                 procedure=proc_text,
                 description="Intervenção cirúrgica programada.",
                 estimated_price=Decimal("4500.00") + Decimal(idx * 35),
-                vat_percentage=Decimal("16.00"),
+                vat_percentage=Decimal("5.00"),
                 applies_vat_by_default=True,
                 scheduled_for=timezone.now() - timedelta(days=random.randint(1, 540)),
                 status=Surgery.Status.COMPLETED if idx % 4 else Surgery.Status.SCHEDULED,
@@ -1568,7 +1568,7 @@ class Command(BaseCommand):
                 procedure_code=f"PE-{idx:04d}",
                 description="Procedimento padronizado institucional.",
                 default_price=Decimal("350.00") + Decimal(idx * 6),
-                vat_percentage=Decimal("16.00"),
+                vat_percentage=Decimal("5.00"),
                 applies_vat_by_default=True,
                 estimated_duration_minutes=20 + (idx % 80),
                 active=True,

@@ -83,10 +83,10 @@ function RelationSelect({ value, onChange, target, placeholder, initialLabel, zI
   function clear() { onChange(null, ""); setLabel(""); }
 
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1">
       {value !== null && (
-        <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
-          {label}
+        <span className="inline-flex max-w-full items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[10px] font-medium text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
+          <span className="truncate">{label}</span>
           <button type="button" onClick={clear} className="ml-0.5 text-violet-400 transition hover:text-violet-600"><X size={9} /></button>
         </span>
       )}
@@ -125,13 +125,13 @@ function Card({ icon: Icon, title, accent, children }: {
   icon: React.ElementType; title: string; accent?: string; children: React.ReactNode;
 }) {
   return (
-    <section className="relative z-0 overflow-visible rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:border-white/10 dark:bg-white/5">
-      {accent && <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${accent}`} />}
-      <div className="flex items-center gap-1.5 border-b border-border/50 px-3 py-1.5 pl-4">
+    <section className="relative z-0 min-w-0 overflow-visible rounded-md border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:border-white/10 dark:bg-white/5">
+      {accent && <span className={`absolute inset-y-0 left-0 w-1 rounded-l-md ${accent}`} />}
+      <div className="flex min-w-0 items-center gap-1.5 whitespace-nowrap border-b border-border/50 px-3 py-1.5 pl-4">
         <Icon size={11} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
-        <h2 className="text-[11px] font-semibold text-foreground">{title}</h2>
+        <h2 className="truncate text-[11px] font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="space-y-2 p-2.5 pl-3">{children}</div>
+      <div className="space-y-1.5 p-2 pl-3">{children}</div>
     </section>
   );
 }
@@ -140,18 +140,18 @@ function Field({ label, required, hint, error, children }: {
   label: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-0.5">
-      <label className="text-[11px] font-semibold text-foreground">
+    <div className="grid min-w-0 grid-cols-[8.5rem_minmax(0,1fr)] items-center gap-2 whitespace-nowrap">
+      <label className="min-w-0 truncate text-[11px] font-semibold text-foreground">
         {label}{required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
-      {children}
-      {hint && !error && <p className="text-[10px] text-muted-foreground">{hint}</p>}
-      {error && <p className="text-[10px] font-medium text-red-600 dark:text-red-400">{error}</p>}
+      <div className="min-w-0">{children}</div>
+      {hint && !error && <p className="col-start-2 min-w-0 truncate text-[10px] text-muted-foreground">{hint}</p>}
+      {error && <p className="col-start-2 min-w-0 truncate text-[10px] font-medium text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
 }
 
-const inputCls = "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20";
+const inputCls = "w-full min-w-0 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-400/20";
 
 export default function EditNotificationPage() {
   useAuthGuard();
@@ -256,7 +256,7 @@ export default function EditNotificationPage() {
 
   return (
     <AppLayout requiredGroups={EDIT_GROUPS}>
-      <form onSubmit={handleSubmit} noValidate className="mx-auto w-[90%] space-y-2">
+      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-[97vw] space-y-2">
 
         {/* Hero */}
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
@@ -302,40 +302,38 @@ export default function EditNotificationPage() {
           </div>
         )}
 
-        {/* Estado — full width */}
-        <Card icon={Bell} title="Estado" accent={activeStatus.bar}>
-          <div className="grid grid-cols-3 gap-1 sm:grid-cols-6">
-            {STATUSES.map((s) => (
-              <button key={s.value} type="button" onClick={() => setStatus(s.value)}
-                className={`rounded-lg border py-2 text-center text-[10px] font-medium transition ${status === s.value ? `${s.chip} shadow-sm ring-1 ring-current/30` : "border-border bg-background text-muted-foreground hover:bg-muted"}`}>
-                <div className="text-base leading-none">{s.emoji}</div>
-                <div className="mt-0.5 leading-tight">{s.label}</div>
-              </button>
-            ))}
-          </div>
-        </Card>
-
-        <div className="grid gap-2 lg:grid-cols-2">
+        <div className="grid grid-cols-2 gap-2">
+          <Card icon={Bell} title="Estado" accent={activeStatus.bar}>
+            <div className="grid grid-cols-6 gap-1 whitespace-nowrap">
+              {STATUSES.map((s) => (
+                <button key={s.value} type="button" onClick={() => setStatus(s.value)}
+                  className={`min-w-0 rounded-md border px-1 py-1.5 text-center text-[10px] font-medium transition ${status === s.value ? `${s.chip} shadow-sm ring-1 ring-current/30` : "border-border bg-background text-muted-foreground hover:bg-muted"}`}>
+                  <div className="text-sm leading-none">{s.emoji}</div>
+                  <div className="mt-0.5 truncate leading-tight">{s.label}</div>
+                </button>
+              ))}
+            </div>
+          </Card>
 
           {/* Sistema e tipo */}
           <Card icon={Zap} title="Sistema e tipo de evento" accent="bg-violet-500">
             <Field label="Sistema oficial">
-              <div className="grid grid-cols-4 gap-1">
+              <div className="grid grid-cols-4 gap-1 whitespace-nowrap">
                 {OFFICIAL_SYSTEMS.map((s) => (
                   <button key={s.value} type="button" onClick={() => setOfficialSystem(s.value)}
-                    className={`rounded-lg border py-1.5 text-center text-[10px] font-semibold transition ${officialSystem === s.value ? "border-violet-200 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300" : "border-border bg-background text-muted-foreground hover:bg-muted"}`}>
+                    className={`min-w-0 rounded-md border px-1 py-1.5 text-center text-[10px] font-semibold transition ${officialSystem === s.value ? "border-violet-200 bg-violet-50 text-violet-700 shadow-sm dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300" : "border-border bg-background text-muted-foreground hover:bg-muted"}`}>
                     {s.label}
                   </button>
                 ))}
               </div>
             </Field>
             <Field label="Tipo de evento">
-              <div className="grid grid-cols-3 gap-1">
+              <div className="grid grid-cols-3 gap-1 whitespace-nowrap">
                 {EVENT_TYPES.map((t) => (
                   <button key={t.value} type="button" onClick={() => setEventType(t.value)}
-                    className={`rounded-lg border py-2 text-center text-[10px] font-medium transition ${eventType === t.value ? "border-violet-200 bg-violet-50 text-violet-700 shadow-sm ring-1 ring-violet-300/30 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300" : "border-border bg-background text-muted-foreground hover:bg-muted"}`}>
-                    <div className="text-base leading-none">{t.emoji}</div>
-                    <div className="mt-0.5 leading-tight">{t.label}</div>
+                    className={`min-w-0 rounded-md border px-1 py-1.5 text-center text-[10px] font-medium transition ${eventType === t.value ? "border-violet-200 bg-violet-50 text-violet-700 shadow-sm ring-1 ring-violet-300/30 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300" : "border-border bg-background text-muted-foreground hover:bg-muted"}`}>
+                    <div className="text-sm leading-none">{t.emoji}</div>
+                    <div className="mt-0.5 truncate leading-tight">{t.label}</div>
                   </button>
                 ))}
               </div>
@@ -381,16 +379,18 @@ export default function EditNotificationPage() {
           </Card>
 
           {/* Erro e observações */}
-          <Card icon={Bell} title="Erro e observações" accent="bg-rose-400">
-            <Field label="Mensagem de erro">
-              <textarea value={errorMessage} onChange={(e) => setErrorMessage(e.target.value)}
-                rows={2} placeholder="Detalhe do erro de envio…" className={inputCls} />
-            </Field>
-            <Field label="Observações">
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-                rows={2} placeholder="Notas adicionais…" className={inputCls} />
-            </Field>
-          </Card>
+          <div className="col-span-2">
+            <Card icon={Bell} title="Erro e observações" accent="bg-rose-400">
+              <Field label="Mensagem de erro">
+                <textarea value={errorMessage} onChange={(e) => setErrorMessage(e.target.value)}
+                  rows={2} placeholder="Detalhe do erro de envio…" className={inputCls} />
+              </Field>
+              <Field label="Observações">
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
+                  rows={2} placeholder="Notas adicionais…" className={inputCls} />
+              </Field>
+            </Card>
+          </div>
 
         </div>
       </form>

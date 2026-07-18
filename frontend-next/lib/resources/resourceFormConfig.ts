@@ -3716,6 +3716,7 @@ const HR_INTERNAL_FIELDS = [
 const HR_COMPUTED_FIELDS = [
   // Propriedades calculadas — somente leitura, não editáveis
   "employee_name", "role_name", "profession_name", "approved_by_name",
+  "medical_specialty_name", "medical_specialty_code",
   "salary_base", "salary_liquido", "salary_allowances_value", "current_salary",
   "tenure_months", "has_open_disciplinary_process", "can_progress_salary", "can_change_career",
   "remaining_days",
@@ -3726,6 +3727,8 @@ function hrEmployeeConfig(): ResourceFormConfig {
     esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
     labels: {
       name: "Nome completo", role: "Cargo", profession: "Profissão",
+      is_medical_doctor: "É médico", is_surgeon: "É cirurgião",
+      medical_specialty: "Especialidade médica",
       gender: "Género", date_of_birth: "Data de nascimento",
       nationality: "Nacionalidade", marital_status: "Estado civil",
       address: "Morada", document_type: "Tipo de documento",
@@ -3749,7 +3752,7 @@ function hrEmployeeConfig(): ResourceFormConfig {
       "document_type", "document_number", "nuit", "inss_number",
       "email", "phone", "address",
       "emergency_contact_name", "emergency_contact_phone",
-      "role", "profession", "admission_date", "status",
+      "role", "profession", "is_medical_doctor", "is_surgeon", "medical_specialty", "admission_date", "status",
       "nib", "payment_method",
       "nominal_salary", "salary_increase", "base_month_hours",
       "ordinary_hour_value", "extraordinary_hour_value",
@@ -3760,11 +3763,11 @@ function hrEmployeeConfig(): ResourceFormConfig {
       { titulo: "Dados pessoais", campos: ["name", "gender", "date_of_birth", "nationality", "marital_status"] },
       { titulo: "Documentos e contacto", campos: ["document_type", "document_number", "nuit", "inss_number", "email", "phone", "address"] },
       { titulo: "Emergência", campos: ["emergency_contact_name", "emergency_contact_phone"] },
-      { titulo: "Dados laborais", campos: ["role", "profession", "admission_date", "status"] },
+      { titulo: "Dados laborais", campos: ["role", "profession", "is_medical_doctor", "is_surgeon", "medical_specialty", "admission_date", "status"] },
       { titulo: "Pagamento", campos: ["nib", "payment_method", "nominal_salary", "salary_increase", "base_month_hours"] },
       { titulo: "Horas e progressão", campos: ["ordinary_hour_value", "extraordinary_hour_value", "minimum_progression_months", "minimum_career_change_months", "family_allowance_per_dependent"] },
     ],
-    lembrarCampos: ["role", "profession", "payment_method", "nationality"],
+    lembrarCampos: ["role", "profession", "is_medical_doctor", "is_surgeon", "medical_specialty", "payment_method", "nationality"],
   }
 }
 

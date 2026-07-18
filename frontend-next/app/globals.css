@@ -489,12 +489,15 @@
 
   .nav-click-pending {
     pointer-events: none;
+    position: relative !important;
+    z-index: 2147483647 !important;
+    isolation: isolate;
   }
 
   .nav-click-pending-indicator {
     position: absolute;
     inset: 0;
-    z-index: 30;
+    z-index: 2147483647 !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -505,6 +508,8 @@
   }
 
   .nav-click-pending-badge {
+    position: relative;
+    z-index: 2147483647;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;

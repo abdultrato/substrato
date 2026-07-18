@@ -181,6 +181,28 @@ class Employee(CoreModel):
         default=Status.ACTIVE,
         db_index=True,
     )
+    is_medical_doctor = models.BooleanField(
+        db_column="is_medical_doctor",
+        verbose_name="É médico",
+        default=False,
+        db_index=True,
+    )
+    is_surgeon = models.BooleanField(
+        db_column="is_surgeon",
+        verbose_name="É cirurgião",
+        default=False,
+        db_index=True,
+    )
+    medical_specialty = models.ForeignKey(
+        "consultas.ConsultationSpecialty",
+        db_column="medical_specialty_id",
+        verbose_name="Especialidade médica",
+        on_delete=models.PROTECT,
+        related_name="medical_staff",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
 
     # ── Pagamento ────────────────────────────────────────────────────────────
     nib = models.CharField(
@@ -253,6 +275,9 @@ class Employee(CoreModel):
             models.Index(fields=["tenant", "status"]),
             models.Index(fields=["tenant", "role"]),
             models.Index(fields=["tenant", "profession"]),
+            models.Index(fields=["tenant", "is_medical_doctor"]),
+            models.Index(fields=["tenant", "is_surgeon"]),
+            models.Index(fields=["tenant", "medical_specialty"]),
             models.Index(fields=["tenant", "nuit"]),
             models.Index(fields=["tenant", "document_number"]),
             models.Index(fields=["tenant", "inss_number"]),
@@ -427,6 +452,12 @@ class Employee(CoreModel):
             raise ValidationError({"role": "Cargo e funcionário devem pertencer ao mesmo tenant."})
         if self.profession_id and self.tenant_id and self.profession.tenant_id != self.tenant_id:
             raise ValidationError({"profession": "Profissão e funcionário devem pertencer ao mesmo tenant."})
+        if self.medical_specialty_id and self.tenant_id and self.medical_specialty.tenant_id != self.tenant_id:
+            raise ValidationError({"medical_specialty": "Especialidade médica e funcionário devem pertencer ao mesmo tenant."})
+        if self.is_surgeon and not self.is_medical_doctor:
+            raise ValidationError({"is_surgeon": "Um cirurgião deve estar marcado também como médico."})
+        if self.medical_specialty_id and not self.is_medical_doctor:
+            raise ValidationError({"medical_specialty": "A especialidade médica só pode ser atribuída a funcionário marcado como médico."})
         if self.ordinary_hour_value is not None and self.ordinary_hour_value < Decimal("0.0000"):
             raise ValidationError({"ordinary_hour_value": "Valor da hora ordinária inválido."})
         if self.extraordinary_hour_value is not None and self.extraordinary_hour_value < Decimal("0.0000"):
