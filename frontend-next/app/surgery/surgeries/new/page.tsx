@@ -276,6 +276,7 @@ export default function CreateSurgeryPage() {
   const [roomQuery, setRoomQuery] = useState("");
   const [procedureIds, setProcedureIds] = useState<number[]>([]);
   const [procedureQuery, setProcedureQuery] = useState("");
+  const debouncedProcedureQuery = useDebounce(procedureQuery, 250);
   const [specialtyId, setSpecialtyId] = useState<number | null>(null);
   const [specialtyQuery, setSpecialtyQuery] = useState("");
   const [surgerySize, setSurgerySize] = useState("PEQUENA");
@@ -324,6 +325,31 @@ export default function CreateSurgeryPage() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadProcedures() {
+      try {
+        const query: Record<string, string> = {
+          active: "true",
+          for_surgery_size: surgerySize,
+        };
+        if (debouncedProcedureQuery.trim()) query.search = debouncedProcedureQuery.trim();
+        const { items } = await apiFetchList<Option>("/surgery/surgical_procedure/", {
+          page: 1,
+          pageSize: 50,
+          query,
+        });
+        if (mounted) setProcedures(items);
+      } catch {
+        if (mounted) setProcedures([]);
+      }
+    }
+    loadProcedures();
+    return () => {
+      mounted = false;
+    };
+  }, [debouncedProcedureQuery, surgerySize]);
 
   const selectedPatient = patients.find((item) => item.id === patientId) || null;
   const selectedSurgeons = employees.filter((item) => surgeonIds.includes(item.id));
@@ -551,10 +577,17 @@ export default function CreateSurgeryPage() {
               <Picker
                 label="Catálogo"
                 value={selectedProcedures.map(labelFor).join(", ")}
-                options={procedures.filter((item) => item.surgery_type === surgerySize || item.surgery_type === "AMBAS" || !item.surgery_type)}
+                options={procedures}
                 query={procedureQuery}
                 onQuery={setProcedureQuery}
-                onPick={(item) => setProcedureIds((current) => toggleId(current, item.id))}
+                onPick={(item) => {
+                  // O porte é derivado dos procedimentos escolhidos (GRANDE domina).
+                  const next = toggleId(procedureIds, item.id);
+                  setProcedureIds(next);
+                  const chosen = procedures.filter((p) => next.includes(p.id));
+                  if (chosen.some((p) => p.surgery_type === "GRANDE")) setSurgerySize("GRANDE");
+                  else if (chosen.some((p) => p.surgery_type === "PEQUENA")) setSurgerySize("PEQUENA");
+                }}
                 placeholder="Pesquisar procedimento..." emptyLabel="Nenhum procedimento encontrado."
                 error={errors.procedure}
                 multiple
