@@ -93,7 +93,7 @@ function EntitySearch({
         </div>
       )}
       {mounted && open && options.length > 0 && createPortal(
-        <ul style={dropStyle} className="rounded-lg border border-border bg-popover shadow-xl">
+        <ul style={dropStyle} className="rounded-lg border border-white/20 bg-white/10 shadow-xl backdrop-blur-xl dark:border-white/10">
           {options.map(opt => (
             <li key={opt.id}>
               <button type="button" onMouseDown={() => select(opt)}
