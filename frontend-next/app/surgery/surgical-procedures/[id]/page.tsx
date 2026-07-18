@@ -66,8 +66,11 @@ export default function SurgicalProcedureDetailPage() {
   // inline qty picker: holds the candidate item before confirm
   const [pending, setPending] = useState<Omit<MatItem, "qty"> | null>(null)
   const [pendingQty, setPendingQty] = useState("1")
+  const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null)
+  const [editingQty, setEditingQty] = useState("1")
   const matRef = useRef<HTMLDivElement>(null)
   const qtyRef = useRef<HTMLInputElement>(null)
+  const editQtyRef = useRef<HTMLInputElement>(null)
   const matTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const load = useCallback(async () => {
@@ -147,6 +150,12 @@ export default function SurgicalProcedureDetailPage() {
     }
   }, [pending])
 
+  useEffect(() => {
+    if (editingMaterialId !== null) {
+      setTimeout(() => editQtyRef.current?.select(), 50)
+    }
+  }, [editingMaterialId])
+
   const saveMaterials = async (next: MatItem[]) => {
     try {
       await apiFetch(`/surgery/surgical_procedure/${id}/`, {
@@ -181,6 +190,26 @@ export default function SurgicalProcedureDetailPage() {
     const next = materials.filter(m => m.id !== itemId)
     setMaterials(next)
     saveMaterials(next)
+  }
+
+  const startEditMaterial = (item: MatItem) => {
+    setPending(null)
+    setEditingMaterialId(item.id)
+    setEditingQty(String(item.qty || 1))
+  }
+
+  const cancelEditMaterial = () => {
+    setEditingMaterialId(null)
+    setEditingQty("1")
+  }
+
+  const confirmEditMaterial = () => {
+    if (editingMaterialId === null) return
+    const qty = Math.max(1, parseInt(editingQty) || 1)
+    const next = materials.map(m => m.id === editingMaterialId ? { ...m, qty } : m)
+    setMaterials(next)
+    saveMaterials(next)
+    cancelEditMaterial()
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -246,7 +275,7 @@ export default function SurgicalProcedureDetailPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-full max-w-2xl space-y-2 px-1">
+      <div className="mx-auto w-full max-w-[98vw] space-y-2 px-1">
 
         {/* header */}
         <section className={`relative overflow-hidden ${GLASS}`}>
@@ -542,9 +571,22 @@ export default function SurgicalProcedureDetailPage() {
                 {materials.map(m => {
                   const unitVat = m.applies_vat_by_default ? parseFloat(m.vat_percentage || "0") : 0
                   const lineTotal = parseFloat(m.sale_price || "0") * m.qty * (1 + unitVat / 100)
+                  const editing = editingMaterialId === m.id
                   return (
-                    <div key={m.id}
-                      className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-2.5 py-1 dark:border-amber-700/30 dark:bg-amber-900/10">
+                    <div
+                      key={m.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (!editing) startEditMaterial(m)
+                      }}
+                      onKeyDown={e => {
+                        if (!editing && (e.key === "Enter" || e.key === " ")) {
+                          e.preventDefault()
+                          startEditMaterial(m)
+                        }
+                      }}
+                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-2.5 py-1 transition hover:border-amber-300 hover:bg-amber-100/70 dark:border-amber-700/30 dark:bg-amber-900/10 dark:hover:bg-amber-900/20">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[12px] font-medium text-amber-800 dark:text-amber-300">{m.name}</p>
                         <p className="text-[10px] text-amber-600/70 dark:text-amber-400/60">
@@ -552,8 +594,43 @@ export default function SurgicalProcedureDetailPage() {
                           {unitVat > 0 ? ` + IVA ${unitVat}%` : " · isento IVA"}
                         </p>
                       </div>
+                      {editing ? (
+                        <div className="flex shrink-0 items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                          <label className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">Qtd.</label>
+                          <input
+                            ref={editQtyRef}
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={editingQty}
+                            onChange={e => setEditingQty(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === "Enter") {
+                                e.preventDefault()
+                                confirmEditMaterial()
+                              }
+                              if (e.key === "Escape") cancelEditMaterial()
+                            }}
+                            className="h-7 w-14 rounded-md border border-amber-300 bg-white px-2 text-center text-[12px] font-semibold text-foreground focus:border-amber-500 focus:outline-none dark:border-amber-700/50 dark:bg-slate-900/40"
+                          />
+                          <button
+                            type="button"
+                            onClick={confirmEditMaterial}
+                            className="inline-flex h-7 items-center gap-1 rounded-md bg-amber-500 px-2 text-[11px] font-semibold text-white hover:bg-amber-600"
+                          >
+                            <Check size={10} /> OK
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelEditMaterial}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted"
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      ) : null}
                       <span className="shrink-0 text-[11px] font-semibold text-teal-600 dark:text-teal-400">{fmtMT(lineTotal)}</span>
-                      <button type="button" onClick={() => removeMaterial(m.id)}
+                      <button type="button" onClick={e => { e.stopPropagation(); removeMaterial(m.id) }}
                         className="shrink-0 rounded-full p-0.5 text-amber-600 hover:bg-amber-200/60 hover:text-amber-800 dark:text-amber-400 dark:hover:bg-amber-800/30">
                         <X size={10} />
                       </button>
