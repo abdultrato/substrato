@@ -48,6 +48,8 @@ type Option = {
   surgery_type?: string;
   room_type?: string;
   status?: string;
+  sterile?: boolean;
+  capacity?: number;
 };
 
 type FieldProps = {
@@ -297,14 +299,18 @@ export default function CreateSurgeryPage() {
         const [patientRes, employeeRes, roomRes, procedureRes, specialtyRes] = await Promise.all([
           apiFetchList<Option>("/clinical/patient/", { page: 1, pageSize: 300 }),
           apiFetchList<Option>("/human_resources/employee/", { page: 1, pageSize: 300 }),
-          apiFetchList<Option>("/surgery/centro_cirurgico/", { page: 1, pageSize: 200 }),
+          apiFetchList<Option>("/surgery/centro_cirurgico/", {
+            page: 1,
+            pageSize: 200,
+            query: { status: "AVAILABLE", sterile: "true" },
+          }),
           apiFetchList<Option>("/surgery/surgical_procedure/", { page: 1, pageSize: 300, query: { active: "true" } }),
           apiFetchList<Option>("/consultations/specialty/", { page: 1, pageSize: 200 }),
         ]);
         if (!mounted) return;
         setPatients(patientRes.items);
         setEmployees(employeeRes.items);
-        setRooms(roomRes.items);
+        setRooms(roomRes.items.filter((room) => room.status === "AVAILABLE" && room.sterile !== false));
         setProcedures(procedureRes.items);
         setSpecialties(specialtyRes.items);
       } catch (err: any) {
@@ -327,6 +333,18 @@ export default function CreateSurgeryPage() {
   const proceduresTotal = selectedProcedures.reduce((acc, item) => acc + toNumber(item.base_price), 0);
   const totalEstimate = toNumber(estimatedPrice) || proceduresTotal;
   const finalEstimate = appliesVat ? totalEstimate * (1 + toNumber(vatPercentage) / 100) : totalEstimate;
+  const compatibleRooms = useMemo(() => rooms.filter((room) => {
+    const type = room.room_type || "";
+    if (surgerySize === "PEQUENA") return ["MINOR", "GENERAL", "OPERATING_ROOM", "OTHER"].includes(type);
+    return ["MAJOR", "OPERATING_ROOM", "HYBRID", "EMERGENCY_OR", "GENERAL", "OTHER"].includes(type);
+  }), [rooms, surgerySize]);
+
+  useEffect(() => {
+    if (roomId && !compatibleRooms.some((room) => room.id === roomId)) {
+      setRoomId(null);
+      setRoomQuery("");
+    }
+  }, [compatibleRooms, roomId]);
 
   function validate() {
     const next: Record<string, string> = {};
@@ -447,7 +465,16 @@ export default function CreateSurgeryPage() {
                 placeholder="Pesquisar cirurgião..." emptyLabel="Nenhum cirurgião encontrado."
                 multiple
               />
-              <Picker label="Sala operatória" value={labelFor(selectedRoom)} options={rooms} query={roomQuery} onQuery={setRoomQuery} onPick={(item) => setRoomId(item.id)} placeholder="Pesquisar sala..." emptyLabel="Nenhuma sala encontrada." />
+              <Picker
+                label="Sala operatória"
+                value={labelFor(selectedRoom)}
+                options={compatibleRooms}
+                query={roomQuery}
+                onQuery={setRoomQuery}
+                onPick={(item) => setRoomId(item.id)}
+                placeholder="Pesquisar sala disponível..."
+                emptyLabel="Nenhuma sala disponível para este porte."
+              />
             </div>
             {selectedSurgeons.length ? (
               <div className="mt-1 flex flex-wrap gap-1">
