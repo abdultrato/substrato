@@ -59,7 +59,7 @@ function fmtDate(value: any): string {
   if (!value) return "—"
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return String(value)
-  return d.toLocaleString()
+  return d.toLocaleString("pt-PT", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
 }
 
 function statusOf(row: Row): string {
@@ -87,6 +87,9 @@ function ChecklistCard({ row, href, t }: { row: Row; href: string; t: (pt: strin
             <ClipboardCheck size={14} className="shrink-0 text-muted-foreground" />
             <span className="truncate font-mono text-xs font-bold text-foreground">{row?.surgery_code || row?.custom_id || `#${row?.id}`}</span>
           </div>
+          {row?.patient_name ? (
+            <p className="mt-0.5 truncate text-[11px] font-medium text-foreground">{row.patient_name}</p>
+          ) : null}
           {phase ? (
             <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${phase.tone}`}>
               {t(phase.label, phase.labelEn)}
@@ -196,7 +199,7 @@ export default function SurgerySafetyChecklistsListPage() {
       const st = STATUSES[statusOf(r)]
       const ph = PHASES[String(r?.phase || "").toUpperCase()]
       const haystack = [
-        r?.surgery_code, r?.custom_id, r?.completed_by_name, r?.notes, r?.override_reason,
+        r?.surgery_code, r?.custom_id, r?.patient_name, r?.completed_by_name, r?.notes, r?.override_reason,
         st ? t(st.label, st.labelEn) : "", ph ? t(ph.label, ph.labelEn) : "",
       ].map((v) => String(v ?? "").toLowerCase()).join(" ")
       return haystack.includes(q)

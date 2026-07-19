@@ -1022,6 +1022,7 @@ class AnesthesiaRecordSerializer(LegacyAliasSerializerMixin, serializers.ModelSe
 
 class SurgicalSafetyChecklistSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="surgery.patient.name", read_only=True)
     completed_by_name = serializers.CharField(source="completed_by.name", read_only=True)
     is_complete = serializers.BooleanField(read_only=True)
     legacy_input_aliases = {
@@ -1048,7 +1049,7 @@ class SurgicalSafetyChecklistSerializer(LegacyAliasSerializerMixin, serializers.
     class Meta:
         model = SurgicalSafetyChecklist
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "completed_by_name", "is_complete")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "patient_name", "completed_by_name", "is_complete")
 
 
 class SurgicalMaterialSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
