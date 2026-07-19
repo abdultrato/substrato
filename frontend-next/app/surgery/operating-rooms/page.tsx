@@ -4,10 +4,10 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import {
   Clock3,
-  Clipboard,
   DoorOpen,
   Lock,
   MapPin,
+  Plus,
   Search,
   ShieldCheck,
   Sparkles,
@@ -16,14 +16,12 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import AutoForm from "@/components/form/AutoForm"
 import PageSizeInput from "@/components/ui/PageSizeInput"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import useDebounce from "@/hooks/useDebounce"
 import { useLanguage } from "@/hooks/useLanguage"
-import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
-import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { buildRecordDetailHref } from "@/lib/resources/recordIdentity"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
@@ -163,9 +161,7 @@ function RoomCard({ row, href, t }: { row: Row; href: string; t: (pt: string, en
 export default function SurgeryOperatingRoomsListPage() {
   const { loading: authLoading } = useAuthGuard()
   const { t } = useLanguage()
-  const { refreshNow, isRefreshing } = useSafeDataRefresh()
   const safeRefreshToken = useSafeDataRefreshSignal()
-  const [formSeed, setFormSeed] = useState(0)
 
   const [data, setData] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
@@ -245,11 +241,6 @@ export default function SurgeryOperatingRoomsListPage() {
     return buildRecordDetailHref(ROUTE_BASE, row) ?? `${ROUTE_BASE}/${row.id}`
   }
 
-  const formConfig = useMemo(
-    () => getResourceFormConfig("surgery", "centro_cirurgico", ENDPOINT),
-    []
-  )
-
   if (authLoading) return null
 
   return (
@@ -270,9 +261,7 @@ export default function SurgeryOperatingRoomsListPage() {
                 <p className="text-[11px] text-muted-foreground">
                   {loading
                     ? t("A carregar…", "Loading…")
-                    : isRefreshing
-                      ? t("A atualizar…", "Refreshing…")
-                      : `${filtered.length} ${t("de", "of")} ${data.length}`}
+                    : `${filtered.length} ${t("de", "of")} ${data.length}`}
                 </p>
               </div>
             </div>
@@ -318,6 +307,12 @@ export default function SurgeryOperatingRoomsListPage() {
 
           {/* Filtros de estado + tipo */}
           <div className="flex flex-wrap items-center gap-1 border-t border-white/20 px-3 py-1.5 pl-4 dark:border-white/10">
+            <Link
+              href={`${ROUTE_BASE}/new`}
+              className="mr-2 inline-flex h-7 items-center gap-1.5 rounded-md border border-teal-300 bg-teal-50 px-3 text-[11px] font-semibold text-teal-700 transition hover:bg-teal-100 dark:border-teal-700/40 dark:bg-teal-900/20 dark:text-teal-300"
+            >
+              <Plus size={11} /> {t("Criar novo bloco operatório", "Create new operating room")}
+            </Link>
             <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Estado", "Status")}</span>
             {Object.entries(STATUSES).map(([code, s]) => {
               const active = statusFilter === code
@@ -373,43 +368,6 @@ export default function SurgeryOperatingRoomsListPage() {
             <span>{t("Identificação operacional: nome, código único, tipo de sala e localização física.", "Operational identity: name, unique code, room type and physical location.")}</span>
             <span>{t("Estado assistencial: disponibilidade, capacidade, esterilização e classe de limpeza.", "Clinical state: availability, capacity, sterilization and cleaning class.")}</span>
             <span>{t("Prontidão técnica: equipamentos disponíveis e motivo de bloqueio quando aplicável.", "Technical readiness: available equipment and blocking reason when applicable.")}</span>
-          </div>
-        </section>
-
-        <section className="grid gap-1.5">
-          <div className={`${GLASS} overflow-hidden`}>
-            <div className="flex items-center justify-between gap-3 border-b border-white/20 px-4 py-3 dark:border-white/10">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20">
-                    <Clipboard size={17} />
-                  </span>
-                  <div className="min-w-0">
-                    <h2 className="text-sm font-bold text-foreground">{t("Novo bloco operatório", "New operating room")}</h2>
-                    <p className="text-[11px] text-muted-foreground">
-                      {t("Cadastre a sala com identificação, disponibilidade, esterilização e equipamentos.", "Register the room with identification, availability, sterilization and equipment.")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
-                {t("Criação inline", "Inline create")}
-              </span>
-            </div>
-            <div className="px-4 py-4">
-              <AutoForm
-                key={formSeed}
-                endpoint={ENDPOINT}
-                method="post"
-                submitLabel={t("Criar bloco operatório", "Create operating room")}
-                config={formConfig}
-                presentation="modern-nursing"
-                onSuccess={() => {
-                  setFormSeed((value) => value + 1)
-                  void refreshNow("mutation")
-                }}
-              />
-            </div>
           </div>
         </section>
 

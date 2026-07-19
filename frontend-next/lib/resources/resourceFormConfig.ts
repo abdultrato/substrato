@@ -4469,7 +4469,7 @@ function surgeryOperatingRoomConfig(): ResourceFormConfig {
     ],
     etapas: [
       {
-        titulo: "Identificação",
+        titulo: "Identificação principal",
         descricao: "Nome, tipo e localização da sala",
         campos: ["name", "room_type", "location"],
       },
@@ -4487,6 +4487,7 @@ function surgeryOperatingRoomConfig(): ResourceFormConfig {
         campos: ["blocked_reason", "notes"],
       },
     ],
+    etapasEmCartoes: true,
     lembrarCampos: ["room_type", "sterile", "cleaning_class"],
   }
 }

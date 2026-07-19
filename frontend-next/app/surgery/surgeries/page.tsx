@@ -264,7 +264,7 @@ function SurgeriesListInner() {
       <div className="mx-auto w-full max-w-5xl space-y-2 px-1 py-1">
 
         {/* header */}
-        <section className={`relative overflow-hidden ${GLASS}`}>
+        <section className={`relative z-10 overflow-visible ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-slate-400" />
           <div className="px-3 py-2 pl-4">
             {/* title row */}
@@ -296,7 +296,7 @@ function SurgeriesListInner() {
                 </Link>
                 <Link href="/surgery/surgeries/new"
                   className="inline-flex h-7 items-center gap-1.5 rounded-md border border-slate-300 bg-slate-50 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-white/20 dark:bg-white/[0.06] dark:text-slate-200">
-                  <Plus size={11} /> Nova cirurgia
+                  <Plus size={11} /> Agendar cirurgia
                 </Link>
               </div>
             </div>
@@ -316,7 +316,7 @@ function SurgeriesListInner() {
               </div>
 
               {/* estado */}
-              <div ref={statusRef} className="relative shrink-0">
+              <div ref={statusRef} className="relative z-20 shrink-0">
                 <button type="button" onClick={() => setStatusOpen(v => !v)}
                   className={`inline-flex h-[34px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] transition ${
                     statusFilter
@@ -354,7 +354,7 @@ function SurgeriesListInner() {
               </div>
 
               {/* tipo */}
-              <div ref={sizeRef} className="relative shrink-0">
+              <div ref={sizeRef} className="relative z-20 shrink-0">
                 <button type="button" onClick={() => setSizeOpen(v => !v)}
                   className={`inline-flex h-[34px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] transition ${
                     sizeFilter
