@@ -3,7 +3,8 @@
 import { useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useAuth } from "./useAuth"
-import { getDefaultWorkspaceHref } from "@/lib/rbac"
+import { getSmartPostLoginTarget } from "@/lib/loginRedirect"
+import { isSafeInternalPath } from "@/lib/lastVisited"
 
 interface Options {
     redirectTo?: string
@@ -36,7 +37,12 @@ export default function useAuthGuard ( options: Options = {} ) {
 
         // página pública com login (ex: login page)
         if ( !requireAuth && authenticated ) {
-            router.replace( getDefaultWorkspaceHref( user ) )
+            const rawNext =
+                typeof window !== "undefined"
+                    ? new URLSearchParams(window.location.search).get("next")
+                    : null
+            const explicitNext = isSafeInternalPath(rawNext) ? rawNext : null
+            router.replace( getSmartPostLoginTarget( user, explicitNext ) )
         }
     }, [authenticated, loading, pathname, redirectTo, requireAuth, router, user] )
 

@@ -181,6 +181,61 @@ export type WorkspaceDef = {
   anyOfGroups?: string[]
 }
 
+export type PlatformChoiceKey = "health" | "education" | "erp-wms"
+
+export type PlatformChoiceDef = {
+  key: PlatformChoiceKey
+  label: string
+  href: string
+  anyOfGroups: string[]
+}
+
+export const PLATFORM_CHOICES: PlatformChoiceDef[] = [
+  {
+    key: "health",
+    label: "Saúde",
+    href: "/healthcare",
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.RECEPCAO,
+      GROUPS.LABORATORIO,
+      GROUPS.ENFERMAGEM,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.FARMACIA,
+      GROUPS.FARMACIA_CLINICA,
+      GROUPS.TELEMEDICINA,
+      GROUPS.SAUDE_PUBLICA,
+      GROUPS.RADIOLOGIA,
+      GROUPS.CARDIOLOGIA,
+      GROUPS.NEUROLOGIA,
+      GROUPS.OFTALMOLOGIA,
+      GROUPS.FISIOTERAPIA,
+      GROUPS.TERAPIA_OCUPACIONAL,
+      GROUPS.FONOAUDIOLOGIA,
+    ],
+  },
+  {
+    key: "education",
+    label: "Educação",
+    href: "/education",
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.PROFESSOR,
+      GROUPS.DIRETOR_ESCOLA,
+      GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
+      GROUPS.STUDENT,
+      GROUPS.ENCARREGADO_EDUCACAO,
+    ],
+  },
+  {
+    key: "erp-wms",
+    label: "ERP e WMS",
+    href: "/warehouse",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE, GROUPS.FARMACIA, GROUPS.RECURSOS_HUMANOS],
+  },
+]
+
 export const WORKSPACES: WorkspaceDef[] = [
   {
     key: "dashboard",
@@ -645,32 +700,11 @@ export function getAccessibleWorkspaces(user: SessionUser | null): WorkspaceDef[
   )
 }
 
-export function getDefaultWorkspaceHref(user: SessionUser | null): string {
-  if (userHasAnyGroup(user, [GROUPS.ADMIN])) return "/workspaces"
-  if (userHasAnyGroup(user, [GROUPS.CREDITO_FINANCIAMENTO])) return "/credit-financing"
+export function getAccessiblePlatformChoices(user: SessionUser | null): PlatformChoiceDef[] {
+  return PLATFORM_CHOICES.filter((platform) => userHasAnyGroup(user, platform.anyOfGroups))
+}
 
-  if (
-    userHasAnyGroup(user, [
-      GROUPS.RECEPCAO,
-      GROUPS.LABORATORIO,
-      GROUPS.ENFERMAGEM,
-      GROUPS.MEDICINA,
-      GROUPS.MEDICINA_OCUPACIONAL,
-      GROUPS.FARMACIA,
-      GROUPS.FARMACIA_CLINICA,
-      GROUPS.TELEMEDICINA,
-      GROUPS.SAUDE_PUBLICA,
-      GROUPS.RADIOLOGIA,
-      GROUPS.CARDIOLOGIA,
-      GROUPS.NEUROLOGIA,
-      GROUPS.OFTALMOLOGIA,
-      GROUPS.FISIOTERAPIA,
-      GROUPS.TERAPIA_OCUPACIONAL,
-      GROUPS.FONOAUDIOLOGIA,
-    ])
-  ) {
-    return "/healthcare"
-  }
+function getEducationWorkspaceHref(user: SessionUser | null): string {
   if (
     userHasAnyGroup(user, [
       GROUPS.STUDENT,
@@ -688,6 +722,22 @@ export function getDefaultWorkspaceHref(user: SessionUser | null): string {
   if (userHasAnyGroup(user, [GROUPS.PROFESSOR])) {
     return "/education/teacher"
   }
+  return "/education"
+}
+
+export function getPlatformChoiceHomeHref(user: SessionUser | null, platform: PlatformChoiceKey): string {
+  if (platform === "education") return getEducationWorkspaceHref(user)
+  if (platform === "erp-wms") return "/warehouse"
+  return "/healthcare"
+}
+
+export function getDefaultWorkspaceHref(user: SessionUser | null): string {
+  if (userHasAnyGroup(user, [GROUPS.ADMIN])) return "/workspaces"
+  if (userHasAnyGroup(user, [GROUPS.CREDITO_FINANCIAMENTO])) return "/credit-financing"
+
+  const platformChoices = getAccessiblePlatformChoices(user)
+  if (platformChoices.length === 1) return getPlatformChoiceHomeHref(user, platformChoices[0].key)
+  if (platformChoices.length > 1) return "/workspaces"
   if (userHasAnyGroup(user, [GROUPS.CONTABILIDADE])) return "/"
 
   const first = getAccessibleWorkspaces(user).find((w) => w.key !== "dashboard")

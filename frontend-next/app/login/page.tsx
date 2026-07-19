@@ -9,9 +9,10 @@ import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import useAuth from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { getAccessGrantedRoleLabel, getDefaultWorkspaceHref } from "@/lib/rbac";
-import { getLastVisitedPath, isSafeInternalPath } from "@/lib/lastVisited";
+import { getAccessGrantedRoleLabel } from "@/lib/rbac";
+import { isSafeInternalPath } from "@/lib/lastVisited";
 import { LOGO_LIGHT_SRC, LOGO_DARK_SRC } from "@/lib/brand";
+import { getSmartPostLoginTarget } from "@/lib/loginRedirect";
 
 type View = "login" | "reset_request" | "reset_confirm";
 
@@ -155,9 +156,8 @@ export default function LoginPage() {
                 typeof window !== "undefined"
                     ? new URLSearchParams(window.location.search).get("next")
                     : null;
-            // Retoma a última página: ?next= (expiração/guard) ou registo local.
-            const next = isSafeInternalPath(rawNext) ? rawNext : getLastVisitedPath();
-            const target = next || getDefaultWorkspaceHref(sessionUser);
+            const explicitNext = isSafeInternalPath(rawNext) ? rawNext : null;
+            const target = getSmartPostLoginTarget(sessionUser, explicitNext);
             // Mostra o overlay "ACESSO GARANTIDO" com elegância antes de redirecionar.
             setAccess("granted");
             window.setTimeout(() => router.push(target), 1300);

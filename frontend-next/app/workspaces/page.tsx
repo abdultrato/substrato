@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useCallback, useMemo, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
@@ -60,6 +60,12 @@ function storeScope(scope: DepartmentScope) {
   if (scope === "healthcare" || scope === "education" || scope === "transport-logistics") {
     writeStoredWorkspaceScope(scope)
   }
+}
+
+function scopeForLayer(layerKey: WorkspaceLayerKey): DepartmentScope {
+  if (layerKey === "education") return "education"
+  if (layerKey === "transport-logistics") return "transport-logistics"
+  return "healthcare"
 }
 
 function workspaceTone(key: string) {
@@ -706,6 +712,13 @@ function WorkspacesContent() {
   const selectedLayer = selectedLayerKey ? layers.find((layer) => layer.key === selectedLayerKey) || null : null
   const visibleDepartments = selectedLayer?.departments.filter((department) => department.visible) || []
 
+  useEffect(() => {
+    if (selectedLayerKey || visibleLayers.length !== 1) return
+    const onlyLayer = visibleLayers[0]
+    storeScope(scopeForLayer(onlyLayer.key))
+    setSelectedLayerKey(onlyLayer.key)
+  }, [selectedLayerKey, setSelectedLayerKey, visibleLayers])
+
   const normalizedQuery = searchQuery.trim().toLowerCase()
   const filteredDepartments = normalizedQuery
     ? visibleDepartments.filter(
@@ -783,9 +796,7 @@ function WorkspacesContent() {
                   icon={layer.icon}
                   toneKey={layer.key}
                   onClick={() => {
-                    if (layer.key === "health") writeStoredWorkspaceScope("healthcare")
-                    if (layer.key === "education") writeStoredWorkspaceScope("education")
-                    if (layer.key === "transport-logistics") writeStoredWorkspaceScope("transport-logistics")
+                    storeScope(scopeForLayer(layer.key))
                     setSelectedLayerKey(layer.key)
                   }}
                 />
