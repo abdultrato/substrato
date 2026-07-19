@@ -1130,6 +1130,7 @@ class SurgicalConsumptionSerializer(LegacyAliasSerializerMixin, serializers.Mode
 
 class RecoveryRecordSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="surgery.patient.name", read_only=True)
     nurse_name = serializers.CharField(source="nurse.name", read_only=True)
     legacy_input_aliases = {
         **BASE_ALIASES,
@@ -1154,7 +1155,7 @@ class RecoveryRecordSerializer(LegacyAliasSerializerMixin, serializers.ModelSeri
     class Meta:
         model = RecoveryRecord
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "nurse_name")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "patient_name", "nurse_name")
 
 
 class OperativeReportSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
