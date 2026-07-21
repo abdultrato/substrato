@@ -183,40 +183,40 @@ function LotCard({ lot }: { lot: Lot }) {
   return (
     <Link href={`/pharmacy/lots/${lot.id}`} className={`${GLASS} group relative block overflow-hidden transition hover:shadow-md`}>
       <span className={`absolute inset-y-0 left-0 w-1 ${status.accent}`} />
-      <div className="space-y-2 px-3 py-2 pl-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-300">
-              <Package size={15} />
+      <div className="space-y-1.5 px-2.5 py-1.5 pl-3">
+        <div className="flex items-start justify-between gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-300">
+              <Package size={12} />
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-foreground group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
+              <p className="truncate text-xs font-bold text-foreground group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
                 {productName(lot)}
               </p>
-              <p className="text-[10px] text-muted-foreground">{lot.lot_number || lot.custom_id || `Lote #${lot.id}`}</p>
+              <p className="text-[9px] text-muted-foreground">{lot.lot_number || lot.custom_id || `Lote #${lot.id}`}</p>
             </div>
           </div>
-          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${status.badge}`}>
+          <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${status.badge}`}>
             {status.label}
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Saldo</p>
-            <p className="text-sm font-bold text-foreground">{balance}</p>
+        <div className="grid grid-cols-3 gap-1 text-[10px]">
+          <div className="rounded-md border border-border/60 bg-background/45 px-1.5 py-0.5">
+            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Saldo</p>
+            <p className="text-xs font-bold text-foreground">{balance}</p>
           </div>
-          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Validade</p>
-            <p className="truncate text-xs font-semibold text-foreground">{formatDate(lot.expiration_date)}</p>
+          <div className="rounded-md border border-border/60 bg-background/45 px-1.5 py-0.5">
+            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Validade</p>
+            <p className="truncate text-[11px] font-semibold text-foreground">{formatDate(lot.expiration_date)}</p>
           </div>
-          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Preço</p>
-            <p className="truncate text-xs font-semibold text-foreground">{formatMoney(lot.sale_price)}</p>
+          <div className="rounded-md border border-border/60 bg-background/45 px-1.5 py-0.5">
+            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Preço</p>
+            <p className="truncate text-[11px] font-semibold text-foreground">{formatMoney(lot.sale_price)}</p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-border/50 pt-2 text-[10px] text-muted-foreground">
+        <div className="flex items-center justify-between border-t border-border/50 pt-1.5 text-[9px] text-muted-foreground">
           <span className="truncate">{lot.custom_id || `ID ${lot.id}`}</span>
           <span className="shrink-0">{daysLabel}</span>
         </div>
@@ -421,7 +421,7 @@ export default function PharmacyLotsPage() {
             Nenhum lote encontrado.
           </section>
         ) : (
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {filtered.map((lot) => (
               <LotCard key={lot.id} lot={lot} />
             ))}
