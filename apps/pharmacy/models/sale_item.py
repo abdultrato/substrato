@@ -182,14 +182,17 @@ class SaleItem(ScopedPositionMixin, CoreModel):
     @transaction.atomic
     def save(self, *args, **kwargs):
 
+        from apps.pharmacy.models.lot import Lot
+
         criando = self.pk is None  # Flag para saber se é criação
 
-        # Regra de negócio: item de venda herda preço do produto na criação.
+        # Regra de negócio: o item herda o preço do lote FEFO (o primeiro a ser
+        # consumido na baixa de stock), com fallback para o preço do produto.
         if criando:
-            self.unit_price = self.product.sale_price or Decimal("0.00")
+            self.unit_price = Lot.sale_price_for_product(self.product) or Decimal("0.00")
         elif self.unit_price is None:
             # Salvaguarda para dados legados/incompletos.
-            self.unit_price = self.product.sale_price or Decimal("0.00")
+            self.unit_price = Lot.sale_price_for_product(self.product) or Decimal("0.00")
 
         if not self.name:
             self.name = f"Item {self.product.name}"  # Nome default

@@ -34,6 +34,7 @@ type Lot = {
   balance?: number;
   initial_quantity?: number;
   status?: string;
+  sale_price?: string | number;
 };
 type ProductLotOption = {
   key: string;
@@ -84,6 +85,22 @@ function lotIsUsable(lot: Lot) {
   const exp = new Date(lot.expiration_date);
   exp.setHours(0, 0, 0, 0);
   return !Number.isNaN(exp.getTime()) && exp >= today;
+}
+
+// Ordena por FEFO: primeiro a vencer, primeiro a sair (validade ascendente).
+// Lotes sem validade ficam por último.
+function fefoCompare(a: Lot, b: Lot) {
+  const expA = a.expiration_date ? new Date(a.expiration_date).getTime() : Infinity;
+  const expB = b.expiration_date ? new Date(b.expiration_date).getTime() : Infinity;
+  if (expA !== expB) return expA - expB;
+  return a.id - b.id;
+}
+
+// Preço unitário efetivo do lote (preço do lote, com fallback para o produto).
+function lotUnitPrice(lot: Lot, product?: Product) {
+  const lotPrice = Number(lot.sale_price ?? NaN);
+  if (!Number.isNaN(lotPrice) && lot.sale_price !== "" && lot.sale_price != null) return lotPrice;
+  return Number(product?.sale_price || 0);
 }
 
 function formatMoney(value?: string | number) {
@@ -328,15 +345,28 @@ export default function CreateSalePage() {
         productCode: product?.custom_id,
         lotLabel: labelLot(lot),
         balance: lotBalance(lot),
-        price: product?.sale_price,
+        // Preço do próprio lote (FEFO), com fallback para o produto.
+        price: lotUnitPrice(lot, product),
       });
     }
     return options.sort((a, b) => `${a.productName} ${a.lotLabel}`.localeCompare(`${b.productName} ${b.lotLabel}`));
   }, [lots, productMap]);
+  // Preço unitário por produto vindo do lote FEFO (o primeiro a vencer), que é
+  // o lote que a venda baixará automaticamente.
+  const fefoPriceByProduct = useMemo(() => {
+    const map = new Map<string, number>();
+    const usable = lots.filter(lotIsUsable).slice().sort(fefoCompare);
+    for (const lot of usable) {
+      const productId = lotProductId(lot);
+      if (!productId || map.has(productId)) continue;
+      map.set(productId, lotUnitPrice(lot, productMap.get(productId)));
+    }
+    return map;
+  }, [lots, productMap]);
   const validLines = lines.filter((line) => line.product && Number(line.quantity || 0) > 0);
   const totalPreview = lines.reduce((total, line) => {
-    const product = productMap.get(line.product);
-    return total + Number(product?.sale_price || 0) * Math.max(0, Number(line.quantity || 0));
+    const unit = fefoPriceByProduct.get(line.product) ?? Number(productMap.get(line.product)?.sale_price || 0);
+    return total + unit * Math.max(0, Number(line.quantity || 0));
   }, 0);
   const totalQuantity = lines.reduce((total, line) => total + Math.max(0, Number(line.quantity || 0)), 0);
 
@@ -442,19 +472,22 @@ export default function CreateSalePage() {
                 </div>
 
                 <div className="overflow-visible pb-1">
-                  <div className="mb-1 hidden min-w-[560px] grid-cols-[minmax(260px,1fr)_90px_110px_36px_36px] gap-2 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground lg:grid">
+                  <div className="mb-1 hidden min-w-[640px] grid-cols-[minmax(260px,1fr)_90px_110px_110px_36px_36px] gap-2 px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground lg:grid">
                     <span>Produto</span>
                     <span>Qtd.</span>
+                    <span>Preço unit.</span>
                     <span>Subtotal</span>
                     <span />
                     <span />
                   </div>
                   <div className="space-y-1.5 overflow-visible">
                   {lines.map((line, index) => {
-                    const selected = productMap.get(line.product);
-                    const subtotal = Number(selected?.sale_price || 0) * Math.max(0, Number(line.quantity || 0));
+                    const unitPrice = line.product
+                      ? (fefoPriceByProduct.get(line.product) ?? Number(productMap.get(line.product)?.sale_price || 0))
+                      : 0;
+                    const subtotal = unitPrice * Math.max(0, Number(line.quantity || 0));
                     return (
-                      <div key={line.id} className="grid min-w-[560px] grid-cols-[minmax(260px,1fr)_90px_110px_36px_36px] items-end gap-2 rounded-lg border border-border/60 bg-background/45 px-3 py-2">
+                      <div key={line.id} className="grid min-w-[640px] grid-cols-[minmax(260px,1fr)_90px_110px_110px_36px_36px] items-end gap-2 rounded-lg border border-border/60 bg-background/45 px-3 py-2">
                         <label className="grid gap-1">
                           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground lg:hidden">Produto {index + 1}</span>
                           <ProductPicker
@@ -468,6 +501,12 @@ export default function CreateSalePage() {
                           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground lg:hidden">Qtd.</span>
                           <input className={INPUT} type="number" min={1} value={line.quantity} onChange={(event) => updateLine(line.id, { quantity: event.target.value })} disabled={saving} required />
                         </label>
+                        <div className="grid gap-1">
+                          <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground lg:hidden">Preço unit.</span>
+                          <div className="flex h-9 items-center rounded-md border border-border bg-background/45 px-3 text-sm text-foreground">
+                            {line.product ? formatMoney(unitPrice) : "—"}
+                          </div>
+                        </div>
                         <div className="grid gap-1">
                           <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground lg:hidden">Subtotal</span>
                           <div className="flex h-9 items-center rounded-md border border-border bg-background/45 px-3 text-sm font-bold text-foreground">
