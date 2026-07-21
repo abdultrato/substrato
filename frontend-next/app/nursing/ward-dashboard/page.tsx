@@ -287,7 +287,7 @@ export default function NursingWardDashboardPage() {
                 {wardGroups.map(([wardName, beds]) => (
                   <section key={wardName} className={`relative overflow-hidden ${GLASS}`}>
                     <div className="flex items-center justify-between px-3 py-1.5 pl-4">
-                      <h2 className="text-xs font-bold uppercase tracking-wide text-foreground">{wardName}</h2>
+                      <h2 className="text-xs font-bold tracking-wide text-foreground">{wardName}</h2>
                       <span className="text-[10px] text-muted-foreground">
                         {beds.length} {t("cama(s) ocupada(s)", "occupied bed(s)")}
                       </span>

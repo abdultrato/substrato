@@ -126,7 +126,7 @@ export default function ProcedureCatalogsDetailPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md border border-violet-200 bg-white/70 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300">
+                    <span className="rounded-md border border-violet-200 bg-white/70 px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300">
                       {catalog.procedure_code || catalog.custom_id || `CAT-${catalog.id}`}
                     </span>
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${catalog.active === false ? "bg-slate-200/80 text-slate-700 dark:bg-slate-800 dark:text-slate-300" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"}`}>

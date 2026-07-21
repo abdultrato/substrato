@@ -214,7 +214,7 @@ export default function NursingProcedureCatalogsPage() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{code}</p>
+                          <p className="truncate text-[10px] font-semibold tracking-[0.12em] text-muted-foreground">{code}</p>
                           <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${catalog.active === false ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"}`}>
                             {catalog.active === false ? "Inativo" : "Ativo"}
                           </span>

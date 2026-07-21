@@ -171,7 +171,7 @@ export default function NursingProcedureMaterialsPage() {
                   <div className="flex h-full flex-col gap-2 p-3.5 pt-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{material.custom_id || `MAT-${material.id}`}</p>
+                        <p className="truncate font-mono text-[9px] font-semibold tracking-wider text-muted-foreground">{material.custom_id || `MAT-${material.id}`}</p>
                         <h2 className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug text-foreground">{material.product_name || `Produto #${material.product || "—"}`}</h2>
                       </div>
                       <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold ${allocated ? "border-emerald-200/60 bg-emerald-50/50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-950/30 dark:text-emerald-300" : "border-amber-200/60 bg-amber-50/50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-950/30 dark:text-amber-300"}`}>

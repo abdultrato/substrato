@@ -400,7 +400,7 @@ export default function LabOrderDetailPage() {
                     <div key={sector}>
                       <div className="mb-1 flex items-center gap-1.5">
                         <span className="h-px flex-1 bg-[var(--border)]" />
-                        <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-400)]">{sector}</span>
+                        <span className="text-[9px] font-semibold tracking-[0.14em] text-[var(--gray-400)]">{sector}</span>
                         <span className="h-px flex-1 bg-[var(--border)]" />
                       </div>
                       <div className="overflow-hidden rounded-lg border border-[var(--border)]">

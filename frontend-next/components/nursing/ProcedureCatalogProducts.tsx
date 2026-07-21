@@ -254,7 +254,7 @@ export default function ProcedureCatalogProducts({ catalogId, editable = false }
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-xs font-medium text-foreground">{product.name}</span>
-                      <span className="block text-[9px] uppercase tracking-wide text-muted-foreground">{product.custom_id || `Produto ${product.id}`}</span>
+                      <span className="block text-[9px] tracking-wide text-muted-foreground">{product.custom_id || `Produto ${product.id}`}</span>
                     </span>
                     <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">{productTypeLabel(product.type)}</span>
                   </button>
@@ -318,7 +318,7 @@ export default function ProcedureCatalogProducts({ catalogId, editable = false }
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <h3 className="truncate text-xs font-semibold text-foreground">{product?.name || `Produto #${item.product}`}</h3>
-                        <p className="text-[9px] uppercase tracking-wide text-muted-foreground">{productTypeLabel(product?.type)}{product?.custom_id ? ` · ${product.custom_id}` : ""}</p>
+                        <p className="text-[9px] tracking-wide text-muted-foreground">{productTypeLabel(product?.type)}{product?.custom_id ? ` · ${product.custom_id}` : ""}</p>
                       </div>
                       {editable && !isEditing ? (
                         <div className="flex shrink-0 gap-1">

@@ -247,7 +247,7 @@ export default function CultureDetailPage() {
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/25"><Microscope size={18} /></span>
               <div className="min-w-0">
                 <div className="mb-0.5 flex flex-wrap gap-1.5">
-                  <span className="rounded-full border border-teal-200/70 bg-teal-50/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700 backdrop-blur-sm dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-300">{culture.status_display}</span>
+                  <span className="rounded-full border border-teal-200/70 bg-teal-50/70 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-teal-700 backdrop-blur-sm dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-300">{culture.status_display}</span>
                   <span className="rounded-full border border-cyan-200/70 bg-cyan-50/70 px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-sm dark:border-cyan-800/40 dark:bg-cyan-900/20 dark:text-cyan-300">{culture.custom_id}</span>
                 </div>
                 <h1 className="truncate text-lg font-semibold leading-tight text-foreground">{culture.test_name}</h1>

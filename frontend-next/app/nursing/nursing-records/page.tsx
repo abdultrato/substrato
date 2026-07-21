@@ -177,7 +177,7 @@ export default function NursingNursingRecordsPage() {
                   <div className="flex h-full flex-col gap-2 p-3.5 pt-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{record.custom_id || `REG-${record.id}`}</p>
+                        <p className="truncate font-mono text-[9px] font-semibold tracking-wider text-muted-foreground">{record.custom_id || `REG-${record.id}`}</p>
                         <h2 className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug text-foreground">{record.name || "Registo de enfermagem"}</h2>
                       </div>
                       <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold ${priority.badge}`}>{priority.label}</span>

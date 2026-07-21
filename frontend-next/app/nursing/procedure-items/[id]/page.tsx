@@ -140,7 +140,7 @@ export default function ProcedureItemsDetailPage() {
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-indigo-600 text-white shadow-lg shadow-sky-500/25"><ClipboardCheck size={18} /></span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-mono text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">{code}</p>
+                  <p className="font-mono text-[9px] font-semibold tracking-wider text-muted-foreground">{code}</p>
                   <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${tone.badge}`}>{item.execution_status_display || item.execution_status || "Pendente"}</span>
                 </div>
                 <h1 className="mt-0.5 truncate text-xl font-bold text-foreground">{title}</h1>

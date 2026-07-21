@@ -178,7 +178,7 @@ export default function NursingNursingEvolutionsPage() {
                 <div className="flex h-full flex-col gap-1.5 p-2.5 pl-3.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate font-mono text-[8px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <p className="truncate font-mono text-[8px] font-semibold tracking-wider text-muted-foreground">
                         {evolution.custom_id || `EVO-${evolution.id}`}
                       </p>
                       <h2 className="truncate text-xs font-semibold text-foreground">
