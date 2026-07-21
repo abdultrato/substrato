@@ -262,10 +262,29 @@ export default function LotsDetailPage() {
   const balance = balanceOf(lot);
   const days = daysToExpire(lot);
   const daysLabel = days === null ? "Sem data" : days < 0 ? `${Math.abs(days)} dias vencido` : `${days} dias restantes`;
-  const entries = useMemo(() => movements.filter((movement) => movement.type === "ENT").reduce((total, movement) => total + Number(movement.quantity || 0), 0), [movements]);
+  const initialQuantity = Number(lot?.initial_quantity ?? 0);
+  const hasInitialEntry = useMemo(
+    () =>
+      movements.some(
+        (movement) =>
+          movement.type === "ENT" &&
+          movement.origin === "AJUS" &&
+          Number(movement.quantity || 0) === initialQuantity,
+      ),
+    [movements, initialQuantity],
+  );
+  const entries = useMemo(() => {
+    const movementEntries = movements
+      .filter((movement) => movement.type === "ENT")
+      .reduce((total, movement) => total + Number(movement.quantity || 0), 0);
+    // Lotes antigos não têm o movimento de entrada inicial: soma a quantidade cadastrada.
+    return hasInitialEntry ? movementEntries : movementEntries + initialQuantity;
+  }, [movements, hasInitialEntry, initialQuantity]);
   const exits = useMemo(() => movements.filter((movement) => movement.type === "SAI").reduce((total, movement) => total + Number(movement.quantity || 0), 0), [movements]);
   const chronology = useMemo(() => {
-    let runningBalance = 0;
+    // Se o lote antigo não tem movimento de entrada inicial, o saldo corrido parte
+    // da quantidade cadastrada; caso contrário, a própria entrada inicial já a contém.
+    let runningBalance = hasInitialEntry ? 0 : initialQuantity;
     return [...movements]
       .sort((a, b) => {
         const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -277,7 +296,7 @@ export default function LotsDetailPage() {
         runningBalance += signedQuantity(movement);
         return { movement, runningBalance };
       });
-  }, [movements]);
+  }, [movements, hasInitialEntry, initialQuantity]);
 
   async function updateLotStatus(nextStatus: string, reason: string) {
     setStatusSaving(true);
@@ -413,6 +432,32 @@ export default function LotsDetailPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+                    {!hasInitialEntry && initialQuantity > 0 ? (
+                      <div className="relative rounded-lg border border-border/60 bg-background/45 px-3 py-2">
+                        <span className="absolute inset-y-0 left-0 w-1 rounded-l-lg bg-emerald-500" />
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex min-w-0 gap-2 pl-1">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-[10px] font-bold text-foreground">
+                              0
+                            </span>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-bold text-foreground">Saldo inicial (cadastro)</p>
+                              <p className="text-[11px] text-muted-foreground">Quantidade cadastrada do lote</p>
+                            </div>
+                          </div>
+                          <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+                            Entrada
+                          </span>
+                        </div>
+                        <div className="mt-2 grid grid-cols-3 gap-1 border-t border-border/50 pt-2 text-[11px] text-muted-foreground">
+                          <span>Cadastro</span>
+                          <span className="text-center font-bold text-emerald-600 dark:text-emerald-300">
+                            +{initialQuantity}
+                          </span>
+                          <span className="text-right font-bold text-foreground">Saldo {initialQuantity}</span>
+                        </div>
+                      </div>
+                    ) : null}
                     {chronology.map(({ movement, runningBalance }, index) => {
                       const isExit = movement.type === "SAI";
                       const delta = signedQuantity(movement);
