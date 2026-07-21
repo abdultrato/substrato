@@ -80,7 +80,7 @@ sqlparse==0.5.5
 tablib==3.9.0
 typing_extensions==4.15.0
 tzdata==2025.3
-uvicorn[standard]==0.48.0
+uvicorn[standard]==0.51.0
 unicorn==2.1.4
 uritemplate==4.2.0
 whitenoise==6.11.0
