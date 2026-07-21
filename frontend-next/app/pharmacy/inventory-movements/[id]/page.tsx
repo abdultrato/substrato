@@ -261,8 +261,10 @@ export default function PharmacyInventoryMovementsDetailPage() {
   const linkedLotId = lotId(movement);
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]}>
-      <div className="w-full space-y-2 px-1">
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]} fullWidth>
+      {/* Margens negativas anulam o padding horizontal do <main> do AppLayout,
+          aproximando a página da largura total (~99vw) apenas aqui. */}
+      <div className="w-auto space-y-1 -mx-2 px-0.5 sm:-mx-3 md:-mx-4">
         <section className={`${GLASS} relative overflow-hidden`}>
           <span className={`absolute inset-y-0 left-0 w-1 ${info.accent}`} />
           <div className="space-y-2 px-3 py-2 pl-4">
@@ -293,7 +295,7 @@ export default function PharmacyInventoryMovementsDetailPage() {
             </div>
 
             {movement ? (
-              <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
                 <MetricCard icon={ClipboardList} label="Quantidade" value={<span className={info.text}>{signed > 0 ? "+" : ""}{signed}</span>} />
                 <MetricCard icon={Repeat} label="Origem" value={originLabel(movement.origem ?? movement.origin)} />
                 <MetricCard icon={CalendarClock} label="Criado em" value={fmtDate(movement.created_at)} />
@@ -314,9 +316,9 @@ export default function PharmacyInventoryMovementsDetailPage() {
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : movement ? (
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-1 lg:grid-cols-2">
             <DetailCard icon={Package} title="Produto e lote" accent="bg-cyan-500">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
                 <MetricCard icon={Package} label="Produto" value={productLabel(movement, lot)} />
                 <MetricCard
                   icon={ClipboardList}
@@ -337,7 +339,7 @@ export default function PharmacyInventoryMovementsDetailPage() {
             </DetailCard>
 
             <DetailCard icon={ShoppingCart} title="Vínculos operacionais" accent="bg-indigo-500">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
                 <MetricCard icon={ShoppingCart} label="Item de venda" value={movement.sale_item ? `#${movement.sale_item}` : "—"} />
                 <MetricCard
                   icon={ClipboardList}
