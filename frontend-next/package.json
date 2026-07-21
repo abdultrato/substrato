@@ -40,7 +40,7 @@
     "@vitest/ui": "^4.1.0",
     "autoprefixer": "^10.4.21",
     "cross-env": "^10.1.0",
-    "eslint": "^8.0.0",
+    "eslint": "^10.7.0",
     "eslint-config-next": "^15.5.19",
     "openapi-typescript-codegen": "^0.30.0",
     "playwright": "^1.61.0",
