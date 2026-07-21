@@ -84,4 +84,4 @@ uvicorn[standard]==0.48.0
 unicorn==2.1.4
 uritemplate==4.2.0
 whitenoise==6.11.0
-zipp==3.23.0
+zipp==4.1.0
