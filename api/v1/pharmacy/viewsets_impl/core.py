@@ -243,16 +243,24 @@ class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
         qs = self.filter_queryset(self.get_queryset()).filter(deleted=False)
         summary_raw = qs.aggregate(
             moves_count=Count("id"),
-            total_entries=Sum("quantity", filter=Q(type="ENT")),
-            total_exits=Sum("quantity", filter=Q(type="SAI")),
-            total_adjustments=Sum("quantity", filter=Q(type="AJU")),
+            # Contagem de movimentos por tipo (coerente com o total de registos).
+            count_entries=Count("id", filter=Q(type="ENT")),
+            count_exits=Count("id", filter=Q(type="SAI")),
+            count_adjustments=Count("id", filter=Q(type="AJU")),
+            # Soma de quantidades por tipo (unidades movimentadas).
+            qty_entries=Sum("quantity", filter=Q(type="ENT")),
+            qty_exits=Sum("quantity", filter=Q(type="SAI")),
+            qty_adjustments=Sum("quantity", filter=Q(type="AJU")),
         )
         return Response(
             {
                 "moves_count": int(summary_raw.get("moves_count") or 0),
-                "total_entries": int(summary_raw.get("total_entries") or 0),
-                "total_exits": int(summary_raw.get("total_exits") or 0),
-                "total_adjustments": int(summary_raw.get("total_adjustments") or 0),
+                "count_entries": int(summary_raw.get("count_entries") or 0),
+                "count_exits": int(summary_raw.get("count_exits") or 0),
+                "count_adjustments": int(summary_raw.get("count_adjustments") or 0),
+                "qty_entries": int(summary_raw.get("qty_entries") or 0),
+                "qty_exits": int(summary_raw.get("qty_exits") or 0),
+                "qty_adjustments": int(summary_raw.get("qty_adjustments") or 0),
             }
         )
 

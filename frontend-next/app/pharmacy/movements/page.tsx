@@ -173,9 +173,9 @@ export default function FarmaciaMovimentosPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [summary, setSummary] = useState<{
-    total_entries: number;
-    total_exits: number;
-    total_adjustments: number;
+    count_entries: number;
+    count_exits: number;
+    count_adjustments: number;
   } | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -204,10 +204,16 @@ export default function FarmaciaMovimentosPage() {
       try {
         setLoading(true);
         setErro(null);
+        const query: Record<string, string> = {};
+        if (reportType !== "ALL") query.type = reportType;
+        if (reportSector !== "ALL") query.sector = reportSector;
+        if (dateFrom) query.date_from = dateFrom;
+        if (dateTo) query.date_to = dateTo;
+        if (reportProductId.trim()) query.product = reportProductId.trim();
         const { items, meta } = await apiFetchList<MovimentoRow>("/pharmacy/inventory_movement/", {
           page,
           pageSize,
-          query: reportType !== "ALL" ? { type: reportType } : undefined,
+          query: Object.keys(query).length ? query : undefined,
           clientPaginate: true,
           clientCache: safeRefreshToken === 0,
           timeoutMs: 5000,
@@ -239,28 +245,32 @@ export default function FarmaciaMovimentosPage() {
     return () => {
       mounted = false;
     };
-  }, [page, pageSize, reportType, safeRefreshToken]);
+  }, [page, pageSize, reportType, reportSector, dateFrom, dateTo, reportProductId, safeRefreshToken]);
 
   useEffect(() => {
     let mounted = true;
     async function loadSummary() {
       try {
-        const url =
-          reportType !== "ALL"
-            ? `/pharmacy/inventory_movement/summary/?type=${reportType}`
-            : "/pharmacy/inventory_movement/summary/";
+        const params = new URLSearchParams();
+        if (reportType !== "ALL") params.set("type", reportType);
+        if (reportSector !== "ALL") params.set("sector", reportSector);
+        if (dateFrom) params.set("date_from", dateFrom);
+        if (dateTo) params.set("date_to", dateTo);
+        if (reportProductId.trim()) params.set("product", reportProductId.trim());
+        const qs = params.toString();
+        const url = `/pharmacy/inventory_movement/summary/${qs ? `?${qs}` : ""}`;
         const result = await apiFetch<{
-          total_entries?: number;
-          total_exits?: number;
-          total_adjustments?: number;
+          count_entries?: number;
+          count_exits?: number;
+          count_adjustments?: number;
         }>(url, {
           clientCache: safeRefreshToken === 0,
         });
         if (!mounted) return;
         setSummary({
-          total_entries: Number(result?.total_entries ?? 0),
-          total_exits: Number(result?.total_exits ?? 0),
-          total_adjustments: Number(result?.total_adjustments ?? 0),
+          count_entries: Number(result?.count_entries ?? 0),
+          count_exits: Number(result?.count_exits ?? 0),
+          count_adjustments: Number(result?.count_adjustments ?? 0),
         });
       } catch {
         if (mounted) setSummary(null);
@@ -270,7 +280,7 @@ export default function FarmaciaMovimentosPage() {
     return () => {
       mounted = false;
     };
-  }, [reportType, safeRefreshToken]);
+  }, [reportType, reportSector, dateFrom, dateTo, reportProductId, safeRefreshToken]);
 
   const downloadPdf = useCallback(async (url: string, filename: string) => {
     const blob = await apiFetch<Blob>(url, { responseType: "blob" });
@@ -434,14 +444,15 @@ export default function FarmaciaMovimentosPage() {
     }
   }, [downloadPdf, buildCommonParams, reportProductId]);
 
-  // Totais agregados de TODOS os movimentos (via endpoint), com fallback para a
-  // soma da página atual caso o resumo ainda não tenha carregado.
-  const pageEntries = data.filter((row) => movementType(row) === "ENT").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
-  const pageExits = data.filter((row) => movementType(row) === "SAI").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
-  const pageAdjustments = data.filter((row) => movementType(row) === "AJU").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
-  const currentEntries = summary?.total_entries ?? pageEntries;
-  const currentExits = summary?.total_exits ?? pageExits;
-  const currentAdjustments = summary?.total_adjustments ?? pageAdjustments;
+  // Contagem de movimentos por tipo em TODOS os registos (via endpoint),
+  // coerente com o card "Total". Fallback para a contagem da página atual
+  // enquanto o resumo ainda não carregou.
+  const pageEntries = data.filter((row) => movementType(row) === "ENT").length;
+  const pageExits = data.filter((row) => movementType(row) === "SAI").length;
+  const pageAdjustments = data.filter((row) => movementType(row) === "AJU").length;
+  const currentEntries = summary?.count_entries ?? pageEntries;
+  const currentExits = summary?.count_exits ?? pageExits;
+  const currentAdjustments = summary?.count_adjustments ?? pageAdjustments;
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]}>
@@ -516,8 +527,8 @@ export default function FarmaciaMovimentosPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
-              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={CONTROL} aria-label="Data inicial" />
-              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={CONTROL} aria-label="Data final" />
+              <input type="date" value={dateFrom} onChange={(e) => { setPage(1); setDateFrom(e.target.value); }} className={CONTROL} aria-label="Data inicial" />
+              <input type="date" value={dateTo} onChange={(e) => { setPage(1); setDateTo(e.target.value); }} className={CONTROL} aria-label="Data final" />
               <select
                 value={reportType}
                 onChange={(e) => {
@@ -532,7 +543,7 @@ export default function FarmaciaMovimentosPage() {
                 <option value="SAI">Saídas</option>
                 <option value="AJU">Ajustes</option>
               </select>
-              <select value={reportSector} onChange={(e) => setReportSector(e.target.value as any)} className={CONTROL} aria-label="Setor solicitante">
+              <select value={reportSector} onChange={(e) => { setPage(1); setReportSector(e.target.value as any); }} className={CONTROL} aria-label="Setor solicitante">
                 <option value="ALL">Todos setores</option>
                 <option value="LAB">Laboratório</option>
                 <option value="ENF">Enfermagem</option>
@@ -544,7 +555,7 @@ export default function FarmaciaMovimentosPage() {
               <input
                 type="number"
                 value={reportProductId}
-                onChange={(e) => setReportProductId(e.target.value)}
+                onChange={(e) => { setPage(1); setReportProductId(e.target.value); }}
                 placeholder="Produto ID"
                 className={`${CONTROL} w-28`}
               />

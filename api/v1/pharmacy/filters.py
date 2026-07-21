@@ -1,3 +1,5 @@
+import django_filters
+
 from api.core.filters import SafeFilterSet
 from apps.pharmacy.models.inventory_movement import InventoryMovement
 from apps.pharmacy.models.lot import Lot
@@ -70,6 +72,16 @@ class LotFilter(SafeFilterSet):
 
 
 class InventoryMovementFilter(SafeFilterSet):
+    # Filtros derivados usados pela UI de movimentos (setor via requisição,
+    # intervalo de datas e produto do lote).
+    sector = django_filters.CharFilter(
+        field_name="material_request_item__requisition__sector",
+        lookup_expr="exact",
+    )
+    date_from = django_filters.DateFilter(field_name="created_at", lookup_expr="date__gte")
+    date_to = django_filters.DateFilter(field_name="created_at", lookup_expr="date__lte")
+    product = django_filters.NumberFilter(field_name="lot__product_id", lookup_expr="exact")
+
     class Meta:
         model = InventoryMovement
         fields = [
