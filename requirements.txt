@@ -70,7 +70,7 @@ requests==2.32.4
 referencing==0.37.0
 reportlab==4.4.7
 rpds-py==0.30.0
-ruff==0.15.5
+ruff==0.15.22
 # Comentado por causa de torch (dependência pesada que causa timeouts)
 # sentence-transformers==2.2.2
 # faiss-cpu==1.14.2
