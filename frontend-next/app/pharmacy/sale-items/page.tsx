@@ -162,11 +162,11 @@ function SaleItemCard({
           </div>
           <div className="rounded-md border border-border/60 bg-background/45 px-1.5 py-0.5">
             <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Unitário</p>
-            <p className="truncate text-xs font-semibold text-foreground">{formatMoney(item.unit_price)}</p>
+            <p className="truncate text-xs font-semibold text-foreground">{formatMoney(item.unit_price)} MT</p>
           </div>
           <div className="rounded-md border border-border/60 bg-background/45 px-1.5 py-0.5">
             <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Subtotal</p>
-            <p className="truncate text-xs font-semibold text-foreground">{formatMoney(subtotal(item))}</p>
+            <p className="truncate text-xs font-semibold text-foreground">{formatMoney(subtotal(item))} MT</p>
           </div>
         </div>
 
@@ -302,7 +302,7 @@ export default function PharmacySaleItemsPage() {
             <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
               <MetricCard icon={ShoppingCart} label="Itens" value={filtered.length} />
               <MetricCard icon={Boxes} label="Quantidade" value={totalQuantity} />
-              <MetricCard icon={Banknote} label="Subtotal" value={formatMoney(totalValue)} />
+              <MetricCard icon={Banknote} label="Total" value={`${formatMoney(totalValue)} MT`} />
               <MetricCard icon={Pill} label="Medicação" value={medicationCount} />
             </div>
 
