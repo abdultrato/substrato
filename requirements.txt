@@ -74,7 +74,7 @@ ruff==0.15.5
 # Comentado por causa de torch (dependência pesada que causa timeouts)
 # sentence-transformers==2.2.2
 # faiss-cpu==1.14.2
-numpy>=1.26.0
+numpy==2.4.6
 six==1.17.0
 sqlparse==0.5.5
 tablib==3.9.0
