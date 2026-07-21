@@ -706,8 +706,14 @@ export default function FarmaciaMovimentosPage() {
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : data.length === 0 ? (
-          <section className={`${GLASS} flex min-h-[180px] items-center justify-center text-sm text-muted-foreground`}>
-            Nenhum movimento encontrado.
+          <section className={`${GLASS} flex min-h-[180px] flex-col items-center justify-center gap-1 px-4 text-center text-sm text-muted-foreground`}>
+            <span>Nenhum movimento encontrado.</span>
+            {reportSector !== "ALL" ? (
+              <span className="text-xs text-muted-foreground/80">
+                Só movimentos de saída ligados a requisições têm setor. Movimentos
+                de venda, entrada e ajuste não são associados a nenhum setor.
+              </span>
+            ) : null}
           </section>
         ) : (
           <>
