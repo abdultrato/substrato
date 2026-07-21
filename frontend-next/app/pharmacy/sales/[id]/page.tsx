@@ -192,44 +192,112 @@ function MetricCard({ icon: Icon, label, value }: { icon: React.ElementType; lab
   );
 }
 
-function ItemCard({ item, products }: { item: SaleItem; products: Map<string, Product> }) {
+function ItemCard({
+  item,
+  products,
+  canRequestCreditNote,
+  creditNoteState,
+  onToggleCreditNote,
+  onReasonChange,
+  onSubmitCreditNote,
+  submitting,
+}: {
+  item: SaleItem;
+  products: Map<string, Product>;
+  canRequestCreditNote: boolean;
+  creditNoteState: { open: boolean; reason: string; pending: boolean };
+  onToggleCreditNote: () => void;
+  onReasonChange: (value: string) => void;
+  onSubmitCreditNote: () => void;
+  submitting: boolean;
+}) {
   return (
-    <Link href={`/pharmacy/sale-items/${item.id}`} className={`${GLASS} group relative block overflow-hidden transition hover:shadow-md`}>
+    <div className={`${GLASS} group relative overflow-hidden transition hover:shadow-md`}>
       <span className="absolute inset-y-0 left-0 w-1 bg-green-500" />
-      <div className="space-y-2 px-3 py-2 pl-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-500/12 text-green-600 dark:text-green-300">
-              <Package size={15} />
+      <Link href={`/pharmacy/sale-items/${item.id}`} className="block">
+        <div className="space-y-2 px-3 py-2 pl-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-500/12 text-green-600 dark:text-green-300">
+                <Package size={15} />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-foreground group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
+                  {productLabel(item, products)}
+                </p>
+                <p className="truncate text-[10px] text-muted-foreground">{item.custom_id || `Item #${item.id}`}</p>
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 dark:border-green-800/50 dark:bg-green-950/30 dark:text-green-300">
+              {itemKindLabel(item, products)}
             </span>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-foreground group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
-                {productLabel(item, products)}
-              </p>
-              <p className="truncate text-[10px] text-muted-foreground">{item.custom_id || `Item #${item.id}`}</p>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+            <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Qtd.</p>
+              <p className="truncate text-xs font-bold text-foreground">{item.quantity ?? 0}</p>
+            </div>
+            <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Unitário</p>
+              <p className="truncate text-xs font-semibold text-foreground">{formatMoney(item.unit_price)}</p>
+            </div>
+            <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Subtotal</p>
+              <p className="truncate text-xs font-semibold text-foreground">{formatMoney(lineTotal(item))}</p>
             </div>
           </div>
-          <span className="shrink-0 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700 dark:border-green-800/50 dark:bg-green-950/30 dark:text-green-300">
-            {itemKindLabel(item, products)}
-          </span>
         </div>
+      </Link>
 
-        <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Qtd.</p>
-            <p className="truncate text-xs font-bold text-foreground">{item.quantity ?? 0}</p>
-          </div>
-          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Unitário</p>
-            <p className="truncate text-xs font-semibold text-foreground">{formatMoney(item.unit_price)}</p>
-          </div>
-          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Subtotal</p>
-            <p className="truncate text-xs font-semibold text-foreground">{formatMoney(lineTotal(item))}</p>
-          </div>
+      {canRequestCreditNote ? (
+        <div className="border-t border-border/50 px-3 py-1.5 pl-4">
+          {creditNoteState.pending ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-300">
+              <FileText size={11} />
+              Nota de crédito solicitada
+            </span>
+          ) : creditNoteState.open ? (
+            <div className="space-y-1.5">
+              <textarea
+                value={creditNoteState.reason}
+                onChange={(event) => onReasonChange(event.target.value)}
+                rows={2}
+                placeholder="Motivo (opcional): ex. item devolvido, cobrança incorreta…"
+                className="w-full rounded-md border border-border bg-background/60 px-2 py-1 text-[11px] text-foreground outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+              />
+              <div className="flex justify-end gap-1.5">
+                <button
+                  type="button"
+                  onClick={onToggleCreditNote}
+                  className="inline-flex h-7 items-center rounded-md border border-border/70 bg-background/60 px-2 text-[11px] font-semibold text-muted-foreground transition hover:text-foreground"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={onSubmitCreditNote}
+                  disabled={submitting}
+                  className="inline-flex h-7 items-center gap-1 rounded-md bg-amber-600 px-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? <Loader2 size={11} className="animate-spin" /> : <FileText size={11} />}
+                  Enviar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onToggleCreditNote}
+              className="inline-flex h-7 items-center gap-1 rounded-md border border-amber-400/50 bg-amber-500/10 px-2 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-500/20 dark:text-amber-200"
+            >
+              <FileText size={11} />
+              Solicitar nota de crédito
+            </button>
+          )}
         </div>
-      </div>
-    </Link>
+      ) : null}
+    </div>
   );
 }
 
@@ -245,7 +313,15 @@ export default function SalesDetailPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [action, setAction] = useState<"invoice" | "payment" | "receipt" | null>(null);
+  const [action, setAction] = useState<"invoice" | "payment" | "receipt" | "credit-note" | null>(null);
+  const [creditNoteOpen, setCreditNoteOpen] = useState(false);
+  const [creditNoteReason, setCreditNoteReason] = useState("");
+  const [creditNotePending, setCreditNotePending] = useState(false);
+  // Estado da nota de crédito por item: { [itemId]: { open, reason, pending } }.
+  const [itemCreditNotes, setItemCreditNotes] = useState<
+    Record<string, { open: boolean; reason: string; pending: boolean }>
+  >({});
+  const [creditNoteItemSubmitting, setCreditNoteItemSubmitting] = useState<string | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [paymentInvoice, setPaymentInvoice] = useState<SaleInvoice | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -303,7 +379,33 @@ export default function SalesDetailPage() {
         setProducts(productsResponse.items ?? []);
         const invoice = billingResponse.invoice ?? null;
         setPaymentInvoice(invoice);
-        setInvoicePaid(Boolean(billingResponse.paid || billingResponse.receipt || invoice?.status === "PAGA"));
+        const paid = Boolean(billingResponse.paid || billingResponse.receipt || invoice?.status === "PAGA");
+        setInvoicePaid(paid);
+        // Se a fatura está paga, carrega os pedidos de nota de crédito pendentes
+        // para refletir o estado dos botões (global e por item) após recarregar.
+        if (paid && invoice?.id) {
+          const pendingCredit = await apiFetchList<any>("/billing/credit-note-request/", {
+            page: 1,
+            pageSize: 200,
+            query: { invoice: invoice.id, status: "PEND" },
+            clientPaginate: true,
+            clientCache: safeRefreshToken === 0,
+          }).catch(() => ({ items: [] as any[], meta: {}, raw: null }));
+          if (mounted) {
+            const pendingList = pendingCredit.items ?? [];
+            // Pedido global = pendente sem sale_item.
+            setCreditNotePending(pendingList.some((cn: any) => !cn.sale_item));
+            // Pedidos por item = pendentes com sale_item.
+            const byItem: Record<string, { open: boolean; reason: string; pending: boolean }> = {};
+            for (const cn of pendingList) {
+              if (cn.sale_item) byItem[String(cn.sale_item)] = { open: false, reason: "", pending: true };
+            }
+            setItemCreditNotes(byItem);
+          }
+        } else if (mounted) {
+          setCreditNotePending(false);
+          setItemCreditNotes({});
+        }
       } catch (err: any) {
         if (mounted) setError(err?.message || "Falha ao carregar venda.");
       } finally {
@@ -373,6 +475,64 @@ export default function SalesDetailPage() {
       setError(err?.message || "Falha ao abrir pagamento da fatura.");
     } finally {
       setAction(null);
+    }
+  }
+
+  async function requestCreditNote() {
+    if (!paymentInvoice?.id || action) return;
+    try {
+      setAction("credit-note");
+      setError(null);
+      await apiFetch(`/billing/invoice/${paymentInvoice.id}/request-credit-note/`, {
+        method: "POST",
+        body: JSON.stringify({ reason: creditNoteReason.trim() }),
+        clientCache: false,
+      });
+      setCreditNoteOpen(false);
+      setCreditNoteReason("");
+      setCreditNotePending(true);
+      setPaymentFeedback("Pedido de nota de crédito enviado. Aguarda aprovação.");
+    } catch (err: any) {
+      setError(err?.message || "Falha ao solicitar nota de crédito.");
+    } finally {
+      setAction(null);
+    }
+  }
+
+  function toggleItemCreditNote(itemId: string) {
+    setItemCreditNotes((current) => {
+      const state = current[itemId] || { open: false, reason: "", pending: false };
+      return { ...current, [itemId]: { ...state, open: !state.open } };
+    });
+  }
+
+  function setItemCreditNoteReason(itemId: string, reason: string) {
+    setItemCreditNotes((current) => {
+      const state = current[itemId] || { open: true, reason: "", pending: false };
+      return { ...current, [itemId]: { ...state, reason } };
+    });
+  }
+
+  async function requestItemCreditNote(itemId: string) {
+    if (!paymentInvoice?.id || creditNoteItemSubmitting) return;
+    try {
+      setCreditNoteItemSubmitting(itemId);
+      setError(null);
+      const reason = itemCreditNotes[itemId]?.reason?.trim() || "";
+      await apiFetch(`/billing/invoice/${paymentInvoice.id}/request-credit-note/`, {
+        method: "POST",
+        body: JSON.stringify({ reason, sale_item: itemId }),
+        clientCache: false,
+      });
+      setItemCreditNotes((current) => ({
+        ...current,
+        [itemId]: { open: false, reason: "", pending: true },
+      }));
+      setPaymentFeedback("Pedido de nota de crédito do item enviado. Aguarda aprovação.");
+    } catch (err: any) {
+      setError(err?.message || "Falha ao solicitar nota de crédito do item.");
+    } finally {
+      setCreditNoteItemSubmitting(null);
     }
   }
 
@@ -526,7 +686,17 @@ export default function SalesDetailPage() {
                     {action === "payment" ? <Loader2 size={13} className="animate-spin" /> : <CreditCard size={13} />}
                     Pagar fatura
                   </button>
-                ) : null}
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { setCreditNoteOpen((open) => !open); setPaymentFeedback(null); }}
+                    disabled={!sale || loading || action !== null || creditNotePending}
+                    className="inline-flex h-8 items-center gap-1 rounded-md bg-amber-600 px-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {action === "credit-note" ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
+                    {creditNotePending ? "Nota de crédito solicitada" : "Solicitar nota de crédito"}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={generateReceipt}
@@ -560,6 +730,46 @@ export default function SalesDetailPage() {
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-300">
             {paymentFeedback}
           </div>
+        ) : null}
+
+        {creditNoteOpen && invoicePaid && paymentInvoice ? (
+          <section className={`${GLASS} relative overflow-visible border-l-4 border-l-amber-500`}>
+            <div className="space-y-3 px-3 py-2 pl-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-bold text-foreground">Solicitar nota de crédito</h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    {paymentInvoice.custom_id || `Fatura #${paymentInvoice.id}`} · Total {formatMoney(paymentInvoice.total)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCreditNoteOpen(false)}
+                  className="inline-flex h-8 items-center rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+                >
+                  Fechar
+                </button>
+              </div>
+              <textarea
+                value={creditNoteReason}
+                onChange={(event) => setCreditNoteReason(event.target.value)}
+                rows={2}
+                placeholder="Motivo (opcional): ex. cobrança em duplicado, valor incorreto…"
+                className="w-full rounded-md border border-border bg-background/60 px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={requestCreditNote}
+                  disabled={action !== null}
+                  className="inline-flex h-8 items-center gap-1 rounded-md bg-amber-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {action === "credit-note" ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
+                  Enviar pedido
+                </button>
+              </div>
+            </div>
+          </section>
         ) : null}
 
         {paymentOpen && paymentInvoice ? (
@@ -715,9 +925,23 @@ export default function SalesDetailPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-                    {items.map((item) => (
-                      <ItemCard key={item.id} item={item} products={productsMap} />
-                    ))}
+                    {items.map((item) => {
+                      const itemKey = String(item.id);
+                      const state = itemCreditNotes[itemKey] || { open: false, reason: "", pending: false };
+                      return (
+                        <ItemCard
+                          key={item.id}
+                          item={item}
+                          products={productsMap}
+                          canRequestCreditNote={invoicePaid}
+                          creditNoteState={state}
+                          onToggleCreditNote={() => toggleItemCreditNote(itemKey)}
+                          onReasonChange={(value) => setItemCreditNoteReason(itemKey, value)}
+                          onSubmitCreditNote={() => requestItemCreditNote(itemKey)}
+                          submitting={creditNoteItemSubmitting === itemKey}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>

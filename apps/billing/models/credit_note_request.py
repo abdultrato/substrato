@@ -57,6 +57,17 @@ class CreditNoteRequest(NoNameCoreModel):
         blank=True,
         related_name="credit_note_requests",
     )
+    sale_item = models.ForeignKey(
+        "farmacia.SaleItem",
+        db_column="sale_item_id",
+        verbose_name="Item de venda",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="credit_note_requests",
+        db_index=True,
+        help_text="Item específico da venda a estornar; nulo quando o pedido é sobre a fatura inteira.",
+    )
 
     amount = MoneyField("Valor solicitado", db_column="amount", default=Decimal("0.00"))
     reason = models.TextField("Motivo", db_column="reason", blank=True, default="")
@@ -96,6 +107,8 @@ class CreditNoteRequest(NoNameCoreModel):
         super().clean()
         if self.invoice_id and self.tenant_id and self.invoice.tenant_id != self.tenant_id:
             raise ValidationError({"invoice": "Fatura e pedido devem pertencer ao mesmo tenant."})
+        if self.sale_item_id and self.tenant_id and self.sale_item.tenant_id != self.tenant_id:
+            raise ValidationError({"sale_item": "Item de venda e pedido devem pertencer ao mesmo tenant."})
         if self.amount is None or self.amount < Decimal("0.00"):
             raise ValidationError({"amount": "Valor inválido."})
 
@@ -104,8 +117,13 @@ class CreditNoteRequest(NoNameCoreModel):
             self.tenant_id = self.invoice.tenant_id
         if not self.patient_id and self.invoice_id:
             self.patient_id = self.invoice.patient_id
-        if (self.amount is None or self.amount == Decimal("0.00")) and self.invoice_id and not self.pk:
-            self.amount = self.invoice.total or Decimal("0.00")
+        if (self.amount is None or self.amount == Decimal("0.00")) and not self.pk:
+            # Valor por defeito: total do item (se for pedido por item) ou da fatura.
+            if self.sale_item_id:
+                item = self.sale_item
+                self.amount = (item.quantity or 0) * (item.unit_price or Decimal("0.00"))
+            elif self.invoice_id:
+                self.amount = self.invoice.total or Decimal("0.00")
         self.full_clean()
         return super().save(*args, **kwargs)
 

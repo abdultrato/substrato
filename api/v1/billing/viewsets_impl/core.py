@@ -599,10 +599,23 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         invoice = self.get_object()
         if invoice.status != Invoice.Status.PAID:
             raise ValidationError("Apenas faturas pagas podem ter pedidos de nota de crédito.")
-        if CreditNoteRequest.objects.filter(invoice=invoice, status=CreditNoteRequest.Status.PENDING, deleted=False).exists():
-            raise ValidationError("Já existe um pedido de nota de crédito pendente para esta fatura.")
-        reason = (request.data or {}).get("reason", "") if isinstance(request.data, dict) else ""
-        credit_note = CreditNoteRequest(invoice=invoice, reason=reason or "")
+        data = request.data if isinstance(request.data, dict) else {}
+        reason = data.get("reason", "") or ""
+        sale_item_id = data.get("sale_item") or None
+
+        base_qs = CreditNoteRequest.objects.filter(
+            invoice=invoice, status=CreditNoteRequest.Status.PENDING, deleted=False
+        )
+        if sale_item_id:
+            # Pedido por item: impede duplicado apenas para o mesmo item.
+            if base_qs.filter(sale_item_id=sale_item_id).exists():
+                raise ValidationError("Já existe um pedido de nota de crédito pendente para este item.")
+            credit_note = CreditNoteRequest(invoice=invoice, sale_item_id=sale_item_id, reason=reason)
+        else:
+            # Pedido sobre a fatura inteira: mantém a regra de um pendente sem item.
+            if base_qs.filter(sale_item__isnull=True).exists():
+                raise ValidationError("Já existe um pedido de nota de crédito pendente para esta fatura.")
+            credit_note = CreditNoteRequest(invoice=invoice, reason=reason)
         credit_note.save()
         return Response(CreditNoteRequestSerializer(credit_note).data, status=201)
 
