@@ -455,8 +455,11 @@ export default function FarmaciaMovimentosPage() {
   const currentAdjustments = summary?.count_adjustments ?? pageAdjustments;
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]}>
-      <div className="w-full space-y-2 px-1">
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]} fullWidth>
+      {/* Margens negativas anulam o padding horizontal do <main> do AppLayout,
+          aproximando a página da largura total (~99vw) apenas aqui. w-auto (não
+          w-full) evita overflow horizontal ao combinar com as margens negativas. */}
+      <div className="w-auto space-y-1 -mx-2 px-0.5 sm:-mx-3 md:-mx-4">
         <section className={`${GLASS} relative overflow-hidden`}>
           <span className="absolute inset-y-0 left-0 w-1 bg-violet-500" />
           <div className="space-y-2 px-3 py-2 pl-4">
@@ -717,7 +720,7 @@ export default function FarmaciaMovimentosPage() {
           </section>
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {data.map((movement) => (
                 <MovementCard key={movement.id} movement={movement} />
               ))}
