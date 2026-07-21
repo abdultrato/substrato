@@ -415,6 +415,8 @@ const MODULES_BASE: ModuleGroup[] = [
     label: "Farmácia",
     resources: [
       { key: "product", label: "Produtos", endpoint: "/pharmacy/product/", adminListHref: "/admin/pharmacy/product/" },
+      { key: "product_category", label: "Categorias", endpoint: "/pharmacy/product-categories/", adminListHref: "/admin/pharmacy/productcategory/" },
+      { key: "parent_category", label: "Categorias-pai", endpoint: "/pharmacy/parent-categories/", adminListHref: "/admin/pharmacy/parentcategory/" },
       { key: "lot", label: "Lotes", endpoint: "/pharmacy/lot/", adminListHref: "/admin/pharmacy/lot/" },
       { key: "inventory_movement", label: "Movimentos de Estoque", endpoint: "/pharmacy/inventory_movement/", adminListHref: "/admin/pharmacy/inventorymovement/" },
       { key: "sale", label: "Vendas", endpoint: "/pharmacy/sale/", adminListHref: "/admin/pharmacy/sale/" },
