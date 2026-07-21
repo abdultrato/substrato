@@ -6,6 +6,7 @@ from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.material_requisition import MaterialRequisition
 from apps.pharmacy.models.material_requisition_item import MaterialRequisitionItem
 from apps.pharmacy.models.product import Product
+from apps.pharmacy.models.product_category import ParentCategory, ProductCategory
 from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
 
@@ -206,6 +207,23 @@ class MaterialRequisitionItemFilter(SafeFilterSet):
 
 
 # =====================================================
+# CATEGORIES
+# =====================================================
+
+
+class ParentCategoryFilter(SafeFilterSet):
+    class Meta:
+        model = ParentCategory
+        fields = ["tenant", "custom_id", "name", "deleted", "created_at", "updated_at"]
+
+
+class ProductCategoryFilter(SafeFilterSet):
+    class Meta:
+        model = ProductCategory
+        fields = ["tenant", "custom_id", "name", "parent_category", "deleted", "created_at", "updated_at"]
+
+
+# =====================================================
 # MAPA
 # =====================================================
 
@@ -217,5 +235,7 @@ FILTER_MAP = {
     "material_requisition": MaterialRequisitionFilter,
     "material_requisition_item": MaterialRequisitionItemFilter,
     "sale": SaleFilter,
+    "parent-categories": ParentCategoryFilter,
+    "product-categories": ProductCategoryFilter,
 }
 

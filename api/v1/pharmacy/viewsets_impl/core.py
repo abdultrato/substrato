@@ -25,6 +25,7 @@ from apps.pharmacy.models.material_requisition import (
 )
 from apps.pharmacy.models.material_requisition_item import MaterialRequisitionItem
 from apps.pharmacy.models.product import Product
+from apps.pharmacy.models.product_category import ParentCategory, ProductCategory
 from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
 from security.permissions.rbac import GROUPS as RBAC_GROUPS, _normalize
@@ -34,6 +35,8 @@ from ..filters import (
     LotFilter,
     MaterialRequisitionFilter,
     MaterialRequisitionItemFilter,
+    ParentCategoryFilter,
+    ProductCategoryFilter,
     ProductFilter,
     SaleFilter,
     SaleItemFilter,
@@ -43,6 +46,8 @@ from ..serializers import (
     LotSerializer,
     MaterialRequisitionItemSerializer,
     MaterialRequisitionSerializer,
+    ParentCategorySerializer,
+    ProductCategorySerializer,
     ProductSerializer,
     SaleItemSerializer,
     SaleSerializer,
@@ -909,6 +914,49 @@ class SaleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
         raise ValidationError({"receipt": "Recibo só pode ser gerado depois de pagamento confirmado da fatura."})
 
 
+class ParentCategoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = ParentCategory.objects.all()
+    serializer_class = ParentCategorySerializer
+    filterset_class = ParentCategoryFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = ["custom_id", "name", "description"]
+    ordering_fields = [
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
+    ]
+    ordering = ["name"]
+
+
+class ProductCategoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = ProductCategory.objects.select_related("parent_category").all()
+    serializer_class = ProductCategorySerializer
+    filterset_class = ProductCategoryFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = ["custom_id", "name", "description", "parent_category__name"]
+    ordering_fields = [
+        "tenant",
+        "custom_id",
+        "name",
+        "deleted",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "parent_category",
+        "version",
+    ]
+    ordering = ["name"]
+
+
 VIEWSET_MAP = {
     "sale_item": SaleItemViewSet,
     "lot": LotViewSet,
@@ -917,6 +965,8 @@ VIEWSET_MAP = {
     "material_requisition": None,
     "material_requisition_item": None,
     "sale": SaleViewSet,
+    "parent-categories": ParentCategoryViewSet,
+    "product-categories": ProductCategoryViewSet,
 }
 
 

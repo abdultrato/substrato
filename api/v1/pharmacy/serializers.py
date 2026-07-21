@@ -9,6 +9,7 @@ from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.material_requisition import MaterialRequisition
 from apps.pharmacy.models.material_requisition_item import MaterialRequisitionItem
 from apps.pharmacy.models.product import Product
+from apps.pharmacy.models.product_category import ParentCategory, ProductCategory
 from apps.pharmacy.models.sale import Sale
 from apps.pharmacy.models.sale_item import SaleItem
 
@@ -478,6 +479,22 @@ class MaterialRequisitionSerializer(LegacyAliasSerializerMixin, serializers.Mode
         return requisition
 
 
+class ParentCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ParentCategory
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
+
+
+class ProductCategorySerializer(serializers.ModelSerializer):
+    parent_category_name = serializers.CharField(source="parent_category.name", read_only=True, default=None)
+
+    class Meta:
+        model = ProductCategory
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
+
+
 SERIALIZER_MAP = {
     "sale_item": SaleItemSerializer,
     "lot": LotSerializer,
@@ -486,4 +503,6 @@ SERIALIZER_MAP = {
     "material_requisition": MaterialRequisitionSerializer,
     "material_requisition_item": MaterialRequisitionItemSerializer,
     "sale": SaleSerializer,
+    "parent-categories": ParentCategorySerializer,
+    "product-categories": ProductCategorySerializer,
 }
