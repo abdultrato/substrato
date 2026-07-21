@@ -172,6 +172,11 @@ export default function FarmaciaMovimentosPage() {
   const [pageSize, setPageSize] = useState(20);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [summary, setSummary] = useState<{
+    total_entries: number;
+    total_exits: number;
+    total_adjustments: number;
+  } | null>(null);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [reportType, setReportType] = useState<"ALL" | "ENT" | "SAI" | "AJU">(
@@ -235,6 +240,37 @@ export default function FarmaciaMovimentosPage() {
       mounted = false;
     };
   }, [page, pageSize, reportType, safeRefreshToken]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadSummary() {
+      try {
+        const url =
+          reportType !== "ALL"
+            ? `/pharmacy/inventory_movement/summary/?type=${reportType}`
+            : "/pharmacy/inventory_movement/summary/";
+        const result = await apiFetch<{
+          total_entries?: number;
+          total_exits?: number;
+          total_adjustments?: number;
+        }>(url, {
+          clientCache: safeRefreshToken === 0,
+        });
+        if (!mounted) return;
+        setSummary({
+          total_entries: Number(result?.total_entries ?? 0),
+          total_exits: Number(result?.total_exits ?? 0),
+          total_adjustments: Number(result?.total_adjustments ?? 0),
+        });
+      } catch {
+        if (mounted) setSummary(null);
+      }
+    }
+    loadSummary();
+    return () => {
+      mounted = false;
+    };
+  }, [reportType, safeRefreshToken]);
 
   const downloadPdf = useCallback(async (url: string, filename: string) => {
     const blob = await apiFetch<Blob>(url, { responseType: "blob" });
@@ -398,9 +434,14 @@ export default function FarmaciaMovimentosPage() {
     }
   }, [downloadPdf, buildCommonParams, reportProductId]);
 
-  const currentEntries = data.filter((row) => movementType(row) === "ENT").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
-  const currentExits = data.filter((row) => movementType(row) === "SAI").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
-  const currentAdjustments = data.filter((row) => movementType(row) === "AJU").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
+  // Totais agregados de TODOS os movimentos (via endpoint), com fallback para a
+  // soma da página atual caso o resumo ainda não tenha carregado.
+  const pageEntries = data.filter((row) => movementType(row) === "ENT").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
+  const pageExits = data.filter((row) => movementType(row) === "SAI").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
+  const pageAdjustments = data.filter((row) => movementType(row) === "AJU").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
+  const currentEntries = summary?.total_entries ?? pageEntries;
+  const currentExits = summary?.total_exits ?? pageExits;
+  const currentAdjustments = summary?.total_adjustments ?? pageAdjustments;
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]}>

@@ -234,6 +234,28 @@ class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     ]
     ordering = ["-created_at"]
 
+    @action(detail=False, methods=["get"], url_path="summary", url_name="summary")
+    def summary(self, request):
+        """
+        Totais agregados de TODOS os movimentos que correspondem aos filtros
+        ativos (não apenas a página atual). Usado pelos cartões de resumo.
+        """
+        qs = self.filter_queryset(self.get_queryset()).filter(deleted=False)
+        summary_raw = qs.aggregate(
+            moves_count=Count("id"),
+            total_entries=Sum("quantity", filter=Q(type="ENT")),
+            total_exits=Sum("quantity", filter=Q(type="SAI")),
+            total_adjustments=Sum("quantity", filter=Q(type="AJU")),
+        )
+        return Response(
+            {
+                "moves_count": int(summary_raw.get("moves_count") or 0),
+                "total_entries": int(summary_raw.get("total_entries") or 0),
+                "total_exits": int(summary_raw.get("total_exits") or 0),
+                "total_adjustments": int(summary_raw.get("total_adjustments") or 0),
+            }
+        )
+
     @action(detail=False, methods=["get"], url_path="history/pdf", url_name="history-pdf")
     def history_pdf(self, request):
         """
