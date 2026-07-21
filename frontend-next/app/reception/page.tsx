@@ -430,7 +430,6 @@ export default function RecepcaoPage() {
   const [workspace, setWorkspace] = useState<ReceptionWorkspace>(EMPTY_WORKSPACE);
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [approvedNotes, setApprovedNotes] = useState<CreditNoteRow[]>([]);
   const [rejectedNotes, setRejectedNotes] = useState<CreditNoteRow[]>([]);
@@ -495,8 +494,6 @@ export default function RecepcaoPage() {
       if (initial) {
         setCarregando(true);
         setLoadingNotes(true);
-      } else {
-        setRefreshing(true);
       }
 
       const [workspaceResult, approvedResult, rejectedResult, checkinsResult] =
@@ -558,7 +555,6 @@ export default function RecepcaoPage() {
       setErro(nextError);
       setCarregando(false);
       setLoadingNotes(false);
-      setRefreshing(false);
       setLastRefresh(new Date());
     },
     [],
@@ -696,12 +692,6 @@ export default function RecepcaoPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  {refreshing ? (
-                    <span className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-white/20 bg-white/40 px-3 text-xs text-muted-foreground dark:bg-white/[0.08]">
-                      <Loader2 size={13} className="animate-spin" />
-                      Actualizando
-                    </span>
-                  ) : null}
                   <button
                     type="button"
                     onClick={() => setShowWizard(true)}
@@ -1169,7 +1159,7 @@ function ChatbotPanel({
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
           <Bot size={12} />
         </span>
-        <h2 className="text-xs font-bold text-foreground">Chatbot Substrato</h2>
+        <h2 className="text-xs font-bold text-foreground">Chat</h2>
         {messages.length > 0 || composer.trim() ? (
           <button
             type="button"
