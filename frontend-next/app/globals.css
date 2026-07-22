@@ -59,7 +59,10 @@
     --ui-text-size: 0.9em;
     --ui-text-size-relaxed: 1em;
     --ui-title-size: 1.5em;
-    --workspace-content-width: 85vw;
+    /* Largura útil do conteúdo: ocupa quase toda a área disponível (99vw),
+       mas nunca ultrapassa o espaço real dentro do shell (100% da coluna,
+       já descontada a sidebar), evitando cortar itens em qualquer contexto. */
+    --workspace-content-width: min(99vw, 100%);
 
     --background-hsl: 210 24% 97%;
     --foreground-hsl: 222 47% 11%;
@@ -238,7 +241,7 @@
       ),
       var(--substrato-logo-url);
     background-repeat: repeat, space;
-    background-size: auto, 96px auto;
+    background-size: auto, 64px auto;
     background-attachment: fixed, fixed;
   }
 
@@ -254,7 +257,7 @@
       ),
       var(--substrato-logo-url);
     background-repeat: repeat, space;
-    background-size: auto, 96px auto;
+    background-size: auto, 64px auto;
     background-attachment: fixed, fixed;
   }
 

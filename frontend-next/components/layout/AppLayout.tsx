@@ -161,7 +161,7 @@ export default function AppLayout ( {
                         <Header user={user} onMenuClick={handleMenuClick} />
                     </div>
 
-                    <main data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
+                    <main data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-1 py-1 sm:px-2 md:px-3 md:py-2">
                         <div className="page-transition mx-auto w-workspace max-w-workspace">
                             <AutoTranslateTree>
                                 <AccessDenied
@@ -229,7 +229,7 @@ export default function AppLayout ( {
                     </div>
                 </div>
 
-                <main data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
+                <main data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-1 py-1 sm:px-2 md:px-3 md:py-2">
                     <div className={`page-transition ${fullWidth ? "w-full" : "mx-auto w-workspace max-w-workspace"}`}>
                         {isUnauthorized ? (
                             <div className="mx-auto mb-3 w-full max-w-workspace rounded-2xl border border-amber-300/60 bg-amber-50/85 px-4 py-3 text-sm text-amber-950 shadow-sm backdrop-blur-sm dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-100">
