@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, ChevronRight, ClipboardList, Clock3, Headphones, Loader2, MonitorCheck, Plus, RefreshCw, Search, ShieldCheck, Stethoscope, UserRound, Video, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronRight, ClipboardList, Clock3, Headphones, Loader2, MonitorCheck, Plus, RefreshCw, Search, ShieldCheck, User, Video, XCircle } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
@@ -41,7 +40,6 @@ function waitLabel(value?: string | null) { if (!value) return "sem horário"; c
 function formatTime(value?: string | null) { if (!value) return "—"; const date = new Date(value); return Number.isNaN(date.getTime()) ? "—" : date.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }); }
 
 export default function TelemedicineWaitingRoomListPage() {
-  const refreshToken = useSafeDataRefreshSignal();
   const [items, setItems] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,18 +63,22 @@ export default function TelemedicineWaitingRoomListPage() {
     finally { if (!opts?.silent) setLoading(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load, refreshToken]);
+  useEffect(() => { load(); }, [load]);
 
-  // Auto-atualização em tempo real: recarrega em silêncio a cada AUTO_REFRESH_MS,
-  // saltando quando a aba está escondida ou há uma transição em curso.
+  // Auto-atualização em tempo real. Usa uma referência estável de `load` para o
+  // intervalo não ser recriado a cada render (evitava um ciclo de re-registo).
+  // Recarrega em silêncio, saltando quando a aba está escondida ou há uma
+  // transição em curso.
+  const loadRef = useRef(load);
+  useEffect(() => { loadRef.current = load; }, [load]);
   useEffect(() => {
     const timer = setInterval(() => {
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       if (busyRef.current) return;
-      load({ silent: true });
+      loadRef.current({ silent: true });
     }, AUTO_REFRESH_MS);
     return () => clearInterval(timer);
-  }, [load]);
+  }, []);
 
   // Executa uma transição de workflow (botão ou drop) e recarrega a fila.
   const runAction = useCallback(async (entry: Entry, endpoint: string) => {
@@ -160,25 +162,37 @@ function WaitingCard({ entry, column, busy, onAction }: { entry: Entry; column: 
   const inCall = entry.status === "IN_CALL";
   const advance = ADVANCE[column];
   const canRemove = column !== "call";
+  const urgent = entry.priority === "URGENT" || entry.priority === "EMERGENCY";
   return <div
     draggable={!busy}
     onDragStart={(event) => { event.dataTransfer.setData("text/plain", String(entry.id)); event.dataTransfer.effectAllowed = "move"; }}
-    className={`group relative block overflow-hidden rounded-xl border border-white/60 bg-white/80 p-3 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-300 hover:shadow-md dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-cyan-600/60 ${busy ? "pointer-events-none opacity-60" : "cursor-grab active:cursor-grabbing"}`}
+    className={`group relative overflow-hidden rounded-lg border border-white/60 bg-white/80 shadow-sm transition hover:border-cyan-300 hover:shadow-md dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-cyan-600/60 ${busy ? "pointer-events-none opacity-60" : "cursor-grab active:cursor-grabbing"}`}
   >
-    <span className={`absolute inset-y-0 left-0 w-1 ${inCall ? "bg-violet-500" : entry.priority === "URGENT" || entry.priority === "EMERGENCY" ? "bg-rose-500" : "bg-cyan-500"}`} />
-    <div className="pl-2">
-      <Link href={`/telemedicine/waiting-room/${entry.id}`} className="block">
-        <div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="font-mono text-[10px] text-muted-foreground">{entry.custom_id || `TWR-${entry.id}`}</p><p className="truncate text-sm font-bold text-foreground">{entry.patient_name || "Paciente não identificado"}</p></div><span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ${priorityStyle(entry.priority)}`}>{priorityLabel(entry.priority)}</span></div>
-        <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">{entry.chief_complaint || "Sem queixa registada"}</p>
-        <div className="mt-2 flex flex-wrap gap-1"><span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-300"><Clock3 size={10} /> {waitLabel(entry.check_in_at)}</span>{entry.device_check_passed ? <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"><MonitorCheck size={10} /> Dispositivo</span> : null}{entry.consent_confirmed ? <span className="inline-flex items-center gap-1 rounded-md bg-cyan-50 px-1.5 py-0.5 text-[10px] text-cyan-700 dark:bg-cyan-950/30 dark:text-cyan-300"><ShieldCheck size={10} /> Consentimento</span> : null}</div>
-        <div className="mt-2 flex items-center justify-between border-t border-border/50 pt-2 text-[10px] text-muted-foreground"><span className="inline-flex min-w-0 items-center gap-1 truncate"><UserRound size={10} /> {entry.clinician_name || "Sem clínico"}</span><span className="inline-flex items-center gap-0.5">{inCall ? <><Stethoscope size={10} /> Em curso</> : `Fila ${entry.queue_position || "—"}`}<ChevronRight size={13} className="opacity-0 transition group-hover:opacity-100" /></span></div>
-        {entry.estimated_start_at ? <p className="mt-1 text-[10px] text-muted-foreground">Previsão: {formatTime(entry.estimated_start_at)}</p> : null}
-      </Link>
-      {/* Ações de fluxo: avançar etapa + remover (faltou). */}
-      <div className="mt-2 flex items-center gap-1.5">
-        {advance ? <button type="button" disabled={busy} onClick={() => onAction(entry, advance.endpoint)} className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg bg-gradient-to-r from-cyan-600 to-violet-600 px-2 text-[11px] font-semibold text-white shadow-sm transition hover:from-cyan-700 hover:to-violet-700 disabled:opacity-50">{busy ? <Loader2 size={12} className="animate-spin" /> : <ChevronRight size={12} />} {advance.label}</button> : null}
-        {canRemove ? <button type="button" disabled={busy} title="Marcar como faltou" onClick={() => onAction(entry, "faltou")} className="inline-flex h-7 items-center justify-center gap-1 rounded-lg border border-rose-200 bg-white px-2 text-[11px] font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-800/40 dark:bg-slate-900/60 dark:text-rose-300"><XCircle size={12} /> Faltou</button> : null}
+    <span className={`absolute inset-y-0 left-0 w-1 ${inCall ? "bg-violet-500" : urgent ? "bg-rose-500" : "bg-cyan-500"}`} />
+    <Link href={`/telemedicine/waiting-room/${entry.id}`} className="block py-1.5 pl-2.5 pr-2">
+      {/* Linha 1: nome + prioridade — a informação de identificação de relance. */}
+      <div className="flex items-center gap-1.5">
+        <p className="min-w-0 flex-1 truncate text-[13px] font-bold leading-tight text-foreground">{entry.patient_name || "Paciente não identificado"}</p>
+        {urgent ? <span className={`shrink-0 rounded px-1 py-px text-[9px] font-bold uppercase ${priorityStyle(entry.priority)}`}>{priorityLabel(entry.priority)}</span> : null}
       </div>
+      {/* Linha 2: espera · clínico · fila + selos de dispositivo/consentimento. */}
+      <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+        <span className={`inline-flex items-center gap-0.5 font-semibold ${urgent ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`}><Clock3 size={10} /> {waitLabel(entry.check_in_at)}</span>
+        <span className="inline-flex min-w-0 items-center gap-0.5 truncate"><User size={10} /> {entry.clinician_name || "Sem clínico"}</span>
+        <span className="ml-auto inline-flex shrink-0 items-center gap-1">
+          {entry.device_check_passed ? <MonitorCheck size={11} className="text-emerald-600 dark:text-emerald-400" /> : null}
+          {entry.consent_confirmed ? <ShieldCheck size={11} className="text-cyan-600 dark:text-cyan-400" /> : null}
+          <span className="tabular-nums">{inCall ? "em curso" : `#${entry.queue_position || "—"}`}</span>
+        </span>
+      </div>
+    </Link>
+    {/* Ações de fluxo compactas: avançar etapa (ícone-only) + faltou. */}
+    <div className="flex items-center gap-1 border-t border-border/40 px-1.5 py-1">
+      {advance ? <button type="button" disabled={busy} title={advance.label} onClick={() => onAction(entry, advance.endpoint)} className="inline-flex h-6 flex-1 items-center justify-center gap-1 rounded-md bg-gradient-to-r from-cyan-600 to-violet-600 text-[10px] font-semibold text-white transition hover:from-cyan-700 hover:to-violet-700 disabled:opacity-50">{busy ? <Loader2 size={11} className="animate-spin" /> : <ChevronRight size={11} />} {advance.label}</button> : <span className="flex-1" />}
+      {canRemove ? <button type="button" disabled={busy} title="Marcar como faltou" onClick={() => onAction(entry, "faltou")} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-800/40 dark:text-rose-300"><XCircle size={12} /></button> : null}
     </div>
   </div>;
 }
+
+
+
