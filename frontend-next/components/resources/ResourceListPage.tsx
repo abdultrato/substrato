@@ -380,6 +380,7 @@ export default function ResourceListPage({
   heroClassName,
   heroAccentClassName,
   clientFullTextSearch = false,
+  accessRestrictionMode,
 }: {
   title: string
   subtitle?: string
@@ -388,6 +389,7 @@ export default function ResourceListPage({
   createHref?: string
   rowHref?: RowHref
   requiredGroups?: string[]
+  accessRestrictionMode?: "data" | "page"
   groupLabel?: string
   resourceLabel?: string
   /** Quando definido, a lista é renderizada como cartões (em vez da tabela). */
@@ -640,7 +642,7 @@ export default function ResourceListPage({
   if (loading) return null
 
   return (
-    <AppLayout requiredGroups={requiredGroups}>
+    <AppLayout requiredGroups={requiredGroups} accessRestrictionMode={accessRestrictionMode}>
       <div className="mx-auto w-full max-w-6xl space-y-2.5">
         {/* Glassmorphism hero with inline search */}
         <section className={`relative overflow-hidden rounded-xl border shadow-sm backdrop-blur-sm ${heroClassName || "border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20"}`}>

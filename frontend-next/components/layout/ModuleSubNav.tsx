@@ -387,8 +387,8 @@ const MODULE_NAVS: ModuleNavConfig[] = [
         tabs: [
             { href: "/pharmacy", label: "Painel", labelEn: "Overview" },
             { href: "/pharmacy/products", label: "Produtos", labelEn: "Products" },
-            { href: "/pharmacy/product-categories", label: "Categorias", labelEn: "Categories" },
-            { href: "/pharmacy/parent-categories", label: "Categorias-pai", labelEn: "Parent categories" },
+            { href: "/pharmacy/product-categories", label: "Categorias", labelEn: "Categories", groups: [GROUPS.ADMIN] },
+            { href: "/pharmacy/parent-categories", label: "Categorias-pai", labelEn: "Parent categories", groups: [GROUPS.ADMIN] },
             { href: "/pharmacy/lots", label: "Lotes", labelEn: "Lots" },
             { href: "/pharmacy/movements", label: "Movimentos", labelEn: "Movements" },
             { href: "/pharmacy/inventory-movements", label: "Movimentos de inventário", labelEn: "Inventory movements" },

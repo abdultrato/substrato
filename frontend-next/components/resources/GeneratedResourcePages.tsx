@@ -106,6 +106,18 @@ function findByEndpoint(
   return null
 }
 
+// Recursos restritos a administradores (backend também só permite ADMIN).
+// A UI reflete isso para não mostrar o recurso a quem não pode aceder.
+const ADMIN_ONLY_ENDPOINTS = new Set([
+  "/pharmacy/parent-categories/",
+  "/pharmacy/product-categories/",
+])
+
+function resolveRequiredGroups(normalizedEndpoint: string, groupKey: string): string[] {
+  if (ADMIN_ONLY_ENDPOINTS.has(normalizedEndpoint)) return [GROUPS.ADMIN]
+  return requiredGroupsForResourceGroup(groupKey)
+}
+
 function buildEndpointContext(modules: ModuleGroup[], endpoint: string): EndpointContext {
   const routeEndpoint = normalizeEndpoint(endpoint)
   const normalizedEndpoint = normalizeEducationEndpoint(routeEndpoint)
@@ -123,7 +135,7 @@ function buildEndpointContext(modules: ModuleGroup[], endpoint: string): Endpoin
       resourceKey: match.resource.key,
       resourceLabel: match.resource.label,
       adminListHref: match.resource.adminListHref,
-      requiredGroups: requiredGroupsForResourceGroup(groupKey),
+      requiredGroups: resolveRequiredGroups(normalizedEndpoint, groupKey),
     }
   }
 
@@ -139,7 +151,7 @@ function buildEndpointContext(modules: ModuleGroup[], endpoint: string): Endpoin
     groupLabel,
     resourceKey: educationUi?.key || parsed.resourceKey,
     resourceLabel,
-    requiredGroups: requiredGroupsForResourceGroup(parsed.groupKey),
+    requiredGroups: resolveRequiredGroups(normalizedEndpoint, parsed.groupKey),
   }
 }
 
@@ -240,6 +252,7 @@ export function GeneratedResourceListPage({
       createHref={canCreate ? `${basePath}/new` : undefined}
       rowHref={(row) => buildRecordDetailHref(basePath, row)}
       requiredGroups={ctx.requiredGroups}
+      accessRestrictionMode={ADMIN_ONLY_ENDPOINTS.has(ctx.normalizedEndpoint) ? "page" : undefined}
       clientFullTextSearch={ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/") || isInvoiceList}
       heroIcon={isInvoiceList ? <Receipt size={22} strokeWidth={2} /> : undefined}
       heroClassName={isInvoiceList ? INVOICE_BANNER : undefined}
