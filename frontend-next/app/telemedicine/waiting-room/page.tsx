@@ -21,11 +21,11 @@ const COLUMNS: Array<{ key: Column; label: string; hint: string; tone: string; c
 
 // Transição de "avanço" de cada coluna: endpoint da API + coluna de destino.
 // Suporta tanto os botões de ação como o drag-and-drop entre colunas adjacentes.
-const ADVANCE: Record<Column, { endpoint: string; label: string; to: Column | null } | null> = {
-  waiting: { endpoint: "iniciar-triagem", label: "Iniciar triagem", to: "triage" },
-  triage: { endpoint: "marcar-pronto", label: "Marcar pronto", to: "ready" },
-  ready: { endpoint: "iniciar-chamada", label: "Iniciar chamada", to: "call" },
-  call: { endpoint: "concluir", label: "Concluir", to: null },
+const ADVANCE: Record<Column, { endpoint: string; label: string; short: string; to: Column | null } | null> = {
+  waiting: { endpoint: "iniciar-triagem", label: "Iniciar triagem", short: "Triagem", to: "triage" },
+  triage: { endpoint: "marcar-pronto", label: "Marcar pronto", short: "Pronto", to: "ready" },
+  ready: { endpoint: "iniciar-chamada", label: "Iniciar chamada", short: "Chamar", to: "call" },
+  call: { endpoint: "concluir", label: "Concluir", short: "Concluir", to: null },
 };
 
 const AUTO_REFRESH_MS = 15000;
@@ -167,29 +167,29 @@ function WaitingCard({ entry, column, busy, onAction }: { entry: Entry; column: 
   return <div
     draggable={!busy}
     onDragStart={(event) => { event.dataTransfer.setData("text/plain", String(entry.id)); event.dataTransfer.effectAllowed = "move"; }}
-    className={`group relative flex h-full w-44 shrink-0 flex-col overflow-hidden rounded-lg border border-white/60 bg-white/80 shadow-sm transition hover:border-cyan-300 hover:shadow-md dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-cyan-600/60 ${busy ? "pointer-events-none opacity-60" : "cursor-grab active:cursor-grabbing"}`}
+    className={`group relative flex h-full w-32 shrink-0 flex-col overflow-hidden rounded-lg border border-white/60 bg-white/80 shadow-sm transition hover:border-cyan-300 hover:shadow-md dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-cyan-600/60 ${busy ? "pointer-events-none opacity-60" : "cursor-grab active:cursor-grabbing"}`}
   >
     <span className={`absolute inset-y-0 left-0 w-1 ${inCall ? "bg-violet-500" : urgent ? "bg-rose-500" : "bg-cyan-500"}`} />
     <Link href={`/telemedicine/waiting-room/${entry.id}`} className="block flex-1 py-1.5 pl-2.5 pr-2">
-      {/* Linha 1: nome + prioridade — a informação de identificação de relance. */}
-      <div className="flex items-center gap-1.5">
-        <p className="min-w-0 flex-1 truncate text-[13px] font-bold leading-tight text-foreground">{entry.patient_name || "Paciente não identificado"}</p>
-        {urgent ? <span className={`shrink-0 rounded px-1 py-px text-[9px] font-bold uppercase ${priorityStyle(entry.priority)}`}>{priorityLabel(entry.priority)}</span> : null}
-      </div>
-      {/* Linha 2: espera · clínico · fila + selos de dispositivo/consentimento. */}
-      <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+      {/* Linha 1: nome (identificação de relance). */}
+      <p className="truncate text-xs font-bold leading-tight text-foreground">{entry.patient_name || "Sem nome"}</p>
+      {/* Linha 2: espera + posição na fila. */}
+      <div className="mt-0.5 flex items-center justify-between text-[10px]">
         <span className={`inline-flex items-center gap-0.5 font-semibold ${urgent ? "text-rose-600 dark:text-rose-400" : "text-foreground"}`}><Clock3 size={10} /> {waitLabel(entry.check_in_at)}</span>
+        <span className="tabular-nums text-muted-foreground">{inCall ? "em curso" : `#${entry.queue_position || "—"}`}</span>
+      </div>
+      {/* Linha 3: clínico + selos de dispositivo/consentimento. */}
+      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
         <span className="inline-flex min-w-0 items-center gap-0.5 truncate"><User size={10} /> {entry.clinician_name || "Sem clínico"}</span>
-        <span className="ml-auto inline-flex shrink-0 items-center gap-1">
-          {entry.device_check_passed ? <MonitorCheck size={11} className="text-emerald-600 dark:text-emerald-400" /> : null}
-          {entry.consent_confirmed ? <ShieldCheck size={11} className="text-cyan-600 dark:text-cyan-400" /> : null}
-          <span className="tabular-nums">{inCall ? "em curso" : `#${entry.queue_position || "—"}`}</span>
+        <span className="ml-auto inline-flex shrink-0 items-center gap-0.5">
+          {entry.device_check_passed ? <MonitorCheck size={10} className="text-emerald-600 dark:text-emerald-400" /> : null}
+          {entry.consent_confirmed ? <ShieldCheck size={10} className="text-cyan-600 dark:text-cyan-400" /> : null}
         </span>
       </div>
     </Link>
     {/* Ações de fluxo compactas: avançar etapa (ícone-only) + faltou. */}
     <div className="flex items-center gap-1 border-t border-border/40 px-1.5 py-1">
-      {advance ? <button type="button" disabled={busy} title={advance.label} onClick={() => onAction(entry, advance.endpoint)} className="inline-flex h-6 flex-1 items-center justify-center gap-1 rounded-md bg-gradient-to-r from-cyan-600 to-violet-600 text-[10px] font-semibold text-white transition hover:from-cyan-700 hover:to-violet-700 disabled:opacity-50">{busy ? <Loader2 size={11} className="animate-spin" /> : <ChevronRight size={11} />} {advance.label}</button> : <span className="flex-1" />}
+      {advance ? <button type="button" disabled={busy} title={advance.label} onClick={() => onAction(entry, advance.endpoint)} className="inline-flex h-6 min-w-0 flex-1 items-center justify-center gap-0.5 rounded-md bg-gradient-to-r from-cyan-600 to-violet-600 px-1 text-[10px] font-semibold text-white transition hover:from-cyan-700 hover:to-violet-700 disabled:opacity-50">{busy ? <Loader2 size={11} className="shrink-0 animate-spin" /> : <ChevronRight size={11} className="shrink-0" />}<span className="truncate">{advance.short}</span></button> : <span className="flex-1" />}
       {canRemove ? <button type="button" disabled={busy} title="Marcar como faltou" onClick={() => onAction(entry, "faltou")} className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:opacity-50 dark:border-rose-800/40 dark:text-rose-300"><XCircle size={12} /></button> : null}
     </div>
   </div>;
