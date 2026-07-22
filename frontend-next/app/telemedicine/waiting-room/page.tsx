@@ -38,7 +38,6 @@ function priorityStyle(priority?: string | null) {
 }
 function priorityLabel(priority?: string | null) { return ({ EMERGENCY: "Emergência", URGENT: "Urgente", PRIORITY: "Prioritário", ROUTINE: "Rotina" } as Record<string, string>)[String(priority || "").toUpperCase()] || "Rotina"; }
 function waitLabel(value?: string | null) { if (!value) return "sem horário"; const minutes = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 60000)); return minutes < 1 ? "agora" : minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)}h ${minutes % 60}min`; }
-function formatTime(value?: string | null) { if (!value) return "—"; const date = new Date(value); return Number.isNaN(date.getTime()) ? "—" : date.toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }); }
 
 export default function TelemedicineWaitingRoomListPage() {
   const [items, setItems] = useState<Entry[]>([]);
@@ -125,34 +124,37 @@ export default function TelemedicineWaitingRoomListPage() {
   }, [activeItems, runAction]);
 
   return <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.RECEPCAO, GROUPS.ENFERMAGEM]}>
-    <div className="mx-auto w-full max-w-[min(98vw,1680px)] space-y-2 px-2 pb-4">
-      <section className="relative overflow-hidden rounded-2xl border border-cyan-200/60 bg-white/55 shadow-sm backdrop-blur-xl dark:border-cyan-900/35 dark:bg-slate-950/45">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden"><div className="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-cyan-400/15 blur-3xl" /><div className="absolute left-1/3 -bottom-16 h-36 w-36 rounded-full bg-violet-400/10 blur-3xl" /></div>
-        <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-cyan-500 via-sky-500 to-violet-600" />
-        <div className="relative flex flex-wrap items-center gap-2 px-3 py-2.5"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 text-white shadow-md shadow-cyan-500/25"><Video size={20} /></div><div className="min-w-0 flex-1"><p className="text-[10px] font-medium uppercase tracking-[0.16em] text-cyan-700/75 dark:text-cyan-300/70">Telemedicina · Operação em tempo real</p><h1 className="text-lg font-bold leading-tight text-foreground">Sala de espera virtual</h1></div>
-          <div className="flex items-center gap-2">
-            <span className="hidden items-center gap-1 text-[10px] text-muted-foreground sm:inline-flex"><RefreshCw size={11} className={busyId != null ? "animate-spin" : ""} /> {lastSync ? `Atualizado ${formatTime(lastSync.toISOString())}` : "A sincronizar…"}</span>
-            <button type="button" onClick={() => load()} className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-cyan-200 bg-white/70 px-3 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-50 dark:border-cyan-800/50 dark:bg-slate-900/60 dark:text-cyan-300"><RefreshCw size={14} /> Atualizar</button>
-            <Link href="/telemedicine/waiting-room/new" className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-violet-600 px-3 text-sm font-semibold text-white shadow-md shadow-cyan-500/25 transition hover:from-cyan-700 hover:to-violet-700"><Plus size={15} /> Novo check-in</Link>
-          </div>
+    <div className="mx-auto w-full max-w-[min(99vw,1680px)] space-y-1 px-1 pb-2">
+      {/* Header mínimo: título + métricas inline + busca, tudo numa faixa fina. */}
+      <section className="relative flex flex-wrap items-center gap-x-2 gap-y-1 overflow-hidden rounded-lg border border-cyan-200/60 bg-white/55 px-2 py-1 shadow-sm backdrop-blur dark:border-cyan-900/35 dark:bg-slate-950/45">
+        <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-cyan-500 to-violet-600" />
+        <div className="flex items-center gap-1.5">
+          <Video size={16} className="text-cyan-600 dark:text-cyan-400" />
+          <h1 className="text-sm font-bold leading-none text-foreground">Sala de espera virtual</h1>
         </div>
-        <div className="relative grid grid-cols-2 gap-1.5 border-t border-white/30 px-3 py-2 sm:grid-cols-4 dark:border-white/10">
-          {[["Em atendimento", board.call.length, Headphones, "text-violet-600", "bg-violet-500/12"], ["Prontos agora", board.ready.length, CheckCircle2, "text-emerald-600", "bg-emerald-500/12"], ["Consentimento", consentCount, ShieldCheck, "text-cyan-600", "bg-cyan-500/12"], ["Fila ativa", activeItems.length, ClipboardList, "text-sky-600", "bg-sky-500/12"]].map(([label, value, Icon, text, background]) => { const MetricIcon = Icon as typeof Video; return <div key={String(label)} className="flex min-w-0 items-center gap-2 rounded-xl border border-white/35 bg-white/35 px-2.5 py-2 dark:border-white/10 dark:bg-white/[0.035]"><span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${text} ${background}`}><MetricIcon size={15} /></span><div className="min-w-0"><p className="truncate text-[10px] text-muted-foreground">{String(label)}</p><p className="text-sm font-bold text-foreground">{loading ? "…" : String(value)}</p></div></div>; })}
+        {/* Indicadores mínimos, inline: ícone + rótulo + número. */}
+        <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
+          {([["Em atendimento", board.call.length, Headphones, "text-violet-600"], ["Prontos", board.ready.length, CheckCircle2, "text-emerald-600"], ["Consentimento", consentCount, ShieldCheck, "text-cyan-600"], ["Fila ativa", activeItems.length, ClipboardList, "text-sky-600"]] as const).map(([label, value, Icon, tone]) => <span key={label} className="inline-flex items-center gap-1"><Icon size={13} className={tone} />{label}<b className={`text-xs font-bold ${tone}`}>{loading ? "…" : value}</b></span>)}
         </div>
-        <div className="relative grid gap-1.5 border-t border-white/30 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_180px] dark:border-white/10"><div className="relative"><Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar paciente, código ou queixa…" className="h-9 w-full rounded-xl border border-slate-200 bg-white/80 pl-9 pr-3 text-sm outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 dark:border-slate-700 dark:bg-slate-900/70" /></div><select value={priority} onChange={(event) => setPriority(event.target.value)} className="h-9 rounded-xl border border-slate-200 bg-white/80 px-3 text-sm outline-none transition focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-900/70"><option value="">Todas as prioridades</option><option value="EMERGENCY">Emergência</option><option value="URGENT">Urgente</option><option value="PRIORITY">Prioritário</option><option value="ROUTINE">Rotina</option></select></div>
+        <div className="ml-auto flex items-center gap-1">
+          <div className="relative"><Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar…" className="h-7 w-32 rounded-md border border-slate-200 bg-white/80 pl-6 pr-2 text-xs outline-none transition focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 sm:w-40 dark:border-slate-700 dark:bg-slate-900/70" /></div>
+          <select value={priority} onChange={(event) => setPriority(event.target.value)} className="h-7 rounded-md border border-slate-200 bg-white/80 px-1.5 text-xs outline-none transition focus:border-cyan-400 dark:border-slate-700 dark:bg-slate-900/70"><option value="">Todas</option><option value="EMERGENCY">Emergência</option><option value="URGENT">Urgente</option><option value="PRIORITY">Prioritário</option><option value="ROUTINE">Rotina</option></select>
+          <button type="button" onClick={() => load()} title="Atualizar" className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-cyan-200 bg-white/70 text-cyan-700 transition hover:bg-cyan-50 dark:border-cyan-800/50 dark:bg-slate-900/60 dark:text-cyan-300"><RefreshCw size={13} className={busyId != null ? "animate-spin" : ""} /></button>
+          <Link href="/telemedicine/waiting-room/new" title="Novo check-in" className="inline-flex h-7 items-center gap-1 rounded-md bg-gradient-to-r from-cyan-600 to-violet-600 px-2 text-xs font-semibold text-white transition hover:from-cyan-700 hover:to-violet-700"><Plus size={13} /> Novo</Link>
+        </div>
       </section>
-      {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-800/40 dark:bg-rose-950/20 dark:text-rose-300">{error}</div> : null}
-      {loading ? <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> A atualizar a fila…</div> : <div className="grid items-start gap-2 xl:grid-cols-4">{COLUMNS.map((column) => {
+      {error ? <div className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 dark:border-rose-800/40 dark:bg-rose-950/20 dark:text-rose-300">{error}</div> : null}
+      {loading ? <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> A atualizar a fila…</div> : <div className="grid items-start gap-1 xl:grid-cols-4">{COLUMNS.map((column) => {
         const isDropTarget = dragOver === column.key;
         return <section
           key={column.key}
           onDragOver={(event) => { event.preventDefault(); setDragOver(column.key); }}
           onDragLeave={() => setDragOver((current) => (current === column.key ? null : current))}
           onDrop={(event) => handleDrop(column.key, event)}
-          className={`overflow-hidden rounded-2xl border ${column.tone} ${isDropTarget ? `ring-2 ${column.ring}` : ""}`}
+          className={`overflow-hidden rounded-lg border ${column.tone} ${isDropTarget ? `ring-2 ${column.ring}` : ""}`}
         >
-          <header className="flex items-center justify-between border-b border-inherit px-3 py-2.5"><div><h2 className="text-xs font-bold uppercase tracking-wide text-foreground">{column.label}</h2><p className="text-[10px] text-muted-foreground">{column.hint}</p></div><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${column.countTone}`}>{board[column.key].length}</span></header>
-          {board[column.key].length === 0 ? <div className="bg-background/25 p-2"><p className="rounded-xl border border-dashed border-border/65 px-3 py-9 text-center text-xs text-muted-foreground">Nenhum paciente nesta etapa.</p></div> : <ColumnCardScroller>{board[column.key].map((entry) => <WaitingCard key={entry.id} entry={entry} column={column.key} busy={busyId === entry.id} onAction={runAction} />)}</ColumnCardScroller>}
+          <header className="flex items-center justify-between border-b border-inherit px-2 py-1"><h2 className="text-[11px] font-bold uppercase tracking-wide text-foreground">{column.label}</h2><span className={`rounded-full px-1.5 text-[10px] font-bold ${column.countTone}`}>{board[column.key].length}</span></header>
+          {board[column.key].length === 0 ? <div className="p-1"><p className="rounded-md border border-dashed border-border/65 px-2 py-6 text-center text-[11px] text-muted-foreground">Vazio</p></div> : <ColumnCardScroller>{board[column.key].map((entry) => <WaitingCard key={entry.id} entry={entry} column={column.key} busy={busyId === entry.id} onAction={runAction} />)}</ColumnCardScroller>}
         </section>;
       })}</div>}
     </div>

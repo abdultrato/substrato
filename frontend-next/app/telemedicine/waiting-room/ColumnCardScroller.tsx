@@ -60,7 +60,7 @@ export default function ColumnCardScroller({ children }: { children: ReactNode }
       ) : null}
       <div
         ref={scrollerRef}
-        className="flex items-stretch gap-1.5 overflow-x-auto scroll-smooth bg-background/25 p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex items-stretch gap-1 overflow-x-auto scroll-smooth bg-background/25 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
