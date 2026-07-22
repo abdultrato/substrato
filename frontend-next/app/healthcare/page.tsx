@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { CalendarClock, ClipboardList, Stethoscope, Users } from "lucide-react"
+import { CalendarClock, ClipboardList, FlaskConical, LayoutGrid, Scissors, Stethoscope, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
@@ -66,6 +66,8 @@ export default function HealthcarePage() {
   const [patients, setPatients] = useState(0)
   const [consultations, setConsultations] = useState(0)
   const [requests, setRequests] = useState(0)
+  const [exams, setExams] = useState(0)
+  const [surgeries, setSurgeries] = useState(0)
 
   useEffect(() => {
     let mounted = true
@@ -75,16 +77,28 @@ export default function HealthcarePage() {
         setLoading(true)
         setError(null)
 
+        const clientCache = safeRefreshToken === 0
+        // Indicadores principais (obrigatórios): se falharem, mostramos erro.
         const [patientsRes, consultationsRes, requestsRes] = await Promise.all([
-          apiFetch<any>("/clinical/patient/", { clientCache: safeRefreshToken === 0 }),
-          apiFetch<any>("/consultations/consultation/", { clientCache: safeRefreshToken === 0 }),
-          apiFetch<any>("/clinical/labrequest/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical/patient/", { clientCache }),
+          apiFetch<any>("/consultations/consultation/", { clientCache }),
+          apiFetch<any>("/clinical/labrequest/", { clientCache }),
         ])
 
         if (!mounted) return
         setPatients(extractTotalCount(patientsRes))
         setConsultations(extractTotalCount(consultationsRes))
         setRequests(extractTotalCount(requestsRes))
+
+        // Indicadores adicionais (opcionais): uma falha isolada não deve
+        // apagar o cabeçalho, por isso usamos allSettled e ignoramos erros.
+        const [examsRes, surgeriesRes] = await Promise.allSettled([
+          apiFetch<any>("/clinical_laboratory/test/", { clientCache }),
+          apiFetch<any>("/surgery/surgery/", { clientCache }),
+        ])
+        if (!mounted) return
+        if (examsRes.status === "fulfilled") setExams(extractTotalCount(examsRes.value))
+        if (surgeriesRes.status === "fulfilled") setSurgeries(extractTotalCount(surgeriesRes.value))
       } catch (e: any) {
         if (!mounted) return
         setError(
@@ -153,6 +167,9 @@ export default function HealthcarePage() {
             { label: "Pacientes", value: metricValue || patients, icon: Users, accentClass: "border-l-sky-500", iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300", href: "/patients" },
             { label: "Consultas", value: metricValue || consultations, icon: CalendarClock, accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", href: "/consultations" },
             { label: "Requisições laboratoriais", value: metricValue || requests, icon: ClipboardList, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300", href: "/requests" },
+            { label: "Exames", value: metricValue || exams, icon: FlaskConical, accentClass: "border-l-amber-500", iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300", href: "/clinical-laboratory" },
+            { label: "Cirurgias", value: metricValue || surgeries, icon: Scissors, accentClass: "border-l-rose-500", iconClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300", href: "/surgery" },
+            { label: "Módulos acessíveis", value: actions.length, icon: LayoutGrid, accentClass: "border-l-cyan-500", iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300" },
           ]}
           actions={[]}
         />
