@@ -174,8 +174,10 @@ export default function HealthcarePage() {
           actions={[]}
         />
 
-        {/* Cartões de módulo dimensionados ao conteúdo (só título), com
-            gap reduzido e dispostos em row com quebra de linha. */}
+        {/* Cartões de módulo em linhas justificadas: cada cartão cresce
+            (flex-grow) para preencher a largura total da linha, sem folga à
+            direita e com as bordas laterais alinhadas. min-width evita que
+            fiquem estreitos demais; gap reduzido. */}
         <div className="flex flex-wrap gap-1">
           {actions.map((item) => {
             const Icon = item.icon
@@ -183,7 +185,7 @@ export default function HealthcarePage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`group inline-flex items-center gap-2 whitespace-nowrap rounded-xl border-t border-r border-b border-white/20 border-l-4 ${item.accentClass} bg-white/25 px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-white/45 hover:shadow-md dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 dark:bg-white/5 dark:hover:bg-white/10`}
+                className={`group inline-flex grow basis-[9rem] items-center justify-center gap-2 whitespace-nowrap rounded-xl border-t border-r border-b border-white/20 border-l-4 ${item.accentClass} bg-white/25 px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-white/45 hover:shadow-md dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 dark:bg-white/5 dark:hover:bg-white/10`}
               >
                 <span
                   aria-hidden
