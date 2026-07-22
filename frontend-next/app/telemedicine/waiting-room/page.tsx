@@ -145,14 +145,14 @@ export default function TelemedicineWaitingRoomListPage() {
         </div>
       </section>
       {error ? <div className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 dark:border-rose-800/40 dark:bg-rose-950/20 dark:text-rose-300">{error}</div> : null}
-      {loading ? <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> A atualizar a fila…</div> : <div className="flex items-start gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">{COLUMNS.map((column) => {
+      {loading ? <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> A atualizar a fila…</div> : <div className="flex flex-col gap-1">{COLUMNS.map((column) => {
         const isDropTarget = dragOver === column.key;
         return <section
           key={column.key}
           onDragOver={(event) => { event.preventDefault(); setDragOver(column.key); }}
           onDragLeave={() => setDragOver((current) => (current === column.key ? null : current))}
           onDrop={(event) => handleDrop(column.key, event)}
-          className={`w-[18rem] shrink-0 overflow-hidden rounded-lg border ${column.tone} ${isDropTarget ? `ring-2 ${column.ring}` : ""}`}
+          className={`w-full overflow-hidden rounded-lg border ${column.tone} ${isDropTarget ? `ring-2 ${column.ring}` : ""}`}
         >
           <header className="flex items-center justify-between border-b border-inherit px-2 py-1"><h2 className="text-[11px] font-bold uppercase tracking-wide text-foreground">{column.label}</h2><span className={`rounded-full px-1.5 text-[10px] font-bold ${column.countTone}`}>{board[column.key].length}</span></header>
           {board[column.key].length === 0 ? <div className="p-1"><p className="rounded-md border border-dashed border-border/65 px-2 py-6 text-center text-[11px] text-muted-foreground">Vazio</p></div> : <ColumnCardScroller>{board[column.key].map((entry) => <WaitingCard key={entry.id} entry={entry} column={column.key} busy={busyId === entry.id} onAction={runAction} />)}</ColumnCardScroller>}
