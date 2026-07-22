@@ -576,7 +576,7 @@ export default function RequestsBoardPage() {
               {t("Sem requisições para mostrar com os filtros actuais.", "No requests to show with the current filters.")}
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="flex flex-wrap items-stretch gap-1 [&>a]:w-[16rem] [&>a]:max-w-full">
               {filteredData.map((row) => (
                 <RequestCard key={row.id} row={row} href={rowHref(row)} />
               ))}

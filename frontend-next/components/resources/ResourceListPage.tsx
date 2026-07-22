@@ -803,9 +803,12 @@ export default function ResourceListPage({
               <div className="p-2">
                 {renderCard ? (
                   pagedVisibleData.length ? (
-                    <div className={cardGridClassName || "grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}>
+                    <div className={cardGridClassName || "flex flex-wrap items-stretch gap-2"}>
                       {pagedVisibleData.map((row, index) => (
-                        <div key={row?.id ?? row?.custom_id ?? index}>
+                        // Largura fixa + wrap: cada cartão ocupa apenas o espaço
+                        // predefinido para a sua informação, alinhando em linha
+                        // com quebra, em vez de esticar na largura da coluna.
+                        <div key={row?.id ?? row?.custom_id ?? index} className="w-[16rem] max-w-full grow-0 [&>*]:h-full">
                           {renderCard(row, rowHref?.(row))}
                         </div>
                       ))}
