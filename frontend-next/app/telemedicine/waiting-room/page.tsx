@@ -132,9 +132,10 @@ export default function TelemedicineWaitingRoomListPage() {
           <Video size={16} className="text-cyan-600 dark:text-cyan-400" />
           <h1 className="text-sm font-bold leading-none text-foreground">Sala de espera virtual</h1>
         </div>
-        {/* Indicadores mínimos, inline: ícone + rótulo + número. */}
+        {/* Indicadores mínimos, inline nowrap: ícone + rótulo + número, cada um
+            numa única linha sem quebrar. */}
         <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
-          {([["Em atendimento", board.call.length, Headphones, "text-violet-600"], ["Prontos", board.ready.length, CheckCircle2, "text-emerald-600"], ["Consentimento", consentCount, ShieldCheck, "text-cyan-600"], ["Fila ativa", activeItems.length, ClipboardList, "text-sky-600"]] as const).map(([label, value, Icon, tone]) => <span key={label} className="inline-flex items-center gap-1"><Icon size={13} className={tone} />{label}<b className={`text-xs font-bold ${tone}`}>{loading ? "…" : value}</b></span>)}
+          {([["Em atendimento", board.call.length, Headphones, "text-violet-600"], ["Prontos", board.ready.length, CheckCircle2, "text-emerald-600"], ["Consentimento", consentCount, ShieldCheck, "text-cyan-600"], ["Fila ativa", activeItems.length, ClipboardList, "text-sky-600"]] as const).map(([label, value, Icon, tone]) => <span key={label} className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap"><Icon size={13} className={`shrink-0 ${tone}`} />{label}<b className={`text-xs font-bold ${tone}`}>{loading ? "…" : value}</b></span>)}
         </div>
         <div className="ml-auto flex items-center gap-1">
           <div className="relative"><Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar…" className="h-7 w-32 rounded-md border border-slate-200 bg-white/80 pl-6 pr-2 text-xs outline-none transition focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 sm:w-40 dark:border-slate-700 dark:bg-slate-900/70" /></div>
@@ -144,14 +145,14 @@ export default function TelemedicineWaitingRoomListPage() {
         </div>
       </section>
       {error ? <div className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 dark:border-rose-800/40 dark:bg-rose-950/20 dark:text-rose-300">{error}</div> : null}
-      {loading ? <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> A atualizar a fila…</div> : <div className="grid items-start gap-1 xl:grid-cols-4">{COLUMNS.map((column) => {
+      {loading ? <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> A atualizar a fila…</div> : <div className="flex items-start gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">{COLUMNS.map((column) => {
         const isDropTarget = dragOver === column.key;
         return <section
           key={column.key}
           onDragOver={(event) => { event.preventDefault(); setDragOver(column.key); }}
           onDragLeave={() => setDragOver((current) => (current === column.key ? null : current))}
           onDrop={(event) => handleDrop(column.key, event)}
-          className={`overflow-hidden rounded-lg border ${column.tone} ${isDropTarget ? `ring-2 ${column.ring}` : ""}`}
+          className={`w-[18rem] shrink-0 overflow-hidden rounded-lg border ${column.tone} ${isDropTarget ? `ring-2 ${column.ring}` : ""}`}
         >
           <header className="flex items-center justify-between border-b border-inherit px-2 py-1"><h2 className="text-[11px] font-bold uppercase tracking-wide text-foreground">{column.label}</h2><span className={`rounded-full px-1.5 text-[10px] font-bold ${column.countTone}`}>{board[column.key].length}</span></header>
           {board[column.key].length === 0 ? <div className="p-1"><p className="rounded-md border border-dashed border-border/65 px-2 py-6 text-center text-[11px] text-muted-foreground">Vazio</p></div> : <ColumnCardScroller>{board[column.key].map((entry) => <WaitingCard key={entry.id} entry={entry} column={column.key} busy={busyId === entry.id} onAction={runAction} />)}</ColumnCardScroller>}
@@ -169,7 +170,7 @@ function WaitingCard({ entry, column, busy, onAction }: { entry: Entry; column: 
   return <div
     draggable={!busy}
     onDragStart={(event) => { event.dataTransfer.setData("text/plain", String(entry.id)); event.dataTransfer.effectAllowed = "move"; }}
-    className={`group relative flex h-full w-32 shrink-0 flex-col overflow-hidden rounded-lg border border-white/60 bg-white/80 shadow-sm transition hover:border-cyan-300 hover:shadow-md dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-cyan-600/60 ${busy ? "pointer-events-none opacity-60" : "cursor-grab active:cursor-grabbing"}`}
+    className={`group relative flex h-full w-32 shrink-0 snap-start flex-col overflow-hidden rounded-lg border border-white/60 bg-white/80 shadow-sm transition hover:border-cyan-300 hover:shadow-md dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-cyan-600/60 ${busy ? "pointer-events-none opacity-60" : "cursor-grab active:cursor-grabbing"}`}
   >
     <span className={`absolute inset-y-0 left-0 w-1 ${inCall ? "bg-violet-500" : urgent ? "bg-rose-500" : "bg-cyan-500"}`} />
     <Link href={`/telemedicine/waiting-room/${entry.id}`} className="block flex-1 py-1.5 pl-2.5 pr-2">
@@ -196,6 +197,8 @@ function WaitingCard({ entry, column, busy, onAction }: { entry: Entry; column: 
     </div>
   </div>;
 }
+
+
 
 
 
