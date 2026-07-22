@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, ChevronRight, ClipboardList, Clock3, Headphones, Loader2, MonitorCheck, Plus, RefreshCw, Search, ShieldCheck, User, Video, XCircle } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import ColumnCardScroller from "./ColumnCardScroller";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
@@ -151,7 +152,7 @@ export default function TelemedicineWaitingRoomListPage() {
           className={`overflow-hidden rounded-2xl border ${column.tone} ${isDropTarget ? `ring-2 ${column.ring}` : ""}`}
         >
           <header className="flex items-center justify-between border-b border-inherit px-3 py-2.5"><div><h2 className="text-xs font-bold uppercase tracking-wide text-foreground">{column.label}</h2><p className="text-[10px] text-muted-foreground">{column.hint}</p></div><span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${column.countTone}`}>{board[column.key].length}</span></header>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] items-stretch gap-1.5 bg-background/25 p-2">{board[column.key].length === 0 ? <p className="col-span-full rounded-xl border border-dashed border-border/65 px-3 py-9 text-center text-xs text-muted-foreground">Nenhum paciente nesta etapa.</p> : board[column.key].map((entry) => <WaitingCard key={entry.id} entry={entry} column={column.key} busy={busyId === entry.id} onAction={runAction} />)}</div>
+          {board[column.key].length === 0 ? <div className="bg-background/25 p-2"><p className="rounded-xl border border-dashed border-border/65 px-3 py-9 text-center text-xs text-muted-foreground">Nenhum paciente nesta etapa.</p></div> : <ColumnCardScroller>{board[column.key].map((entry) => <WaitingCard key={entry.id} entry={entry} column={column.key} busy={busyId === entry.id} onAction={runAction} />)}</ColumnCardScroller>}
         </section>;
       })}</div>}
     </div>
@@ -166,7 +167,7 @@ function WaitingCard({ entry, column, busy, onAction }: { entry: Entry; column: 
   return <div
     draggable={!busy}
     onDragStart={(event) => { event.dataTransfer.setData("text/plain", String(entry.id)); event.dataTransfer.effectAllowed = "move"; }}
-    className={`group relative flex h-full flex-col overflow-hidden rounded-lg border border-white/60 bg-white/80 shadow-sm transition hover:border-cyan-300 hover:shadow-md dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-cyan-600/60 ${busy ? "pointer-events-none opacity-60" : "cursor-grab active:cursor-grabbing"}`}
+    className={`group relative flex h-full w-44 shrink-0 flex-col overflow-hidden rounded-lg border border-white/60 bg-white/80 shadow-sm transition hover:border-cyan-300 hover:shadow-md dark:border-white/10 dark:bg-slate-900/65 dark:hover:border-cyan-600/60 ${busy ? "pointer-events-none opacity-60" : "cursor-grab active:cursor-grabbing"}`}
   >
     <span className={`absolute inset-y-0 left-0 w-1 ${inCall ? "bg-violet-500" : urgent ? "bg-rose-500" : "bg-cyan-500"}`} />
     <Link href={`/telemedicine/waiting-room/${entry.id}`} className="block flex-1 py-1.5 pl-2.5 pr-2">
