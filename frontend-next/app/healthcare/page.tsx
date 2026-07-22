@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { CalendarClock, ClipboardList, Stethoscope, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -57,7 +58,7 @@ const ACCENTS = [
 ]
 
 export default function HealthcarePage() {
-  const { t } = useLanguage()
+  const { t, tr } = useLanguage()
   const { user } = useAuth()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
@@ -119,14 +120,13 @@ export default function HealthcarePage() {
       const accent = ACCENTS[index % ACCENTS.length]
       return {
         title: item.label,
-        description: t(item.desc || "", item.descEn || item.desc || ""),
         href: item.href,
         icon: item.icon,
         accentClass: accent.accentClass,
         iconClass: accent.iconClass,
       }
     })
-  }, [user, t])
+  }, [user])
 
   return (
     <AppLayout requiredGroups={[
@@ -154,8 +154,31 @@ export default function HealthcarePage() {
             { label: "Consultas", value: metricValue || consultations, icon: CalendarClock, accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", href: "/consultations" },
             { label: "Requisições laboratoriais", value: metricValue || requests, icon: ClipboardList, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300", href: "/requests" },
           ]}
-          actions={actions}
+          actions={[]}
         />
+
+        {/* Cartões de módulo dimensionados ao conteúdo (só título), com
+            gap reduzido e dispostos em row com quebra de linha. */}
+        <div className="flex flex-wrap gap-1">
+          {actions.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`group inline-flex items-center gap-2 whitespace-nowrap rounded-xl border-t border-r border-b border-white/20 border-l-4 ${item.accentClass} bg-white/25 px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition-all hover:bg-white/45 hover:shadow-md dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 dark:bg-white/5 dark:hover:bg-white/10`}
+              >
+                <span
+                  aria-hidden
+                  className={`pointer-events-none flex h-6 w-6 shrink-0 items-center justify-center rounded-lg shadow-sm ${item.iconClass}`}
+                >
+                  <Icon size={13} strokeWidth={2} />
+                </span>
+                {tr(item.title)}
+              </Link>
+            )
+          })}
+        </div>
       </div>
     </AppLayout>
   )
