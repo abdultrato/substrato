@@ -146,11 +146,6 @@ export default function HealthcarePage() {
 
         <WorkspaceHub
           title="Saúde"
-          subtitle={t(
-            "Hub clínico unificado: aceda a todos os módulos de saúde a que tem permissão.",
-            "Unified clinical hub: reach every healthcare module you are allowed to open."
-          )}
-          dense
           icon={Stethoscope}
           iconClass="bg-violet-500/15 text-violet-600 dark:text-violet-300"
           barClass="bg-violet-500"
