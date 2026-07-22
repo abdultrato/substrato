@@ -5320,6 +5320,88 @@ function billingInvoiceConfig(): ResourceFormConfig {
   }
 }
 
+// ── Farmácia: produto e hierarquia de categorias ────────────────────────────
+
+function pharmacyProductConfig(): ResourceFormConfig {
+  return {
+    ordenarCampos: [
+      "name",
+      "category",
+      "type",
+      "sale_price",
+      "vat_percentage",
+      "applies_vat_by_default",
+      "description",
+      "active",
+    ],
+    labels: {
+      name: "Nome do produto",
+      category: "Categoria",
+      type: "Tipo",
+      sale_price: "Preço de venda (MT)",
+      vat_percentage: "IVA (%)",
+      applies_vat_by_default: "Aplica IVA por defeito",
+      active: "Activo",
+    },
+    hints: {
+      category: "Classificação do produto (ex.: Antibiótico oral). A categoria pertence a uma categoria-pai (ex.: Medicação).",
+    },
+    placeholders: {
+      name: "Ex.: Amoxicilina 500mg",
+    },
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Nome, classificação e tipo do produto",
+        campos: ["name", "category", "type"],
+      },
+      {
+        titulo: "Preço e imposto",
+        descricao: "Valor de venda e IVA",
+        campos: ["sale_price", "vat_percentage", "applies_vat_by_default"],
+      },
+      {
+        titulo: "Detalhes",
+        campos: ["description", "active"],
+      },
+    ],
+    lembrarCampos: ["category", "type", "applies_vat_by_default"],
+  }
+}
+
+function pharmacyProductCategoryConfig(): ResourceFormConfig {
+  return {
+    ordenarCampos: ["name", "parent_category", "description"],
+    labels: {
+      name: "Nome da categoria",
+      parent_category: "Categoria-pai",
+      description: "Descrição",
+    },
+    hints: {
+      parent_category: "Categoria de nível superior a que esta pertence (ex.: Medicação).",
+    },
+    placeholders: {
+      name: "Ex.: Antibiótico oral",
+    },
+    widgets: { description: "textarea" },
+    lembrarCampos: ["parent_category"],
+  }
+}
+
+function pharmacyParentCategoryConfig(): ResourceFormConfig {
+  return {
+    ordenarCampos: ["name", "description"],
+    labels: {
+      name: "Nome da categoria-pai",
+      description: "Descrição",
+    },
+    placeholders: {
+      name: "Ex.: Medicação",
+    },
+    widgets: { description: "textarea" },
+  }
+}
+
 export function getResourceFormConfig(
   groupKey: string,
   resourceKey: string,
@@ -5641,6 +5723,13 @@ export function getResourceFormConfig(
     if (educationResourceKey === "skill" || educationEp === "/education/skill/") {
       return educationSkillConfig()
     }
+    return null
+  }
+
+  if (g === "pharmacy") {
+    if (r === "product" || ep === "/pharmacy/product/") return pharmacyProductConfig()
+    if (r === "product-categories" || ep === "/pharmacy/product-categories/") return pharmacyProductCategoryConfig()
+    if (r === "parent-categories" || ep === "/pharmacy/parent-categories/") return pharmacyParentCategoryConfig()
     return null
   }
 

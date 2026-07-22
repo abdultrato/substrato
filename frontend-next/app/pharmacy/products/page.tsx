@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -164,6 +165,33 @@ export default function PharmacyProductsPage() {
   const [activeFilter, setActiveFilter] = useState<ProductType>("ALL");
   const [limit, setLimit] = useState(40);
   const debouncedSearch = useDebounce(search, 300);
+  const searchParams = useSearchParams();
+  // Filtro por categoria: aceita ?category=<id> ou ?parent_category=<id> na URL
+  // (ex.: vindo da página de uma categoria) e permite escolher no dropdown.
+  const initialCategory = searchParams?.get("category") || "";
+  const initialParentCategory = searchParams?.get("parent_category") || "";
+  const [categoryFilter, setCategoryFilter] = useState(initialCategory);
+  const [parentCategoryFilter] = useState(initialParentCategory);
+  const [categories, setCategories] = useState<
+    { id: number; name?: string; parent_category_name?: string }[]
+  >([]);
+
+  useEffect(() => {
+    let mounted = true;
+    async function loadCategories() {
+      const response = await apiFetchList<any>("/pharmacy/product-categories/", {
+        page: 1,
+        pageSize: 500,
+        clientPaginate: true,
+        clientCache: safeRefreshToken === 0,
+      }).catch(() => ({ items: [] as any[], meta: {}, raw: null }));
+      if (mounted) setCategories(response.items ?? []);
+    }
+    loadCategories();
+    return () => {
+      mounted = false;
+    };
+  }, [safeRefreshToken]);
 
   useEffect(() => {
     let mounted = true;
@@ -174,6 +202,8 @@ export default function PharmacyProductsPage() {
         setError(null);
         const params = new URLSearchParams();
         if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim());
+        if (categoryFilter) params.set("category", categoryFilter);
+        if (parentCategoryFilter) params.set("parent_category", parentCategoryFilter);
         const query = params.toString();
         const response: ListResponse = await apiFetchList<Product>(`/pharmacy/product/${query ? `?${query}` : ""}`, {
           page: 1,
@@ -193,7 +223,7 @@ export default function PharmacyProductsPage() {
     return () => {
       mounted = false;
     };
-  }, [debouncedSearch, safeRefreshToken]);
+  }, [debouncedSearch, categoryFilter, parentCategoryFilter, safeRefreshToken]);
 
   const counts = useMemo(() => {
     const result: Record<ProductType, number> = { ALL: products.length, MED: 0, MAT: 0, OUT: 0, ACTIVE: 0, INACTIVE: 0 };
@@ -319,6 +349,22 @@ export default function PharmacyProductsPage() {
                   </button>
                 )}
               </div>
+
+              <select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                className="h-8 rounded-md border border-border bg-background/70 px-2 text-xs font-semibold text-foreground outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+                aria-label="Filtrar por categoria"
+              >
+                <option value="">Todas as categorias</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={String(category.id)}>
+                    {category.parent_category_name
+                      ? `${category.parent_category_name} / ${category.name}`
+                      : category.name || `Categoria ${category.id}`}
+                  </option>
+                ))}
+              </select>
 
               {FILTERS.map((filter) => {
                 const active = filter.key === activeFilter;

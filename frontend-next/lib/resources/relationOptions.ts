@@ -221,6 +221,15 @@ const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> =
   "/pharmacy/inventory_movement/": {
     lot: { endpoint: "/pharmacy/lot/", labelFields: ["lot_number", "product_name", ...DEFAULT_LABEL_FIELDS] },
   },
+  "/pharmacy/product/": {
+    // A categoria do produto é a categoria de farmácia (ex.: Antibiótico),
+    // não a categoria de armazém.
+    category: { endpoint: "/pharmacy/product-categories/", labelFields: ["name", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/pharmacy/product-categories/": {
+    // Categoria-pai de uma categoria de produto (ex.: Medicação).
+    parent_category: { endpoint: "/pharmacy/parent-categories/", labelFields: ["name", ...DEFAULT_LABEL_FIELDS] },
+  },
   "/warehouse/lot/": {
     item: { endpoint: "/warehouse/item/", labelFields: ["sku", "name", ...DEFAULT_LABEL_FIELDS] },
   },

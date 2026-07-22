@@ -112,6 +112,12 @@ class InventoryMovementFilter(SafeFilterSet):
 
 
 class ProductFilter(SafeFilterSet):
+    # Filtra produtos pela categoria-pai através da categoria (ex.: todos os
+    # produtos cuja categoria pertence à categoria-pai "Medicação").
+    parent_category = django_filters.NumberFilter(
+        field_name="category__parent_category_id", lookup_expr="exact"
+    )
+
     class Meta:
         model = Product
         fields = [
@@ -129,6 +135,7 @@ class ProductFilter(SafeFilterSet):
             "updated_by",
             "type",
             "sale_price",
+            "category",
         ]
 
 

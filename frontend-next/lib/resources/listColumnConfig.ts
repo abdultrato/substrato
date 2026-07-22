@@ -173,10 +173,62 @@ function nursingMonetaryConfig(endpoint: string): ListColumnConfig | null {
   return { hidden: new Set(hidden), labels: {} }
 }
 
+const TECHNICAL_LIST_FIELDS = [
+  "id",
+  "tenant",
+  "version",
+  "versao",
+  "created_by",
+  "criado_por",
+  "updated_by",
+  "atualizado_por",
+  "deleted",
+  "deleted_at",
+  "deleted_by",
+]
+
+const PHARMACY_PRODUCT_CATEGORY_CONFIG: ListColumnConfig = {
+  labels: {
+    name: "Categoria",
+    parent_category_name: "Categoria-pai",
+    products_count: "Produtos",
+    description: "Descrição",
+  },
+  clickableColumns: new Set(["name"]),
+  hidden: new Set([...TECHNICAL_LIST_FIELDS, "parent_category"]),
+}
+
+const PHARMACY_PARENT_CATEGORY_CONFIG: ListColumnConfig = {
+  labels: {
+    name: "Categoria-pai",
+    subcategories_count: "Subcategorias",
+    description: "Descrição",
+  },
+  clickableColumns: new Set(["name"]),
+  hidden: new Set([...TECHNICAL_LIST_FIELDS]),
+}
+
+const PHARMACY_PRODUCT_CONFIG: ListColumnConfig = {
+  labels: {
+    name: "Produto",
+    category_path: "Categoria",
+    type: "Tipo",
+    sale_price: "Preço",
+    vat_percentage: "IVA (%)",
+    active: "Activo",
+  },
+  clickableColumns: new Set(["name"]),
+  // Esconde o ID cru da categoria e o nome simples (redundante com a hierarquia).
+  hidden: new Set([...TECHNICAL_LIST_FIELDS, "category", "category_name", "order", "applies_vat_by_default"]),
+}
+
 /** Devolve a config de colunas para o endpoint, ou null se não houver. */
 export function getListColumnConfig(endpoint: string): ListColumnConfig | null {
   const normalized = normalize(endpoint)
   if (PATIENT_ENDPOINTS.has(normalized)) return PATIENT_CONFIG
   if (INVOICE_ENDPOINTS.has(normalized)) return INVOICE_CONFIG
+  if (normalized === "/pharmacy/product-categories/") return PHARMACY_PRODUCT_CATEGORY_CONFIG
+  if (normalized === "/pharmacy/parent-categories/") return PHARMACY_PARENT_CATEGORY_CONFIG
+  if (normalized === "/pharmacy/product/") return PHARMACY_PRODUCT_CONFIG
   return nursingMonetaryConfig(normalized)
 }

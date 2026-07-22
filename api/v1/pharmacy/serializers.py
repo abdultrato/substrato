@@ -287,10 +287,23 @@ class ProductSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     legacy_input_aliases = PRODUCT_ALIASES
     legacy_output_aliases = PRODUCT_ALIASES
 
+    category_name = serializers.CharField(source="category.name", read_only=True, default=None)
+    category_path = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
+
+    def get_category_path(self, obj):
+        """Hierarquia legível da categoria: 'Categoria-pai / Categoria'."""
+        category = getattr(obj, "category", None)
+        if not category:
+            return None
+        parent = getattr(category, "parent_category", None)
+        if parent:
+            return f"{parent.name} / {category.name}"
+        return category.name
 
 
 class SaleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -480,19 +493,30 @@ class MaterialRequisitionSerializer(LegacyAliasSerializerMixin, serializers.Mode
 
 
 class ParentCategorySerializer(serializers.ModelSerializer):
+    subcategories_count = serializers.SerializerMethodField()
+
     class Meta:
         model = ParentCategory
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 
+    def get_subcategories_count(self, obj):
+        """Número de categorias de produto ligadas a esta categoria-pai."""
+        return obj.subcategorias.filter(deleted=False).count()
+
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     parent_category_name = serializers.CharField(source="parent_category.name", read_only=True, default=None)
+    products_count = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductCategory
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
+
+    def get_products_count(self, obj):
+        """Número de produtos ligados a esta categoria."""
+        return obj.produtos.filter(deleted=False).count()
 
 
 SERIALIZER_MAP = {
