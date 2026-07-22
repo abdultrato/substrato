@@ -1,16 +1,60 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CalendarClock, ClipboardList, FlaskConical, Stethoscope, Users } from "lucide-react"
+import { CalendarClock, ClipboardList, Stethoscope, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
+import { NAV_ITEMS } from "@/components/layout/Sidebar"
 import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import { isPathAllowedForScope } from "@/lib/workspaceScope"
 import { useLanguage } from "@/hooks/useLanguage"
+
+// Hrefs que são a "porta de entrada" de cada módulo de saúde. Derivamos os
+// cartões do hub a partir do NAV_ITEMS (única fonte de verdade partilhada com a
+// sidebar), filtrando pelo scope "healthcare" e pelos grupos RBAC do utilizador.
+// Estas rotas já constam do NAV_ITEMS com label/descrição/ícone curados; aqui só
+// escolhemos quais entram no hub (exclui métricas de topo e back-office).
+const HEALTHCARE_HUB_HREFS = [
+  "/reception",
+  "/patients",
+  "/consultations",
+  "/requests",
+  "/medical-records",
+  "/medicine",
+  "/nursing",
+  "/clinical-laboratory",
+  "/pharmacy",
+  "/clinical-pharmacy",
+  "/telemedicine",
+  "/public-health",
+  "/dental",
+  "/veterinary",
+  "/physiotherapy",
+  "/occupational-therapy",
+  "/radiology",
+  "/pathology",
+  "/cardiology",
+  "/neurology",
+  "/ophthalmology",
+  "/bloodbank",
+  "/maternity",
+  "/surgery",
+  "/occupational-medicine",
+]
+
+const ACCENTS = [
+  { accentClass: "border-l-sky-500", iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
+  { accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300" },
+  { accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300" },
+  { accentClass: "border-l-amber-500", iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
+  { accentClass: "border-l-rose-500", iconClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300" },
+  { accentClass: "border-l-cyan-500", iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300" },
+]
 
 export default function HealthcarePage() {
   const { t } = useLanguage()
@@ -59,45 +103,30 @@ export default function HealthcarePage() {
   }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
-  const canAccessClinicalLaboratory = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.LABORATORIO])
-  const actions = [
-    {
-      title: "Pacientes",
-      description: t("Cadastro e histórico clínico.", "Clinical registration and history."),
-      href: "/patients",
-      icon: Users,
-      accentClass: "border-l-sky-500",
-      iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-    },
-    {
-      title: "Consultas",
-      description: t("Agenda clínica e seguimento.", "Clinical schedule and follow-up."),
-      href: "/consultations",
-      icon: CalendarClock,
-      accentClass: "border-l-emerald-500",
-      iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-    },
-    {
-      title: "Requisições",
-      description: t("Pedidos laboratoriais e operacionais.", "Laboratory and operational requests."),
-      href: "/requests",
-      icon: ClipboardList,
-      accentClass: "border-l-violet-500",
-      iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
-    },
-    ...(canAccessClinicalLaboratory
-      ? [
-          {
-            title: "Laboratório",
-            description: t("Registo e validação de resultados.", "Result registration and validation."),
-            href: "/clinical-laboratory",
-            icon: FlaskConical,
-            accentClass: "border-l-amber-500",
-            iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
-          },
-        ]
-      : []),
-  ]
+
+  // Cartões do hub: um por módulo de saúde a que o utilizador tem acesso,
+  // preservando a ordem de HEALTHCARE_HUB_HREFS e reutilizando os metadados
+  // (label/descrição/ícone) do NAV_ITEMS.
+  const actions = useMemo(() => {
+    const byHref = new Map(NAV_ITEMS.map((item) => [item.href, item]))
+    const items = HEALTHCARE_HUB_HREFS
+      .map((href) => byHref.get(href))
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .filter((item) => isPathAllowedForScope(item.href, "healthcare"))
+      .filter((item) => !item.groups || userHasAnyGroup(user, item.groups))
+
+    return items.map((item, index) => {
+      const accent = ACCENTS[index % ACCENTS.length]
+      return {
+        title: item.label,
+        description: t(item.desc || "", item.descEn || item.desc || ""),
+        href: item.href,
+        icon: item.icon,
+        accentClass: accent.accentClass,
+        iconClass: accent.iconClass,
+      }
+    })
+  }, [user, t])
 
   return (
     <AppLayout requiredGroups={[
@@ -116,13 +145,12 @@ export default function HealthcarePage() {
         ) : null}
 
         <WorkspaceHub
-          title="Área Clínica"
+          title="Saúde"
           subtitle={t(
-            "Pacientes, consultas, requisições e resultados do atendimento assistencial.",
-            "Patients, consultations, requests, and results for clinical care."
+            "Hub clínico unificado: aceda a todos os módulos de saúde a que tem permissão.",
+            "Unified clinical hub: reach every healthcare module you are allowed to open."
           )}
           dense
-          actionsNowrap
           icon={Stethoscope}
           iconClass="bg-violet-500/15 text-violet-600 dark:text-violet-300"
           barClass="bg-violet-500"
