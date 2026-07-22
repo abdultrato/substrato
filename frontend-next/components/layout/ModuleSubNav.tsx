@@ -52,7 +52,7 @@ const MODULE_NAVS: ModuleNavConfig[] = [
                 groups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
             },
             { href: "/bloodbank", label: "Banco de Sangue", labelEn: "Blood bank" },
-            { href: "/pharmacy", label: "Farmácia", labelEn: "Pharmacy" },
+            { href: "/pharmacy", label: "Gestão de Produtos Farmacêuticos", labelEn: "Pharmaceutical Products Management" },
             { href: "/telemedicine", label: "Telemedicina", labelEn: "Telemedicine" },
             { href: "/public-health", label: "Saúde Pública", labelEn: "Public health" },
             { href: "/radiology", label: "Radiologia", labelEn: "Radiology", groups: [GROUPS.ADMIN, GROUPS.RADIOLOGIA] },
