@@ -8,8 +8,6 @@ import {
   CalendarClock,
   CalendarPlus,
   CalendarX2,
-  CheckCircle2,
-  Circle,
   FileText,
   Info,
   Loader2,
@@ -23,6 +21,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
+import { SubstratoTimeline } from "@/components/ui/SubstratoTimeline"
 import MoneyValue from "@/components/ui/MoneyValue"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -58,33 +57,6 @@ function fmtDateTime(value: any): string {
 }
 
 type TimelineStep = { label: string; date: any; done: boolean; note?: string }
-
-function Timeline({ steps }: { steps: TimelineStep[] }) {
-  return (
-    <ol className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-0">
-      {steps.map((step, i) => (
-        <li key={i} className="relative flex flex-1 items-start gap-2.5 sm:flex-col sm:items-center sm:gap-2 sm:text-center">
-          <span className="relative z-10 mt-0.5 shrink-0">
-            {step.done
-              ? <CheckCircle2 size={16} className="text-emerald-500" />
-              : <Circle size={16} className="text-[var(--gray-300)]" />}
-          </span>
-          {i < steps.length - 1 && (
-            <>
-              <span className="absolute left-[7px] top-6 h-full w-px bg-border sm:hidden" />
-              <span className={`absolute left-1/2 top-2 hidden h-px w-full sm:block ${step.done ? "bg-emerald-400/60" : "bg-border"}`} />
-            </>
-          )}
-          <div className="min-w-0">
-            <p className={`text-xs font-semibold ${step.done ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</p>
-            {step.date ? <p className="text-[10px] text-muted-foreground">{fmtDateTime(step.date)}</p> : null}
-            {step.note ? <p className="text-[10px] text-muted-foreground">{step.note}</p> : null}
-          </div>
-        </li>
-      ))}
-    </ol>
-  )
-}
 
 export default function MedicalConsultationDetailPage() {
   const params = useParams()
@@ -478,15 +450,15 @@ export default function MedicalConsultationDetailPage() {
             </div>
 
             {/* Cronologia */}
-            <section className={`relative overflow-hidden ${GLASS}`}>
-              <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
-              <div className="space-y-1.5 px-3 py-2.5 pl-4">
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <CalendarClock size={13} /> {t("Cronologia", "Timeline")}
-                </div>
-                <Timeline steps={timelineSteps} />
-              </div>
-            </section>
+            <SubstratoTimeline
+              title={t("Cronologia", "Timeline")}
+              accentClassName="bg-sky-500"
+              steps={timelineSteps.map((step) => ({
+                label: step.note ? `${step.label} · ${step.note}` : step.label,
+                date: step.date ? fmtDateTime(step.date) : undefined,
+                done: step.done,
+              }))}
+            />
           </>
         ) : null}
       </div>
