@@ -13,7 +13,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import MetricCard from "@/components/ui/MetricCard";
 import ActionTile from "@/components/ui/ActionTile";
 import { apiFetch, extractTotalCount } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,8 +21,6 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 type RecordMetricCard = {
   label: string;
-  accentClass: string;
-  hint?: string;
 };
 
 type RecordActionTile = {
@@ -38,21 +35,15 @@ type RecordActionTile = {
 const recordMetricCards: RecordMetricCard[] = [
   {
     label: "Cardex (registros)",
-    accentClass: "from-sky-500 via-cyan-500 to-teal-400",
   },
   {
     label: "Itens de prescrição",
-    accentClass: "from-emerald-500 via-lime-500 to-amber-400",
   },
   {
     label: "Consultas",
-    accentClass: "from-violet-500 via-fuchsia-500 to-pink-400",
-    hint: "Vínculo via many-to-many",
   },
   {
     label: "História clínica",
-    accentClass: "from-indigo-500 via-blue-500 to-cyan-400",
-    hint: "Visão agregada por paciente",
   },
 ];
 
@@ -139,26 +130,55 @@ export default function ProntuarioPage() {
       requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}
     >
       <div className="space-y-2">
-        <div className="relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/75 p-2.5 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
+        <header className="relative overflow-hidden rounded-xl border border-sky-200/70 bg-gradient-to-r from-white/90 via-sky-50/60 to-cyan-50/50 p-2.5 shadow-sm backdrop-blur-sm dark:border-sky-900/50 dark:from-slate-950/85 dark:via-sky-950/20 dark:to-cyan-950/15">
           <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sky-500 via-cyan-500 to-teal-400" />
-          <div className="flex flex-wrap items-center justify-between gap-2 pl-2">
-            <div className="min-w-0">
-              <h1 className="text-base font-bold leading-tight text-foreground">Prontuário</h1>
-              <p className="text-xs text-muted-foreground">
-                Cardex e prescrição estruturada.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
+          <div className="absolute -right-10 -top-16 h-40 w-40 rounded-full bg-cyan-300/15 blur-3xl" />
+          <div className="relative flex flex-col gap-2 pl-2 xl:flex-row xl:items-center">
+            <div className="flex min-w-[220px] items-center justify-between gap-3 xl:w-[260px]">
+              <div className="min-w-0">
+                <h1 className="text-base font-bold leading-tight text-foreground">Prontuário</h1>
+                <p className="text-xs text-muted-foreground">
+                  Cardex e prescrição estruturada.
+                </p>
+              </div>
               <Link
                 href="/medicine"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-900"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-sky-200 bg-white/80 px-2.5 py-1 text-xs font-medium text-slate-800 shadow-sm transition hover:bg-sky-50 dark:border-sky-800/60 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-sky-950/30"
               >
                 <ArrowLeft size={14} />
                 Voltar
               </Link>
             </div>
+            <div className="flex min-w-0 flex-1 flex-nowrap gap-1.5 overflow-x-auto">
+              {recordMetricCards.map((card) => {
+                const value =
+                  card.label === "Cardex (registros)"
+                    ? loading
+                      ? "..."
+                      : cardex
+                    : card.label === "Itens de prescrição"
+                      ? loading
+                        ? "..."
+                        : itensPrescricao
+                      : "—";
+
+                return (
+                  <div
+                    key={card.label}
+                    className="inline-flex shrink-0 items-baseline gap-1.5 whitespace-nowrap border-l border-sky-200/80 px-3 first:border-l-0 dark:border-sky-800/60"
+                  >
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {card.label}
+                    </span>
+                    <strong className="text-sm font-bold tabular-nums text-foreground">
+                      {value}
+                    </strong>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        </header>
 
         {erro ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -167,33 +187,6 @@ export default function ProntuarioPage() {
         ) : null}
 
         <div className="flex flex-wrap gap-2">
-          {recordMetricCards.map((card) => (
-            <div
-              key={card.label}
-              className="group relative min-w-[220px] flex-1 basis-[220px] overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700"
-            >
-              <div
-                className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${card.accentClass}`}
-              />
-              <div className="pl-2">
-                <MetricCard
-                  label={card.label}
-                  value={
-                    card.label === "Cardex (registros)"
-                      ? loading
-                        ? "..."
-                        : cardex
-                      : card.label === "Itens de prescrição"
-                        ? loading
-                          ? "..."
-                          : itensPrescricao
-                        : "—"
-                  }
-                  hint={card.hint}
-                />
-              </div>
-            </div>
-          ))}
           {recordActionTiles.map((tile) => (
             <div
               key={tile.href}

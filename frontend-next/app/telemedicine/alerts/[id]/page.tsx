@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { Activity, AlertTriangle, ArrowLeft, ArrowUpCircle, CheckCircle2, Cpu, HeartPulse, Loader2, Stethoscope, User, XCircle } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import { SubstratoTimeline } from "@/components/ui/SubstratoTimeline";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 import { routeParamToString } from "@/lib/routeParams";
@@ -176,14 +177,14 @@ export default function TelemedicineAlertDetailPage() {
 
               {/* Lateral: cronologia e origem. */}
               <section className="space-y-2">
-                <div className="rounded-xl border border-border/60 bg-card/60 p-3">
-                  <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Cronologia</h2>
-                  <ol className="space-y-1.5 text-xs">
-                    <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" /><span className="text-foreground">Disparado</span><span className="ml-auto text-[11px] text-muted-foreground">{fmt(item.triggered_at)}</span></li>
-                    <li className="flex items-center gap-2"><span className={`h-1.5 w-1.5 shrink-0 rounded-full ${item.acknowledged_at ? "bg-amber-500" : "bg-muted-foreground/40"}`} /><span className={item.acknowledged_at ? "text-foreground" : "text-muted-foreground/70"}>Reconhecido{item.acknowledged_by_name ? ` · ${item.acknowledged_by_name}` : ""}</span><span className="ml-auto text-[11px] text-muted-foreground">{fmt(item.acknowledged_at)}</span></li>
-                    <li className="flex items-center gap-2"><span className={`h-1.5 w-1.5 shrink-0 rounded-full ${item.resolved_at ? "bg-emerald-500" : "bg-muted-foreground/40"}`} /><span className={item.resolved_at ? "text-foreground" : "text-muted-foreground/70"}>Resolvido{item.resolved_by_name ? ` · ${item.resolved_by_name}` : ""}</span><span className="ml-auto text-[11px] text-muted-foreground">{fmt(item.resolved_at)}</span></li>
-                  </ol>
-                </div>
+                <SubstratoTimeline
+                  accentClassName="bg-rose-500"
+                  steps={[
+                    { label: "Disparado", date: fmt(item.triggered_at), done: Boolean(item.triggered_at) },
+                    { label: item.acknowledged_by_name ? `Reconhecido · ${item.acknowledged_by_name}` : "Reconhecido", date: item.acknowledged_at ? fmt(item.acknowledged_at) : undefined, done: Boolean(item.acknowledged_at) },
+                    { label: item.resolved_by_name ? `Resolvido · ${item.resolved_by_name}` : "Resolvido", date: item.resolved_at ? fmt(item.resolved_at) : undefined, done: Boolean(item.resolved_at) },
+                  ]}
+                />
 
                 <div className="rounded-xl border border-border/60 bg-card/60 p-3">
                   <h2 className="mb-2 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-muted-foreground"><Activity size={12} /> Origem</h2>

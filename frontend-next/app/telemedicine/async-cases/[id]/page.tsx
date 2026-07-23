@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, ChevronRight, FileStack, HelpCircle, Loader2, Paperclip, Stethoscope, User, XCircle } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import { SubstratoTimeline } from "@/components/ui/SubstratoTimeline";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 import { routeParamToString } from "@/lib/routeParams";
@@ -145,13 +146,13 @@ export default function TelemedicineAsyncCaseDetailPage() {
 
               {/* Lateral: cronologia e anexos. */}
               <section className="space-y-2">
-                <div className="rounded-xl border border-border/60 bg-card/60 p-3">
-                  <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Cronologia</h2>
-                  <ol className="space-y-1.5 text-xs">
-                    <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" /><span className="text-foreground">Submetido</span><span className="ml-auto text-[11px] text-muted-foreground">{fmt(item.submitted_at)}</span></li>
-                    <li className="flex items-center gap-2"><span className={`h-1.5 w-1.5 shrink-0 rounded-full ${item.reviewed_at ? "bg-emerald-500" : "bg-muted-foreground/40"}`} /><span className={item.reviewed_at ? "text-foreground" : "text-muted-foreground/70"}>Revisto</span><span className="ml-auto text-[11px] text-muted-foreground">{fmt(item.reviewed_at)}</span></li>
-                  </ol>
-                </div>
+                <SubstratoTimeline
+                  accentClassName="bg-sky-500"
+                  steps={[
+                    { label: "Submetido", date: fmt(item.submitted_at), done: Boolean(item.submitted_at) },
+                    { label: "Revisto", date: item.reviewed_at ? fmt(item.reviewed_at) : undefined, done: Boolean(item.reviewed_at) },
+                  ]}
+                />
 
                 <div className="rounded-xl border border-border/60 bg-card/60 p-3">
                   <h2 className="mb-2 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-muted-foreground"><Paperclip size={12} /> Ficheiros ({media.length})</h2>

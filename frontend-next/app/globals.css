@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Todas as páginas do shell ocupam a largura útil global (99vw, limitada
+   apenas pela coluna disponível após sidebar/aside). Neutraliza larguras
+   locais antigas como w-[90%] e max-w-* no contêiner raiz de cada rota. */
+.page-transition > * {
+  width: 100% !important;
+  max-width: none !important;
+}
+
 @layer base {
   *,
   *::before,

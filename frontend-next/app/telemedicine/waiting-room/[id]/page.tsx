@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, ChevronRight, Clock3, Loader2, MonitorCheck, ShieldCheck, ShieldAlert, Stethoscope, User, Video, XCircle } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import { SubstratoTimeline } from "@/components/ui/SubstratoTimeline";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 import { routeParamToString } from "@/lib/routeParams";
@@ -168,29 +169,21 @@ export default function TelemedicineWaitingRoomDetailPage() {
 
             <div className="grid gap-2 md:grid-cols-3">
               {/* Linha do tempo do fluxo. */}
-              <section className="rounded-xl border border-border/60 bg-card/60 p-3 md:col-span-2">
-                <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">Linha do tempo</h2>
-                <ol className="space-y-2">
-                  {timeline.map((step) => {
-                    const done = !!step.at;
-                    const StepIcon = step.icon;
-                    return (
-                      <li key={step.label} className="flex items-center gap-2.5">
-                        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${done ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground/60"}`}><StepIcon size={13} /></span>
-                        <span className={`text-xs ${done ? "font-semibold text-foreground" : "text-muted-foreground/70"}`}>{step.label}</span>
-                        <span className="ml-auto text-[11px] text-muted-foreground">{fmt(step.at) || "—"}</span>
-                      </li>
-                    );
-                  })}
-                  {entry.estimated_start_at ? (
-                    <li className="flex items-center gap-2.5 border-t border-border/40 pt-2">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-400"><Clock3 size={13} /></span>
-                      <span className="text-xs font-semibold text-foreground">Previsão de início</span>
-                      <span className="ml-auto text-[11px] text-muted-foreground">{fmt(entry.estimated_start_at)}</span>
-                    </li>
-                  ) : null}
-                </ol>
-              </section>
+              <SubstratoTimeline
+                title="Linha do tempo"
+                className="md:col-span-2"
+                accentClassName="bg-cyan-500"
+                steps={[
+                  ...timeline.map((step) => ({
+                    label: step.label,
+                    date: step.at ? fmt(step.at) : undefined,
+                    done: Boolean(step.at),
+                  })),
+                  ...(entry.estimated_start_at
+                    ? [{ label: "Previsão de início", date: fmt(entry.estimated_start_at), done: true }]
+                    : []),
+                ]}
+              />
 
               {/* Estado de prontidão: dispositivo e consentimento. */}
               <section className="rounded-xl border border-border/60 bg-card/60 p-3">

@@ -63,7 +63,7 @@ const MODULES: ModuleEntry[] = [
       "Criar uma cirurgia com paciente, equipa, sala, procedimentos, data e faturação.",
     href: "/surgery/surgeries/new",
     icon: Plus,
-    bar: "border-l-rose-500",
+    bar: "bg-rose-500",
     iconBg: "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-300",
   },
   {
@@ -73,7 +73,7 @@ const MODULES: ModuleEntry[] = [
       "Indicações cirúrgicas com diagnóstico, prioridade e especialidade.",
     href: "/surgery/requests",
     icon: ClipboardList,
-    bar: "border-l-red-500",
+    bar: "bg-red-500",
     iconBg: "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300",
     countKey: "requests",
   },
@@ -84,7 +84,7 @@ const MODULES: ModuleEntry[] = [
       "Aptidão clínica e anestésica, ASA, exames obrigatórios e consentimento.",
     href: "/surgery/preoperative-assessments",
     icon: Stethoscope,
-    bar: "border-l-amber-500",
+    bar: "bg-amber-500",
     iconBg:
       "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-300",
     countKey: "preoperativeAssessments",
@@ -96,7 +96,7 @@ const MODULES: ModuleEntry[] = [
       "Orçamento, pagamento inicial, seguro, sala, equipa e consentimento.",
     href: "/surgery/authorizations",
     icon: ShieldCheck,
-    bar: "border-l-orange-500",
+    bar: "bg-orange-500",
     iconBg:
       "bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-300",
     countKey: "authorizations",
@@ -107,7 +107,7 @@ const MODULES: ModuleEntry[] = [
     description: "Listar, criar e gerir pequenas cirurgias.",
     href: "/surgery/small-surgeries",
     icon: Scissors,
-    bar: "border-l-blue-500",
+    bar: "bg-blue-500",
     iconBg: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300",
     countKey: "smallSurgeries",
   },
@@ -117,7 +117,7 @@ const MODULES: ModuleEntry[] = [
     description: "Listar, criar e gerir grandes cirurgias.",
     href: "/surgery/large-surgeries",
     icon: Scissors,
-    bar: "border-l-violet-500",
+    bar: "bg-violet-500",
     iconBg:
       "bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-300",
     countKey: "largeSurgeries",
@@ -128,7 +128,7 @@ const MODULES: ModuleEntry[] = [
     description: "Vista consolidada com filtros por estado, tipo e data.",
     href: "/surgery/surgeries",
     icon: ClipboardList,
-    bar: "border-l-zinc-400",
+    bar: "bg-zinc-400",
     iconBg: "bg-zinc-50 text-zinc-600 dark:bg-zinc-800/40 dark:text-zinc-300",
   },
   {
@@ -137,7 +137,7 @@ const MODULES: ModuleEntry[] = [
     description: "Marcação por sala, prioridade, estado e horário previsto.",
     href: "/surgery/schedules",
     icon: CalendarDays,
-    bar: "border-l-cyan-500",
+    bar: "bg-cyan-500",
     iconBg: "bg-cyan-50 text-cyan-600 dark:bg-cyan-900/20 dark:text-cyan-300",
     countKey: "schedules",
   },
@@ -147,7 +147,7 @@ const MODULES: ModuleEntry[] = [
     description: "Salas, esterilização, disponibilidade e equipamentos.",
     href: "/surgery/operating-rooms",
     icon: Scissors,
-    bar: "border-l-emerald-500",
+    bar: "bg-emerald-500",
     iconBg:
       "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-300",
     countKey: "operatingRooms",
@@ -159,7 +159,7 @@ const MODULES: ModuleEntry[] = [
       "Cirurgião, anestesista, instrumentista, circulante e assistentes.",
     href: "/surgery/teams",
     icon: Users,
-    bar: "border-l-teal-500",
+    bar: "bg-teal-500",
     iconBg: "bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-300",
   },
   {
@@ -168,7 +168,7 @@ const MODULES: ModuleEntry[] = [
     description: "Gerir catálogo de procedimentos cirúrgicos.",
     href: "/surgery/surgical-procedures",
     icon: Settings,
-    bar: "border-l-slate-500",
+    bar: "bg-slate-500",
     iconBg:
       "bg-slate-50 text-slate-600 dark:bg-slate-800/40 dark:text-slate-300",
     countKey: "procedures",
@@ -180,7 +180,7 @@ const MODULES: ModuleEntry[] = [
       "Procedimentos efetivos por cirurgia, lateralidade, ordem e cirurgião.",
     href: "/surgery/procedure-items",
     icon: ClipboardCheck,
-    bar: "border-l-sky-500",
+    bar: "bg-sky-500",
     iconBg: "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-300",
   },
   {
@@ -189,7 +189,7 @@ const MODULES: ModuleEntry[] = [
     description: "Tipo, ASA, fármacos, fluidos, via aérea e complicações.",
     href: "/surgery/anesthesia",
     icon: HeartPulse,
-    bar: "border-l-rose-500",
+    bar: "bg-rose-500",
     iconBg: "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-300",
   },
   {
@@ -198,7 +198,7 @@ const MODULES: ModuleEntry[] = [
     description: "Sign-in, time-out, sign-out e confirmação de segurança.",
     href: "/surgery/safety-checklists",
     icon: ClipboardCheck,
-    bar: "border-l-green-500",
+    bar: "bg-green-500",
     iconBg:
       "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-300",
   },
@@ -208,7 +208,7 @@ const MODULES: ModuleEntry[] = [
     description: "Catálogo de materiais cirúrgicos, implantes e consumíveis.",
     href: "/surgery/materials",
     icon: PackageSearch,
-    bar: "border-l-yellow-500",
+    bar: "bg-yellow-500",
     iconBg:
       "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-300",
   },
@@ -218,7 +218,7 @@ const MODULES: ModuleEntry[] = [
     description: "Materiais e produtos consumidos por cirurgia.",
     href: "/surgery/consumptions",
     icon: PackageCheck,
-    bar: "border-l-lime-500",
+    bar: "bg-lime-500",
     iconBg: "bg-lime-50 text-lime-600 dark:bg-lime-900/20 dark:text-lime-300",
   },
   {
@@ -228,7 +228,7 @@ const MODULES: ModuleEntry[] = [
       "Itens faturáveis por sala, equipa, procedimento, anestesia e consumos.",
     href: "/surgery/billing",
     icon: CreditCard,
-    bar: "border-l-teal-500",
+    bar: "bg-teal-500",
     iconBg: "bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300",
     countKey: "billingItems",
   },
@@ -238,7 +238,7 @@ const MODULES: ModuleEntry[] = [
     description: "Amostras coletadas e ligação ao pedido de patologia.",
     href: "/surgery/specimens",
     icon: Microscope,
-    bar: "border-l-pink-500",
+    bar: "bg-pink-500",
     iconBg: "bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:text-pink-300",
     countKey: "specimens",
   },
@@ -248,7 +248,7 @@ const MODULES: ModuleEntry[] = [
     description: "Sala de recuperação, dor, Aldrete, sinais vitais e alta.",
     href: "/surgery/recovery",
     icon: HeartPulse,
-    bar: "border-l-fuchsia-500",
+    bar: "bg-fuchsia-500",
     iconBg:
       "bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20 dark:text-fuchsia-300",
   },
@@ -258,7 +258,7 @@ const MODULES: ModuleEntry[] = [
     description: "Achados, técnica, complicações e amostras para patologia.",
     href: "/surgery/operative-reports",
     icon: FileText,
-    bar: "border-l-purple-500",
+    bar: "bg-purple-500",
     iconBg:
       "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-300",
     countKey: "operativeReports",
@@ -270,7 +270,7 @@ const MODULES: ModuleEntry[] = [
       "Consentimentos, orçamentos, autorizações, relatórios e anexos.",
     href: "/surgery/documents",
     icon: FileText,
-    bar: "border-l-stone-500",
+    bar: "bg-stone-500",
     iconBg:
       "bg-stone-50 text-stone-600 dark:bg-stone-800/40 dark:text-stone-300",
   },
@@ -281,7 +281,7 @@ const MODULES: ModuleEntry[] = [
       "Rastreabilidade de estados, sala, equipa, materiais e faturação.",
     href: "/surgery/audit-events",
     icon: Activity,
-    bar: "border-l-neutral-500",
+    bar: "bg-neutral-500",
     iconBg:
       "bg-neutral-50 text-neutral-600 dark:bg-neutral-800/40 dark:text-neutral-300",
   },
@@ -305,8 +305,9 @@ function ModuleCard({
   return (
     <Link href={mod.href} className="group block">
       <div
-        className={`flex h-full flex-col gap-1.5 rounded-xl border border-l-4 border-white/20 bg-white/25 p-2 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08] ${mod.bar}`}
+        className="relative flex h-full flex-col gap-1.5 overflow-hidden rounded-xl border border-white/20 bg-white/25 p-2 pl-2.5 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
       >
+        <span className={`absolute inset-y-0 left-0 w-1 ${mod.bar}`} />
         {/* top: icon + count */}
         <div className="flex items-start justify-between gap-2">
           <span
@@ -357,7 +358,7 @@ function StatPill({
   return (
     <Link href={href}>
       <span
-        className={`inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold backdrop-blur-xl transition hover:brightness-110 ${cls}`}
+        className={`inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold backdrop-blur-xl transition hover:brightness-110 md:h-5 md:px-1.5 lg:h-6 lg:px-2 ${cls}`}
       >
         <Icon size={11} />
         {label}
@@ -480,16 +481,16 @@ export default function SurgeryPage() {
         {/* Cabeçalho fundido: banner + pílulas + pesquisa + acções num só bloco translúcido */}
         <section className="relative overflow-hidden rounded-2xl border border-rose-200/25 bg-gradient-to-br from-rose-100/[0.05] via-white/[0.015] to-red-100/[0.03] shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-rose-800/20 dark:from-rose-950/[0.05] dark:via-white/[0.01] dark:to-red-950/[0.03]">
           <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-rose-400/15 blur-3xl" />
-          <div className="relative flex flex-wrap items-center gap-2.5 px-3 py-2">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-md shadow-rose-500/25">
+          <div className="relative flex flex-wrap items-center gap-2.5 px-3 py-2 md:flex-nowrap md:gap-1.5 md:px-2 md:py-1 lg:gap-2.5 lg:px-3 lg:py-2">
+            <div className="flex min-w-0 items-center gap-3 md:shrink-0 md:gap-1.5 lg:gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-md shadow-rose-500/25 md:h-7 md:w-7 lg:h-8 lg:w-8">
                 <Scissors size={15} />
               </span>
               <div className="min-w-0">
                 <h1 className="text-base font-bold leading-tight text-foreground">
                   Cirurgia
                 </h1>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground md:hidden lg:block">
                   {loading
                     ? "A carregar…"
                     : formatCount(totalSurgeries, {
@@ -501,7 +502,7 @@ export default function SurgeryPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 md:min-w-0 md:flex-1 md:flex-nowrap md:gap-1 lg:gap-1.5">
               <StatPill
                 label="Pedidos"
                 value={counts.requests ?? 0}
@@ -552,16 +553,16 @@ export default function SurgeryPage() {
               />
             </div>
 
-            <div className="ml-auto flex flex-wrap items-center gap-1.5">
+            <div className="ml-auto flex flex-wrap items-center gap-1.5 md:shrink-0 md:flex-nowrap md:gap-1 lg:gap-1.5">
               <Link
                 href={`/surgery/surgeries/?scheduled_date=${TODAY}`}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/25 bg-white/[0.05] px-2.5 text-xs font-medium text-foreground backdrop-blur-xl transition hover:bg-white/20 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/25 bg-white/[0.05] px-2.5 text-xs font-medium text-foreground backdrop-blur-xl transition hover:bg-white/20 md:h-7 md:px-2 lg:h-8 lg:px-2.5 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
               >
                 Hoje <ArrowRight size={12} />
               </Link>
               <Link
                 href="/surgery/surgeries/new"
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-red-600 px-2.5 text-xs font-semibold text-white shadow-sm transition hover:from-rose-700 hover:to-red-700"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-red-600 px-2.5 text-xs font-semibold text-white shadow-sm transition hover:from-rose-700 hover:to-red-700 md:h-7 md:px-2 lg:h-8 lg:px-2.5"
               >
                 <Plus size={12} /> Nova cirurgia
               </Link>

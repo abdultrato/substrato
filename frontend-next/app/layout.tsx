@@ -47,7 +47,7 @@ function metadataBaseUrl(): URL {
 
 export const metadata: Metadata = {
   metadataBase: metadataBaseUrl(),
-  title: "Substrato Healthcare Platform",
+  title: "Substrato",
   description:
     "Frontend da plataforma Substrato para atendimento e gestão de saúde.",
   icons: {

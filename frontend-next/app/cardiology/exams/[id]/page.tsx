@@ -7,7 +7,6 @@ import { useParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   CalendarClock,
   CheckCircle2,
   ClipboardList,
@@ -22,6 +21,7 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import { SubstratoTimeline } from "@/components/ui/SubstratoTimeline";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
@@ -254,38 +254,6 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
     <div className="grid grid-cols-1 gap-0.5 text-[10px] leading-tight min-[420px]:grid-cols-[7.5rem_1fr]">
       <span className="whitespace-nowrap text-muted-foreground">{label}</span>
       <span className="min-w-0 break-words font-medium text-foreground">{value}</span>
-    </div>
-  );
-}
-
-function TimelineStep({
-  label,
-  value,
-  active,
-  isLast,
-}: {
-  label: string;
-  value?: string | null;
-  active?: boolean;
-  isLast?: boolean;
-}) {
-  return (
-    <div className="flex min-w-[8.5rem] flex-1 items-center gap-1">
-      <div className="min-w-0 flex-1 rounded border border-border/60 bg-background/40 px-1.5 py-0.5">
-        <div className="flex items-center justify-between gap-1">
-          <span className="whitespace-nowrap text-[9px] font-semibold leading-tight text-foreground">{label}</span>
-          <span
-            className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
-              active ? "bg-emerald-500 text-white" : "bg-rose-500/10 text-rose-600 dark:text-rose-300"
-            }`}
-            aria-label={active ? "Concluído" : "Pendente"}
-          >
-            {active ? <CheckCircle2 size={10} /> : <X size={9} />}
-          </span>
-        </div>
-        <div className="break-words text-[9px] leading-tight text-muted-foreground">{fmtDatetime(value)}</div>
-      </div>
-      {!isLast ? <ArrowRight size={12} className="shrink-0 text-muted-foreground" /> : null}
     </div>
   );
 }
@@ -581,20 +549,14 @@ export default function CardiologyExamDetailPage() {
                 </InfoCard>
               ) : null}
 
-              <InfoCard title="Cronologia" icon={CalendarClock} accent="bg-rose-500" className="md:col-span-2">
-                <div className="flex flex-wrap items-stretch gap-1">
-                  {[
-                    { label: "Solicitado", value: exam.requested_at, active: Boolean(exam.requested_at) },
-                    { label: "Agendado", value: exam.scheduled_at, active: Boolean(exam.scheduled_at) },
-                    { label: "Iniciado", value: exam.started_at, active: Boolean(exam.started_at) },
-                    { label: "Realizado", value: exam.performed_at, active: Boolean(exam.performed_at) },
-                    { label: "Concluído", value: exam.completed_at, active: Boolean(exam.completed_at) },
-                    { label: "Atualizado", value: exam.updated_at, active: Boolean(exam.updated_at) },
-                  ].map((step, index, steps) => (
-                    <TimelineStep key={step.label} label={step.label} value={step.value} active={step.active} isLast={index === steps.length - 1} />
-                  ))}
-                </div>
-              </InfoCard>
+              <SubstratoTimeline className="md:col-span-2" accentClassName="bg-rose-500" steps={[
+                { label: "Solicitado", date: exam.requested_at ? fmtDatetime(exam.requested_at) : undefined },
+                { label: "Agendado", date: exam.scheduled_at ? fmtDatetime(exam.scheduled_at) : undefined },
+                { label: "Iniciado", date: exam.started_at ? fmtDatetime(exam.started_at) : undefined },
+                { label: "Realizado", date: exam.performed_at ? fmtDatetime(exam.performed_at) : undefined },
+                { label: "Concluído", date: exam.completed_at ? fmtDatetime(exam.completed_at) : undefined },
+                { label: "Atualizado", date: exam.updated_at ? fmtDatetime(exam.updated_at) : undefined },
+              ]} />
             </div>
           </>
         ) : null}

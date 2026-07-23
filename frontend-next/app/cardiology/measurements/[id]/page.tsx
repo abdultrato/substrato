@@ -7,7 +7,6 @@ import { useParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   CalendarClock,
   CheckCircle2,
   FileEdit,
@@ -17,10 +16,10 @@ import {
   Stethoscope,
   User,
   Waves,
-  X,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import { SubstratoTimeline } from "@/components/ui/SubstratoTimeline";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
@@ -174,38 +173,6 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
   );
 }
 
-function TimelineStep({
-  label,
-  value,
-  active,
-  isLast,
-}: {
-  label: string;
-  value?: string | null;
-  active?: boolean;
-  isLast?: boolean;
-}) {
-  return (
-    <div className="flex min-w-[8.5rem] flex-1 items-center gap-1">
-      <div className="min-w-0 flex-1 rounded border border-border/60 bg-background/40 px-1.5 py-0.5">
-        <div className="flex items-center justify-between gap-1">
-          <span className="whitespace-nowrap text-[9px] font-semibold leading-tight text-foreground">{label}</span>
-          <span
-            className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
-              active ? "bg-emerald-500 text-white" : "bg-rose-500/10 text-rose-600 dark:text-rose-300"
-            }`}
-            aria-label={active ? "Concluído" : "Pendente"}
-          >
-            {active ? <CheckCircle2 size={10} /> : <X size={9} />}
-          </span>
-        </div>
-        <div className="break-words text-[9px] leading-tight text-muted-foreground">{fmtDatetime(value)}</div>
-      </div>
-      {!isLast ? <ArrowRight size={12} className="shrink-0 text-muted-foreground" /> : null}
-    </div>
-  );
-}
-
 export default function CardiologyMeasurementDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
@@ -352,17 +319,11 @@ export default function CardiologyMeasurementDetailPage() {
                 </Card>
               ) : null}
 
-              <Card title="Cronologia" icon={CalendarClock} accent="bg-rose-500" className="md:col-span-2">
-                <div className="flex flex-wrap items-stretch gap-1">
-                  {[
-                    { label: "Criada", value: measurement.created_at, active: Boolean(measurement.created_at) },
-                    { label: "Medida", value: measurement.measured_at, active: Boolean(measurement.measured_at) },
-                    { label: "Atualizada", value: measurement.updated_at, active: Boolean(measurement.updated_at) },
-                  ].map((step, index, steps) => (
-                    <TimelineStep key={step.label} label={step.label} value={step.value} active={step.active} isLast={index === steps.length - 1} />
-                  ))}
-                </div>
-              </Card>
+              <SubstratoTimeline className="md:col-span-2" accentClassName="bg-rose-500" steps={[
+                { label: "Criada", date: measurement.created_at ? fmtDatetime(measurement.created_at) : undefined },
+                { label: "Medida", date: measurement.measured_at ? fmtDatetime(measurement.measured_at) : undefined },
+                { label: "Atualizada", date: measurement.updated_at ? fmtDatetime(measurement.updated_at) : undefined },
+              ]} />
             </div>
           </>
         ) : null}

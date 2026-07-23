@@ -571,13 +571,13 @@ function PurposeCard({
   onSelect,
   icon: Icon,
   title,
-  description,
+  note,
 }: {
   active: boolean
   onSelect: () => void
   icon: typeof ClipboardList
   title: string
-  description: string
+  note?: React.ReactNode
 }) {
   return (
     <button
@@ -599,9 +599,7 @@ function PurposeCard({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold leading-tight">{title}</span>
-        <span className={`block text-[11px] leading-snug ${active ? "text-white/80" : "text-[var(--gray-500)]"}`}>
-          {description}
-        </span>
+        {note ? <span className={`mt-1 block text-[11px] leading-snug ${active ? "text-white/85" : "text-[var(--gray-500)]"}`}>{note}</span> : null}
       </span>
       {active ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : null}
     </button>
@@ -768,10 +766,12 @@ export function PatientIntakeWizard({
   onClose,
   onSuccess,
   patientId,
+  compact = false,
 }: {
   onClose: () => void
   onSuccess?: (result: { id: number; pregnant: boolean }) => void
   patientId?: number | null
+  compact?: boolean
 }) {
   const [step, setStep] = useState(0)
   const [data, setData] = useState<WizardData>(EMPTY)
@@ -1149,7 +1149,7 @@ export function PatientIntakeWizard({
 
   if (bootstrapping) {
     return (
-      <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose}>
+      <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose} compact={compact}>
         <div className="flex min-h-[320px] items-center justify-center p-5 text-sm text-[var(--gray-500)]">
           Carregando paciente...
         </div>
@@ -1159,7 +1159,7 @@ export function PatientIntakeWizard({
 
   if (created) {
     return (
-      <ModalShell title="Paciente registado" onClose={onClose}>
+      <ModalShell title="Paciente registado" onClose={onClose} compact={compact}>
         <div className="space-y-4 p-5">
           <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
             <CheckCircle2 size={20} className="shrink-0 text-emerald-600" />
@@ -1255,10 +1255,10 @@ export function PatientIntakeWizard({
   }
 
   return (
-    <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose}>
+    <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose} compact={compact}>
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <aside className="shrink-0 border-b border-white/20 bg-white/18 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03] md:w-[210px] md:border-b-0 md:border-r">
-          <div className="flex gap-1.5 overflow-x-auto md:flex-col md:overflow-visible">
+        <aside className={`shrink-0 border-b border-white/20 bg-white/18 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03] md:border-b-0 md:border-r ${compact ? "p-1 md:w-[190px]" : "p-2 md:w-[210px]"}`}>
+          <div className={`flex flex-wrap items-stretch md:flex-col md:flex-nowrap ${compact ? "gap-0.5" : "gap-1.5"}`}>
             {steps.map((definition, index) => {
               const Icon = definition.icon
               const active = index === step
@@ -1269,7 +1269,7 @@ export function PatientIntakeWizard({
                   type="button"
                   onClick={() => index <= step && setStep(index)}
                   disabled={index > step}
-                  className={`flex min-w-[150px] items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-xs transition md:min-w-0 ${
+                  className={`flex min-w-min flex-1 basis-auto items-center rounded-xl border text-left text-xs transition md:w-full md:flex-none ${compact ? "gap-1 px-1.5 py-1" : "gap-2 px-2.5 py-2"} ${
                     active
                       ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white"
                       : complete
@@ -1278,13 +1278,13 @@ export function PatientIntakeWizard({
                   }`}
                 >
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
+                    className={`flex shrink-0 items-center justify-center rounded-md ${compact ? "h-6 w-6" : "h-7 w-7"} ${
                       active ? "bg-white/15" : complete ? "bg-emerald-100/80" : "bg-white/45 dark:bg-white/[0.06]"
                     }`}
                   >
                     {complete ? <CheckCircle2 size={15} /> : <Icon size={15} />}
                   </span>
-                  <span className="min-w-0 font-semibold">
+                  <span className="w-min min-w-0 whitespace-normal break-words font-semibold leading-tight md:w-auto">
                     {definition.key === "clinical" && isDonor ? "Clínico" : definition.label}
                   </span>
                 </button>
@@ -1294,16 +1294,16 @@ export function PatientIntakeWizard({
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-3">{renderStep(currentStep.key)}</div>
+          <div className={`min-h-0 flex-1 overflow-y-auto ${compact ? "p-1.5 sm:p-2" : "p-2 sm:p-3"}`}>{renderStep(currentStep.key)}</div>
 
           {error ? (
-            <div className="mx-2 mb-2 flex shrink-0 items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-800 backdrop-blur-sm sm:mx-3">
+            <div className={`flex shrink-0 items-start rounded-lg border border-amber-200 bg-amber-50/80 text-xs text-amber-800 backdrop-blur-sm ${compact ? "mx-1 mb-1 gap-1 px-2 py-1.5" : "mx-2 mb-2 gap-2 px-3 py-2 sm:mx-3"}`}>
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
           ) : null}
 
-          <div className="flex shrink-0 items-center justify-between gap-2 border-t border-white/20 px-3 py-2 dark:border-white/10">
+          <div className={`flex shrink-0 items-center justify-between border-t border-white/20 dark:border-white/10 ${compact ? "gap-1 px-2 py-1.5" : "gap-2 px-3 py-2"}`}>
             <button
               type="button"
               onClick={() => {
@@ -1354,7 +1354,11 @@ export function PatientIntakeWizard({
                 onSelect={() => selectPurpose(option.value)}
                 icon={option.icon}
                 title={option.title}
-                description={option.description}
+                note={
+                  option.value === "donor" && data.visit_purpose === "donor"
+                    ? <>Será adicionado o passo <strong>Doação de sangue</strong> para registar a triagem.</>
+                    : undefined
+                }
               />
             ))}
           </div>
@@ -1362,7 +1366,7 @@ export function PatientIntakeWizard({
           {isOccupational || isClinical ? (
             <div className="space-y-3 rounded-xl border border-white/20 bg-white/24 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
               <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
-                Detalhes — {purposeLabel(data.visit_purpose)}
+                {purposeLabel(data.visit_purpose)}
               </h4>
 
               {isOccupational ? (
@@ -1409,14 +1413,6 @@ export function PatientIntakeWizard({
             </div>
           ) : null}
 
-          {isDonor ? (
-            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50/80 px-3 py-2.5 text-xs text-rose-700 backdrop-blur-sm">
-              <Droplets size={14} className="mt-0.5 shrink-0" />
-              <span>
-                Será adicionado o passo <strong>Doação de sangue</strong> para registar a triagem.
-              </span>
-            </div>
-          ) : null}
         </div>
       )
     }
@@ -2060,12 +2056,28 @@ function TestSelect({
   )
 }
 
-function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function ModalShell({
+  title,
+  onClose,
+  children,
+  compact = false,
+}: {
+  title: string
+  onClose: () => void
+  children: React.ReactNode
+  compact?: boolean
+}) {
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden p-2 sm:p-3">
+    <div className={`fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden ${compact ? "p-0 sm:p-1" : "p-2 sm:p-3"}`}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex max-h-[calc(100vh-1rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/35 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] supports-[backdrop-filter]:bg-white/30 dark:supports-[backdrop-filter]:bg-white/[0.05]">
-        <div className="flex shrink-0 items-center justify-between border-b border-white/20 px-3 py-2 dark:border-white/10">
+      <div
+        className={`relative flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/35 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] supports-[backdrop-filter]:bg-white/30 dark:supports-[backdrop-filter]:bg-white/[0.05] ${
+          compact
+            ? "max-h-screen rounded-none sm:max-h-[calc(100vh-0.5rem)] sm:rounded-xl [&_.gap-4]:gap-2 [&_.gap-3]:gap-1.5 [&_.gap-2]:gap-1.5 [&_.p-5]:p-3 [&_.p-3]:p-2 [&_.py-3]:py-2 [&_.space-y-4]:space-y-2 [&_.space-y-3]:space-y-2"
+            : "max-h-[calc(100vh-1rem)]"
+        }`}
+      >
+        <div className={`flex shrink-0 items-center justify-between border-b border-white/20 dark:border-white/10 ${compact ? "px-2.5 py-1.5" : "px-3 py-2"}`}>
           <div>
             <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
           </div>

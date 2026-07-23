@@ -7,7 +7,6 @@ import { useParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   CalendarClock,
   CheckCircle2,
   ClipboardList,
@@ -17,10 +16,10 @@ import {
   Loader2,
   Stethoscope,
   User,
-  X,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import { SubstratoTimeline } from "@/components/ui/SubstratoTimeline";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
@@ -159,38 +158,6 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
     <div className="grid grid-cols-1 gap-0.5 text-[10px] leading-tight min-[420px]:grid-cols-[7.25rem_1fr]">
       <span className="whitespace-nowrap text-muted-foreground">{label}</span>
       <span className="min-w-0 break-words font-medium text-foreground">{value}</span>
-    </div>
-  );
-}
-
-function TimelineStep({
-  label,
-  value,
-  active,
-  isLast,
-}: {
-  label: string;
-  value?: string | null;
-  active?: boolean;
-  isLast?: boolean;
-}) {
-  return (
-    <div className="flex min-w-[8.5rem] flex-1 items-center gap-1">
-      <div className="min-w-0 flex-1 rounded border border-border/60 bg-background/40 px-1.5 py-0.5">
-        <div className="flex items-center justify-between gap-1">
-          <span className="whitespace-nowrap text-[9px] font-semibold leading-tight text-foreground">{label}</span>
-          <span
-            className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
-              active ? "bg-emerald-500 text-white" : "bg-rose-500/10 text-rose-600 dark:text-rose-300"
-            }`}
-            aria-label={active ? "Concluído" : "Pendente"}
-          >
-            {active ? <CheckCircle2 size={10} /> : <X size={9} />}
-          </span>
-        </div>
-        <div className="break-words text-[9px] leading-tight text-muted-foreground">{fmtDatetime(value)}</div>
-      </div>
-      {!isLast ? <ArrowRight size={12} className="shrink-0 text-muted-foreground" /> : null}
     </div>
   );
 }
@@ -357,25 +324,13 @@ export default function CardiologyReportDetailPage() {
                 </InfoCard>
               ) : null}
 
-              <InfoCard title="Cronologia" icon={CalendarClock} accent="bg-rose-500" className="md:col-span-2">
-                <div className="flex flex-wrap items-stretch gap-1">
-                  {[
-                    { label: "Criado", value: report.created_at, active: Boolean(report.created_at) },
-                    { label: "Laudado", value: report.reported_at, active: Boolean(report.reported_at) },
-                    { label: "Assinado", value: report.signed_at, active: Boolean(report.signed_at) },
-                    { label: "Crítico notificado", value: report.critical_notified_at, active: Boolean(report.critical_notified_at) },
-                    { label: "Atualizado", value: report.updated_at, active: Boolean(report.updated_at) },
-                  ].map((step, index, steps) => (
-                    <TimelineStep
-                      key={step.label}
-                      label={step.label}
-                      value={step.value}
-                      active={step.active}
-                      isLast={index === steps.length - 1}
-                    />
-                  ))}
-                </div>
-              </InfoCard>
+              <SubstratoTimeline className="md:col-span-2" accentClassName="bg-rose-500" steps={[
+                { label: "Criado", date: report.created_at ? fmtDatetime(report.created_at) : undefined },
+                { label: "Laudado", date: report.reported_at ? fmtDatetime(report.reported_at) : undefined },
+                { label: "Assinado", date: report.signed_at ? fmtDatetime(report.signed_at) : undefined },
+                { label: "Crítico notificado", date: report.critical_notified_at ? fmtDatetime(report.critical_notified_at) : undefined },
+                { label: "Atualizado", date: report.updated_at ? fmtDatetime(report.updated_at) : undefined },
+              ]} />
             </div>
           </>
         )}

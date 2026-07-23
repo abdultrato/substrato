@@ -26,6 +26,7 @@ export default function EditPatientPage() {
     <AppLayout requiredGroups={ALLOWED}>
       <PatientIntakeWizard
         patientId={patientId}
+        compact
         onClose={() => router.push(`/patients/${patientId}`)}
         onSuccess={(saved) => router.push(`/patients/${saved.id}`)}
       />

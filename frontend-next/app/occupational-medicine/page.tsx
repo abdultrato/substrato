@@ -23,6 +23,9 @@ import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS } from "@/lib/rbac";
 
 const OCCUPATIONAL_PROVENANCE = "Medicina Ocupacional";
+const DEFAULT_PAGE_SIZE = 12;
+const MIN_PAGE_SIZE = 1;
+const MAX_PAGE_SIZE = 100;
 const VIEW_GROUPS = [
   GROUPS.ADMIN,
   GROUPS.RECEPCAO,
@@ -115,7 +118,8 @@ export default function MedicinaOcupacionalPage() {
 
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 12;
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSizeDraft, setPageSizeDraft] = useState(String(DEFAULT_PAGE_SIZE));
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [patients, setPatients] = useState<PatientRow[]>([]);
@@ -125,7 +129,7 @@ export default function MedicinaOcupacionalPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, pageSize]);
 
   useEffect(() => {
     let mounted = true;
@@ -174,6 +178,7 @@ export default function MedicinaOcupacionalPage() {
             ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
           },
           clientCache: safeRefreshToken === 0,
+          clientPaginate: true,
         });
         if (!mounted) return;
         const items = Array.isArray(res?.items) ? res.items : [];
@@ -200,12 +205,21 @@ export default function MedicinaOcupacionalPage() {
     return () => {
       mounted = false;
     };
-  }, [debouncedSearch, page, safeRefreshToken]);
+  }, [debouncedSearch, page, pageSize, safeRefreshToken]);
 
   const cardAccents = useMemo(
     () => ["bg-teal-500", "bg-sky-500", "bg-violet-500", "bg-emerald-500", "bg-amber-500"],
     [],
   );
+
+  const commitPageSize = () => {
+    const parsed = Math.round(Number(pageSizeDraft));
+    const next = Number.isFinite(parsed)
+      ? Math.min(MAX_PAGE_SIZE, Math.max(MIN_PAGE_SIZE, parsed))
+      : DEFAULT_PAGE_SIZE;
+    setPageSizeDraft(String(next));
+    setPageSize(next);
+  };
 
   return (
     <AppLayout requiredGroups={VIEW_GROUPS}>
@@ -310,15 +324,37 @@ export default function MedicinaOcupacionalPage() {
         </div>
 
         <section className="rounded-xl border border-white/40 bg-white/20 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="mb-1 flex flex-wrap items-center justify-between gap-1">
+            <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Pacientes ocupacionais</h2>
                 <p className="text-[11px] text-muted-foreground">
                   Cards curtos com abertura directa para detalhe ocupacional.
                 </p>
               </div>
-              <div className="text-xs text-muted-foreground">
-                Total: {totalItems} · Pagina {page} de {totalPages}
+              <div className="flex flex-nowrap items-center gap-3">
+                <label className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-muted-foreground">
+                  Itens por página
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    step={1}
+                    value={pageSizeDraft}
+                    onChange={(event) => setPageSizeDraft(event.target.value)}
+                    onBlur={commitPageSize}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        commitPageSize();
+                      }
+                    }}
+                    className="h-7 w-16 rounded-md border border-border bg-background/70 px-2 text-center text-xs font-semibold tabular-nums text-foreground outline-none transition focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20"
+                    aria-label="Número de itens por página"
+                  />
+                </label>
+                <div className="whitespace-nowrap text-xs text-muted-foreground">
+                  Total: {totalItems} · Página {page} de {totalPages}
+                </div>
               </div>
             </div>
 

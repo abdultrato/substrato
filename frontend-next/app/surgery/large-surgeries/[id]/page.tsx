@@ -8,7 +8,6 @@ import {
   Building2,
   CalendarClock,
   CheckCircle2,
-  Clock3,
   CreditCard,
   Package,
   Scissors,
@@ -19,6 +18,7 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import { SubstratoTimeline } from "@/components/ui/SubstratoTimeline"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
@@ -418,47 +418,19 @@ export default function LargeSurgeryDetailPage() {
         </div>
 
         {/* cronologia */}
-        <section className={`relative overflow-hidden ${GLASS}`}>
-          <span className={`absolute left-0 top-0 h-full w-1 ${statusAccent(status)}`} />
-          <div className="px-4 py-3 pl-5">
-            <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-              <Clock3 size={13} />
-              <span>Cronologia cirúrgica</span>
-              <span className={`ml-2 rounded-full border px-2 py-0.5 text-[9px] font-semibold ${statusBadge(status)}`}>
-                {STATUS_LABEL[status] || status}
-              </span>
-            </div>
-            <div className="flex items-start gap-0">
-              {[
-                { label: "Agendada", date: data.scheduled_for, dotColor: "bg-indigo-400", lineColor: "bg-indigo-400", textColor: "text-indigo-600 dark:text-indigo-400" },
-                { label: "Iniciada", date: data.started_at, dotColor: "bg-sky-400", lineColor: "bg-sky-400", textColor: "text-sky-600 dark:text-sky-400" },
-                { label: "Terminada", date: data.ended_at, dotColor: "bg-amber-400", lineColor: "bg-amber-400", textColor: "text-amber-600 dark:text-amber-400" },
-                { label: "Concluída", date: data.completed_at, dotColor: "bg-emerald-400", lineColor: "bg-emerald-400", textColor: "text-emerald-600 dark:text-emerald-400" },
-                { label: "Cancelada", date: data.canceled_at, dotColor: "bg-rose-400", lineColor: "bg-rose-400", textColor: "text-rose-600 dark:text-rose-400" },
-              ].map((step, i, arr) => (
-                <div key={step.label} className="flex flex-1 flex-col">
-                  <div className="flex items-center">
-                    <span className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 shadow-sm ${
-                      step.date ? `border-white/60 ${step.dotColor} dark:border-white/20` : "border-white/40 bg-white/30 dark:border-white/10 dark:bg-white/[0.06]"}`}>
-                      {step.date
-                        ? <CheckCircle2 size={13} className="text-white" />
-                        : <span className="h-2 w-2 rounded-full bg-[var(--gray-300)] dark:bg-white/20" />}
-                    </span>
-                    {i < arr.length - 1 && (
-                      <span className={`h-0.5 flex-1 ${step.date ? `${step.lineColor} opacity-60` : "bg-white/25 dark:bg-white/10"}`} />
-                    )}
-                  </div>
-                  <div className="mt-2 pr-2">
-                    <p className={`text-[11px] font-semibold ${step.date ? step.textColor : "text-[var(--gray-400)]"}`}>{step.label}</p>
-                    <p className={`mt-0.5 text-[10px] ${step.date ? "text-[var(--gray-500)]" : "text-[var(--gray-300)]"}`}>
-                      {step.date ? fmtDate(step.date) : "Pendente"}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <SubstratoTimeline
+          title="Cronologia cirúrgica"
+          status={STATUS_LABEL[status] || status}
+          statusClassName={statusBadge(status)}
+          accentClassName={statusAccent(status)}
+          steps={[
+            { label: "Agendada", date: data.scheduled_for ? fmtDate(data.scheduled_for) : undefined },
+            { label: "Iniciada", date: data.started_at ? fmtDate(data.started_at) : undefined },
+            { label: "Terminada", date: data.ended_at ? fmtDate(data.ended_at) : undefined },
+            { label: "Concluída", date: data.completed_at ? fmtDate(data.completed_at) : undefined },
+            { label: "Cancelada", date: data.canceled_at ? fmtDate(data.canceled_at) : undefined },
+          ]}
+        />
 
       </div>
     </AppLayout>
