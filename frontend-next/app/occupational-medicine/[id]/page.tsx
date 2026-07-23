@@ -67,9 +67,9 @@ function buildAddress(patient: PatientDetail) {
 function Field({ label, value }: { label: string; value?: React.ReactNode }) {
   if (value === null || value === undefined || value === "" || value === "-") return null;
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-border/40 py-1.5 last:border-0">
+    <div className="flex flex-col gap-0.5 border-b border-border/40 py-1.5 last:border-0 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
       <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="max-w-[65%] text-right text-sm font-medium text-foreground">{value}</span>
+      <span className="break-words text-sm font-medium text-foreground sm:max-w-[65%] sm:text-right">{value}</span>
     </div>
   );
 }
@@ -86,13 +86,13 @@ function DetailCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
+    <section className="relative mb-2 break-inside-avoid overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
       <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} />
-      <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2 pl-4">
-        <Icon size={15} className="text-muted-foreground" />
+      <div className="flex items-center gap-2 border-b border-border/60 px-2.5 py-1.5 pl-3.5">
+        <Icon size={14} className="text-muted-foreground" />
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="p-3 pl-4">{children}</div>
+      <div className="px-2.5 py-2 pl-3.5">{children}</div>
     </section>
   );
 }
@@ -142,7 +142,7 @@ export default function OccupationalMedicineDetailPage() {
       <AppLayout requiredGroups={VIEW_GROUPS}>
         <div className="mx-auto max-w-3xl space-y-3 px-2">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-6 text-center text-sm text-amber-800">
-            {error || "Paciente ocupacional nao encontrado."}
+            {error || "Paciente ocupacional não encontrado."}
           </div>
           <button
             type="button"
@@ -161,44 +161,47 @@ export default function OccupationalMedicineDetailPage() {
 
   return (
     <AppLayout requiredGroups={VIEW_GROUPS}>
-      <div className="mx-auto w-full max-w-6xl space-y-3 px-1 pb-4">
+      <div className="mx-auto w-full max-w-6xl space-y-2 px-2 pb-4 sm:px-3">
         <section className="relative overflow-hidden rounded-xl border border-teal-200/70 bg-card shadow-sm dark:border-teal-900/40">
           <span className="absolute inset-y-0 left-0 w-1 bg-teal-500" />
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3 pl-5">
-            <button
-              type="button"
-              onClick={() => router.push("/occupational-medicine")}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-xs font-semibold text-foreground hover:bg-muted"
-            >
-              <ArrowLeft size={14} />
-              Voltar
-            </button>
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/12 text-sm font-bold text-teal-700 dark:text-teal-300">
-              {initials(patient.name)}
-            </span>
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate text-xl font-bold text-foreground">{display(patient.name)}</h1>
-              <p className="truncate text-xs text-muted-foreground">
-                {display(patient.custom_id || patient.id)} · {display(patient.origin_company_name, "Sem empresa")}
-              </p>
+          <div className="flex flex-col gap-3 px-3 py-3 pl-4 sm:px-4 sm:pl-5 md:flex-row md:items-center">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => router.push("/occupational-medicine")}
+                aria-label="Voltar"
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 text-xs font-semibold text-foreground hover:bg-muted"
+              >
+                <ArrowLeft size={14} />
+                <span className="hidden sm:inline">Voltar</span>
+              </button>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-500/12 text-sm font-bold text-teal-700 dark:text-teal-300">
+                {initials(patient.name)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h1 className="truncate text-lg font-bold text-foreground sm:text-xl">{display(patient.name)}</h1>
+                <p className="truncate text-xs text-muted-foreground">
+                  {display(patient.custom_id || patient.id)} · {display(patient.origin_company_name, "Sem empresa")}
+                </p>
+              </div>
             </div>
             <Link
               href={`/patients/${encodeURIComponent(String(patient.id))}`}
-              className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-3 text-xs font-semibold text-foreground hover:bg-muted"
+              className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-border bg-background px-3 text-xs font-semibold text-foreground hover:bg-muted md:ml-auto"
             >
               Ficha clinica
             </Link>
           </div>
         </section>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            Identificacao principal
+            Identificação principal
           </h2>
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="columns-1 gap-2 sm:columns-2 lg:columns-3 [column-fill:_balance]">
             <DetailCard title="Paciente" icon={User} accent="bg-teal-500">
               <Field label="Nome" value={display(patient.name)} />
-              <Field label="Codigo" value={display(patient.custom_id || patient.id)} />
+              <Field label="Código" value={display(patient.custom_id || patient.id)} />
               <Field label="Sexo" value={display(patient.gender)} />
               <Field label="Nascimento" value={fmtDate(patient.birth_date)} />
               <Field label="Idade" value={patient.age_display || patient.age_years} />
@@ -206,7 +209,7 @@ export default function OccupationalMedicineDetailPage() {
 
             <DetailCard title="Documento" icon={Badge} accent="bg-sky-500">
               <Field label="Tipo" value={display(patient.document_type)} />
-              <Field label="Numero" value={display(patient.document_number)} />
+              <Field label="Número" value={display(patient.document_number)} />
               <Field label="NUIT" value={display(patient.nuit)} />
               <Field label="Nacionalidade" value={display(patient.nationality)} />
             </DetailCard>
@@ -214,46 +217,46 @@ export default function OccupationalMedicineDetailPage() {
             <DetailCard title="Contacto" icon={Phone} accent="bg-violet-500">
               <Field label="Telefone" value={display(patient.contact)} />
               <Field label="Email" value={display(patient.email)} />
-              <Field label="Endereco" value={address} />
+              <Field label="Endereço" value={address} />
             </DetailCard>
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
             Contexto ocupacional
           </h2>
-          <div className="grid gap-3 lg:grid-cols-3">
+          <div className="columns-1 gap-2 sm:columns-2 lg:columns-3 [column-fill:_balance]">
             <DetailCard title="Empresa" icon={Building2} accent="bg-emerald-500">
               <Field label="Empresa" value={display(patient.origin_company_name)} />
-              <Field label="Proveniencia" value={display(patient.provenance || patient.proveniencia)} />
+              <Field label="Proveniência" value={display(patient.provenance || patient.proveniencia)} />
               <Field label="Cargo" value={display(patient.job_title || patient.profession)} />
               <Field label="Departamento" value={display(patient.department)} />
             </DetailCard>
 
-            <DetailCard title="Admissao e seguimento" icon={CalendarDays} accent="bg-amber-500">
+            <DetailCard title="Admissão e seguimento" icon={CalendarDays} accent="bg-amber-500">
               <Field label="Criado em" value={fmtDate(patient.created_at)} />
-              <Field label="Actualizado em" value={fmtDate(patient.updated_at)} />
+              <Field label="Atualizado em" value={fmtDate(patient.updated_at)} />
               <Field label="Estado" value={display(patient.status)} />
               <Field label="Categoria" value={display(patient.category)} />
             </DetailCard>
 
-            <DetailCard title="Notas clinicas" icon={HeartPulse} accent="bg-rose-500">
+            <DetailCard title="Notas clínicas" icon={HeartPulse} accent="bg-rose-500">
               <Field label="Alergias" value={display(patient.allergies)} />
-              <Field label="Grupo sanguineo" value={display(patient.blood_type)} />
-              <Field label="Observacoes" value={display(patient.notes || patient.observations)} />
+              <Field label="Grupo sanguíneo" value={display(patient.blood_type)} />
+              <Field label="Observações" value={display(patient.notes || patient.observations)} />
             </DetailCard>
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h2 className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
             Fluxos relacionados
           </h2>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { href: "/requests/new", label: "Nova requisicao", icon: ClipboardList, accent: "bg-violet-500" },
-              { href: `/patients/${encodeURIComponent(String(patient.id))}/medical-history`, label: "Historico clinico", icon: FileText, accent: "bg-sky-500" },
+              { href: "/requests/new", label: "Nova requisição", icon: ClipboardList, accent: "bg-violet-500" },
+              { href: `/patients/${encodeURIComponent(String(patient.id))}/medical-history`, label: "Histórico clínico", icon: FileText, accent: "bg-sky-500" },
               { href: "/nursing/procedures", label: "Procedimentos", icon: HeartPulse, accent: "bg-emerald-500" },
               { href: `mailto:${display(patient.email, "")}`, label: "Enviar email", icon: Mail, accent: "bg-amber-500" },
             ].map((item) => {
