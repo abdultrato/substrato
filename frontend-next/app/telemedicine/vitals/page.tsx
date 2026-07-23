@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, AlertTriangle, Droplet, Gauge, Heart, Loader2, Plus, Search, Thermometer, Wind } from "lucide-react";
+import { Activity, AlertTriangle, ArrowLeft, Droplet, Gauge, Heart, Loader2, Plus, Search, Thermometer, Wind } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
@@ -94,7 +94,10 @@ export default function TelemedicineVitalsListPage() {
         {/* Header mínimo: título + indicadores inline + busca. */}
         <section className="relative flex flex-wrap items-center gap-x-2 gap-y-1 overflow-hidden rounded-lg border border-cyan-200/60 bg-white/55 px-2 py-1 shadow-sm backdrop-blur dark:border-cyan-900/35 dark:bg-slate-950/45">
           <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-cyan-500 to-violet-600" />
-          <div className="flex items-center gap-1.5"><Activity size={16} className="text-cyan-600 dark:text-cyan-400" /><h1 className="text-sm font-bold leading-none text-foreground">Leituras remotas</h1></div>
+          <div className="flex items-center gap-1.5">
+            <Link href="/telemedicine" title="Voltar à Telemedicina" className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background/70 text-muted-foreground shadow-sm transition hover:border-cyan-300 hover:text-foreground"><ArrowLeft size={15} /></Link>
+            <Activity size={16} className="text-cyan-600 dark:text-cyan-400" /><h1 className="text-sm font-bold leading-none text-foreground">Leituras remotas</h1>
+          </div>
           <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground">
             <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap"><Activity size={13} className="shrink-0 text-sky-600" />Total<b className="text-xs font-bold text-sky-600">{loading ? "…" : items.length}</b></span>
             <button type="button" onClick={() => setOnlyCritical((v) => !v)} className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-1.5 py-0.5 transition ${onlyCritical ? "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300" : ""}`}><AlertTriangle size={13} className="shrink-0 text-rose-600" />Críticas<b className="text-xs font-bold text-rose-600">{loading ? "…" : criticalCount}</b></button>
