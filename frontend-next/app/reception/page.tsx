@@ -671,7 +671,7 @@ export default function RecepcaoPage() {
         <div className="grid gap-1 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-1">
           <section className={`relative overflow-hidden ${GLASS}`}>
-            <div className="space-y-2 px-4 py-4 sm:px-5">
+            <div className="space-y-2 px-4 py-3 sm:px-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h1 className="mt-1 text-xl font-bold leading-tight text-foreground sm:text-2xl">
@@ -717,7 +717,7 @@ export default function RecepcaoPage() {
               )}
 
               <div className="flex flex-wrap items-center gap-1.5">
-                <div className="relative w-full sm:w-[16rem] md:w-[18rem] xl:w-[20rem]">
+                <div className="relative w-full min-w-[12rem] sm:w-auto sm:flex-1 sm:max-w-[22rem]">
                   <Search
                     size={13}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -727,7 +727,7 @@ export default function RecepcaoPage() {
                     value={searchInput}
                     onChange={(event) => setSearchInput(event.target.value)}
                     placeholder="Paciente, código, req., fatura..."
-                    className="h-9 w-full rounded-xl border border-border bg-background/70 py-2 pl-8 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                    className="h-7 w-full rounded-full border border-border bg-background/70 py-2 pl-8 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                   />
                   {searchInput ? (
                     <button
@@ -742,7 +742,7 @@ export default function RecepcaoPage() {
                 </div>
 
                 <StatPill
-                  label="Check-ins hoje"
+                  label="Check-ins"
                   value={workspace.summary.checkins_today}
                   icon={Users}
                   cls="border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300"
@@ -762,39 +762,34 @@ export default function RecepcaoPage() {
                   cls="border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300"
                   href="/reception/reception-checkins?status=ATEND"
                 />
-                <div className="shrink-0 xl:ml-auto">
+                <StatPill
+                  label="Req. pendentes"
+                  value={workspace.summary.pending_requests}
+                  icon={ClipboardList}
+                  cls="border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
+                  href="/requests/pendentes"
+                />
+                <StatPill
+                  label="Faturas abertas"
+                  value={workspace.summary.open_invoices}
+                  icon={Receipt}
+                  cls="border-rose-200/50 bg-rose-100/30 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300"
+                  href="/billing/invoices?status=EMIT"
+                />
+                <StatPill
+                  label="Recibos"
+                  value={workspace.summary.receipts_generated_today}
+                  icon={Receipt}
+                  cls="border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
+                  href="/payments/receipts"
+                />
+                <div className="shrink-0 sm:ml-auto">
                   <StatPill
                     label="Recebido hoje"
                     value={<MoneyValue value={workspace.summary.received_today} />}
                     icon={Receipt}
                     cls="border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
                     href="/receipts"
-                  />
-                </div>
-                <div className="grid w-full grid-cols-4 gap-1.5">
-                  <HeaderMiniIndicator
-                    label="Aguardando atendimento"
-                    value={workspace.summary.queue_size}
-                    href="/reception/reception-checkins?status=AGUARD"
-                    accent="text-blue-700 dark:text-blue-300"
-                  />
-                  <HeaderMiniIndicator
-                    label="Requisições pendentes"
-                    value={workspace.summary.pending_requests}
-                    href="/requests/pendentes"
-                    accent="text-amber-700 dark:text-amber-300"
-                  />
-                  <HeaderMiniIndicator
-                    label="Faturas abertas"
-                    value={workspace.summary.open_invoices}
-                    href="/billing/invoices?status=EMIT"
-                    accent="text-rose-700 dark:text-rose-300"
-                  />
-                  <HeaderMiniIndicator
-                    label="Recibos hoje"
-                    value={workspace.summary.receipts_generated_today}
-                    href="/payments/receipts"
-                    accent="text-emerald-700 dark:text-emerald-300"
                   />
                 </div>
               </div>
@@ -1260,35 +1255,6 @@ function ChatbotPanel({
       </div>
     </section>
   );
-}
-
-function HeaderMiniIndicator({
-  label,
-  value,
-  href,
-  accent,
-}: {
-  label: string;
-  value: number | string;
-  href?: string;
-  accent?: string;
-}) {
-  const inner = (
-    <span className="flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/35 px-3 text-[10px] font-medium text-muted-foreground backdrop-blur-sm dark:bg-white/[0.05]">
-      <span className="truncate">{label}</span>
-      <span className={`shrink-0 text-xs font-bold ${accent ?? "text-foreground"}`}>{value}</span>
-    </span>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className="block min-w-0 transition hover:-translate-y-0.5">
-        {inner}
-      </Link>
-    );
-  }
-
-  return inner;
 }
 
 function QuickLinkCard({
