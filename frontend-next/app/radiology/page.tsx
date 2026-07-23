@@ -86,14 +86,20 @@ export default function RadiologyPage() {
 
         <WorkspaceHub
           title="Radiologia"
+          icon={Microscope}
+          iconClass="bg-sky-500/15 text-sky-600 dark:text-sky-300"
+          barClass="bg-sky-500"
+          dense
+          metricsNowrap
+          actionsNowrap
           metrics={[
-            { label: "Equipamentos", value: metricValue || equipment, href: "/radiology/equipment" },
-            { label: "Protocolos", value: metricValue || protocols, href: "/radiology/protocols" },
-            { label: "Estudos", value: metricValue || studies, href: "/radiology/studies" },
-            { label: "Séries", value: metricValue || series, href: "/radiology/series" },
-            { label: "Ficheiros", value: metricValue || files, href: "/radiology/files" },
-            { label: "Laudos", value: metricValue || reports, href: "/radiology/reports" },
-            { label: "Eventos PACS", value: metricValue || pacsEvents, href: "/radiology/pacs-events" },
+            { label: "Equipamentos", value: metricValue || equipment, icon: Wrench, accentClass: "border-l-slate-500", iconClass: "bg-slate-500/15 text-slate-600 dark:text-slate-300", href: "/radiology/equipment" },
+            { label: "Protocolos", value: metricValue || protocols, icon: ClipboardList, accentClass: "border-l-amber-500", iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300", href: "/radiology/protocols" },
+            { label: "Estudos", value: metricValue || studies, icon: Microscope, accentClass: "border-l-sky-500", iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300", href: "/radiology/studies" },
+            { label: "Séries", value: metricValue || series, icon: Layers, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300", href: "/radiology/series" },
+            { label: "Ficheiros", value: metricValue || files, icon: FileText, accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", href: "/radiology/files" },
+            { label: "Laudos", value: metricValue || reports, icon: FileText, accentClass: "border-l-rose-500", iconClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300", href: "/radiology/reports" },
+            { label: "Eventos PACS", value: metricValue || pacsEvents, icon: TerminalSquare, accentClass: "border-l-cyan-500", iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300", href: "/radiology/pacs-events" },
           ]}
           actions={[
             {
@@ -101,42 +107,56 @@ export default function RadiologyPage() {
               description: t("Pedido, agenda, aquisição, estado e vínculo clínico.", "Order, schedule, acquisition, status and clinical link."),
               href: "/radiology/studies",
               icon: Microscope,
+              accentClass: "border-l-sky-500",
+              iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
             },
             {
               title: "Protocolos",
               description: t("Modalidade, região anatómica, contraste e instruções.", "Modality, body region, contrast and instructions."),
               href: "/radiology/protocols",
               icon: ClipboardList,
+              accentClass: "border-l-amber-500",
+              iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
             },
             {
               title: "Equipamentos",
               description: t("Estações, AE Title, localização e controlo de qualidade.", "Stations, AE Title, location and quality control."),
               href: "/radiology/equipment",
               icon: Wrench,
+              accentClass: "border-l-slate-500",
+              iconClass: "bg-slate-500/15 text-slate-600 dark:text-slate-300",
             },
             {
               title: "Séries DICOM",
               description: t("UID da série, contagem de imagens e armazenamento.", "Series UID, image count and storage."),
               href: "/radiology/series",
               icon: Layers,
+              accentClass: "border-l-violet-500",
+              iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
             },
             {
               title: "Ficheiros de imagem",
               description: t("DICOM, imagens, PDFs e referências no PACS.", "DICOM, images, PDFs and PACS references."),
               href: "/radiology/files",
               icon: FileText,
+              accentClass: "border-l-emerald-500",
+              iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
             },
             {
               title: "Laudos",
               description: t("Achados, impressão, assinatura e resultados críticos.", "Findings, impression, signature and critical results."),
               href: "/radiology/reports",
               icon: FileText,
+              accentClass: "border-l-rose-500",
+              iconClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
             },
             {
               title: "Eventos PACS",
               description: t("Worklist, store, query/retrieve, envio de laudo e erros.", "Worklist, store, query/retrieve, report send and errors."),
               href: "/radiology/pacs-events",
               icon: TerminalSquare,
+              accentClass: "border-l-cyan-500",
+              iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300",
             },
           ]}
         />
