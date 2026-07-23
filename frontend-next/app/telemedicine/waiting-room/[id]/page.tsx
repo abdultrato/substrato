@@ -119,9 +119,7 @@ export default function TelemedicineWaitingRoomDetailPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.RECEPCAO, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-full max-w-4xl space-y-2 px-1 pb-4">
-        <Link href="/telemedicine/waiting-room" className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition hover:text-foreground"><ArrowLeft size={13} /> Sala de espera</Link>
-
+      <div className="mx-auto w-full max-w-[99vw] space-y-2 px-1 pb-4">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-24 text-sm text-muted-foreground"><Loader2 size={18} className="animate-spin" /> A carregar…</div>
         ) : !entry ? (
@@ -133,8 +131,9 @@ export default function TelemedicineWaitingRoomDetailPage() {
             {/* Cabeçalho: paciente, código, estado, prioridade e ações. */}
             <section className="relative overflow-hidden rounded-xl border border-cyan-200/60 bg-white/55 p-3 shadow-sm backdrop-blur dark:border-cyan-900/35 dark:bg-slate-950/45">
               <span className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${statusMeta.bar}`} />
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
+              <div className="flex flex-wrap items-start gap-2">
+                <Link href="/telemedicine/waiting-room" title="Voltar à sala de espera" className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background/70 text-muted-foreground shadow-sm transition hover:border-cyan-300 hover:text-foreground"><ArrowLeft size={15} /></Link>
+                <div className="min-w-0 flex-1">
                   <p className="font-mono text-[10px] text-muted-foreground">{entry.custom_id || `TWR-${entry.id}`}{entry.consultation_label ? ` · ${entry.consultation_label}` : ""}</p>
                   <h1 className="truncate text-lg font-bold leading-tight text-foreground">{entry.patient_name || "Paciente não identificado"}</h1>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
