@@ -128,7 +128,7 @@ function Row({ label, value }: { label: string; value?: React.ReactNode }) {
 }
 
 function Chip({ children, color }: { children: React.ReactNode; color: string }) {
-  return <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${color}`}>{children}</span>;
+  return <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-semibold ${color}`}>{children}</span>;
 }
 
 export default function PacienteDetalhePage() {
