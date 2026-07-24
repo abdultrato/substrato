@@ -1,12 +1,9 @@
 "use client";
 
-import { Suspense } from "react";
-import { GeneratedResourceEditPage } from "@/components/resources/GeneratedResourcePages";
+import { useParams } from "next/navigation";
+import ProtocolFormPage from "../../ProtocolFormPage";
 
 export default function RadiologyProtocolsEditPage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceEditPage endpoint="/radiology/protocol/" />
-    </Suspense>
-  );
+  const params = useParams();
+  return <ProtocolFormPage id={String((params as { id?: string })?.id || "")} />;
 }

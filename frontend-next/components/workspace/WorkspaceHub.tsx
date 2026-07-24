@@ -53,6 +53,8 @@ type WorkspaceHubProps = {
   actionsNowrap?: boolean
   /** Renderiza os indicadores numa linha compacta: rótulo e valor lado a lado. */
   metricsNowrap?: boolean
+  /** Renderiza os indicadores como texto "Nome: valor", sem cartões individuais. */
+  metricsPlain?: boolean
   /** Conteúdo extra compacto dentro do cartão de cabeçalho, abaixo das métricas. */
   headerPanels?: ReactNode
 }
@@ -72,6 +74,7 @@ export default function WorkspaceHub({
   backLabel,
   actionsNowrap,
   metricsNowrap,
+  metricsPlain,
   headerPanels,
 }: WorkspaceHubProps) {
   const { tr } = useLanguage()
@@ -111,25 +114,46 @@ export default function WorkspaceHub({
 
         <div
           className={
-            metricsNowrap
+            metricsPlain
+              ? "mt-2 flex flex-wrap items-center gap-x-4 gap-y-1"
+              : metricsNowrap
               ? "mt-1 grid grid-cols-1 gap-1 min-[420px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7"
               : `grid gap-1 ${dense ? "mt-1 grid-cols-4 md:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-12" : "mt-4 grid-cols-2 sm:grid-cols-4"}`
           }
         >
-          {metrics.map((item) => (
-            <MetricCard
-              key={item.label}
-              label={item.label}
-              value={item.value}
-              hint={item.hint}
-              icon={item.icon}
-              accentClass={item.accentClass}
-              iconClass={item.iconClass}
-              href={item.href}
-              dense={dense}
-              inlineNowrap={metricsNowrap}
-            />
-          ))}
+          {metrics.map((item) => {
+            if (metricsPlain) {
+              const content = (
+                <>
+                  <span className="font-semibold text-muted-foreground">{tr(item.label)}:</span>
+                  <span className="font-display font-bold tabular-nums text-foreground">{item.value}</span>
+                </>
+              )
+              return item.href ? (
+                <Link key={item.label} href={item.href} className="inline-flex shrink-0 items-baseline gap-1 whitespace-nowrap text-xs transition hover:text-[var(--primary-600)]">
+                  {content}
+                </Link>
+              ) : (
+                <span key={item.label} className="inline-flex shrink-0 items-baseline gap-1 whitespace-nowrap text-xs">
+                  {content}
+                </span>
+              )
+            }
+            return (
+              <MetricCard
+                key={item.label}
+                label={item.label}
+                value={item.value}
+                hint={item.hint}
+                icon={item.icon}
+                accentClass={item.accentClass}
+                iconClass={item.iconClass}
+                href={item.href}
+                dense={dense}
+                inlineNowrap={metricsNowrap}
+              />
+            )
+          })}
         </div>
 
         {headerPanels ? <div className={dense ? "mt-1" : "mt-3"}>{headerPanels}</div> : null}

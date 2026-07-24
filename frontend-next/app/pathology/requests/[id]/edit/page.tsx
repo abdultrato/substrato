@@ -1,12 +1,1 @@
-"use client";
-
-import { Suspense } from "react";
-import { GeneratedResourceEditPage } from "@/components/resources/GeneratedResourcePages";
-
-export default function PathologyRequestsEditPage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceEditPage endpoint="/pathology/pedidos/" />
-    </Suspense>
-  );
-}
+"use client";import{useParams}from"next/navigation";import RequestFormPage from"../../RequestFormPage";export default function PathologyRequestsEditPage(){const p=useParams()as{id?:string};return <RequestFormPage id={String(p.id||"")}/>}

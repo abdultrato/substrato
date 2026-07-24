@@ -221,7 +221,7 @@ export default function RadiologySeriesListPage() {
   const [search, setSearch] = useState("");
   const [modality, setModality] = useState("ALL");
   const [region, setRegion] = useState("ALL");
-  const [limit, setLimit] = useState(12);
+  const [limit, setLimit] = useState(10);
 
   useEffect(() => {
     let mounted = true;

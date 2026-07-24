@@ -260,6 +260,7 @@ export default function PathologyPage() {
 
         <WorkspaceHub
           title="Patologia"
+          metricsPlain
           metrics={pathologyResources.map((resource) => ({
             label: resource.metricLabel,
             value: metricValue || metrics[resource.key],

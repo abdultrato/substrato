@@ -1,12 +1,36 @@
 "use client";
 
-import { Suspense } from "react";
-import { GeneratedResourceListPage } from "@/components/resources/GeneratedResourcePages";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, ArrowLeft, CalendarClock, ClipboardList, FilePlus2, Loader2, MapPin, Search, Stethoscope, User, X } from "lucide-react";
 
-export default function PathologyRequestsListPage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceListPage endpoint="/pathology/pedidos/" />
-    </Suspense>
-  );
-}
+import AppLayout from "@/components/layout/AppLayout";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
+import { apiFetchList } from "@/lib/api";
+import { GROUPS } from "@/lib/rbac";
+
+export type PathologyRequest = {
+  id: number; custom_id?: string; patient?: number; patient_name?: string; lab_request?: number;
+  lab_request_code?: string; requesting_doctor?: number; requesting_doctor_name?: string; service?: string;
+  request_type?: string; priority?: string; status?: string; requested_at?: string; clinical_diagnosis?: string;
+  icd_code?: string; anatomical_site?: string; notes?: string;
+};
+const GLASS="rounded-lg border border-white/20 bg-white/35 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
+const TYPES:Record<string,string>={BREAST_BIOPSY:"Biópsia mamária",GASTRIC_BIOPSY:"Biópsia gástrica",SURGICAL_SPECIMEN:"Peça cirúrgica",CERVICAL_CYTOLOGY:"Citologia cervical",FNAC:"Punção aspirativa",OTHER:"Outro"};
+const STATUS:Record<string,string>={REQUESTED:"Solicitado",RECEIVED:"Amostra recebida",IN_PROGRESS:"Em execução",REPORTED:"Laudado",CANCELLED:"Cancelado"};
+const PRIORITY:Record<string,string>={ROUTINE:"Rotina",URGENT:"Urgente",STAT:"Emergência"};
+function date(v?:string){if(!v)return"—";const d=new Date(v);return Number.isNaN(d.getTime())?v:d.toLocaleString("pt-PT",{dateStyle:"short",timeStyle:"short"})}
+function Metric({icon:Icon,label,value}:{icon:React.ElementType;label:string;value:React.ReactNode}){return <div className="min-w-0 flex-1 rounded-md border border-border/60 bg-background/45 px-2 py-1"><div className="flex items-center gap-1 whitespace-nowrap text-[9px] font-bold uppercase tracking-[.1em] text-muted-foreground"><Icon size={11}/>{label}</div><div className="truncate whitespace-nowrap text-sm font-bold">{value}</div></div>}
+function Card({item}:{item:PathologyRequest}){const urgent=item.priority==="URGENT"||item.priority==="STAT";return <Link href={`/pathology/requests/${item.id}`} className={`${GLASS} group relative block overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md`}><span className={`absolute inset-y-0 left-0 w-1 ${urgent?"bg-rose-500":"bg-fuchsia-500"}`}/><div className="space-y-2 px-3 py-2 pl-4">
+  <div className="flex items-start justify-between gap-2"><div className="flex min-w-0 items-center gap-2"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-fuchsia-500/12 text-fuchsia-600 dark:text-fuchsia-300"><ClipboardList size={17}/></span><div className="min-w-0"><p className="truncate text-sm font-bold group-hover:text-cyan-600">{item.custom_id||`Pedido #${item.id}`}</p><p className="truncate text-[10px] text-muted-foreground">{item.patient_name||"Paciente não informado"}</p></div></div><span className="shrink-0 rounded-full border border-fuchsia-200 bg-fuchsia-50 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-700 dark:border-fuchsia-800/50 dark:bg-fuchsia-950/30 dark:text-fuchsia-300">{STATUS[item.status||""]||item.status}</span></div>
+  <div className="grid grid-cols-3 gap-1"><Metric icon={Stethoscope} label="Tipo" value={TYPES[item.request_type||""]||item.request_type}/><Metric icon={AlertTriangle} label="Prioridade" value={PRIORITY[item.priority||""]||item.priority}/><Metric icon={CalendarClock} label="Data" value={date(item.requested_at)}/></div>
+  <div className="space-y-1 border-t border-border/50 pt-1.5 text-[10px] text-muted-foreground"><p className="truncate"><MapPin size={11} className="mr-1 inline"/>{item.anatomical_site||"Local não informado"}</p><p className="line-clamp-1">{item.clinical_diagnosis||"Sem diagnóstico clínico."}</p></div>
+</div></Link>}
+export default function PathologyRequestsListPage(){useAuthGuard();const refresh=useSafeDataRefreshSignal();const[items,setItems]=useState<PathologyRequest[]>([]);const[loading,setLoading]=useState(true);const[error,setError]=useState<string|null>(null);const[search,setSearch]=useState("");const[status,setStatus]=useState("ALL");const[priority,setPriority]=useState("ALL");const[limit,setLimit]=useState(10);
+useEffect(()=>{let m=true;apiFetchList<PathologyRequest>("/pathology/pedidos/",{page:1,pageSize:500,clientPaginate:true,clientCache:refresh===0}).then(r=>{if(m)setItems(r.items||[])}).catch(e=>{if(m)setError(e?.message||"Falha ao carregar pedidos.")}).finally(()=>{if(m)setLoading(false)});return()=>{m=false}},[refresh]);
+const filtered=useMemo(()=>{const q=search.trim().toLowerCase();return items.filter(i=>(status==="ALL"||i.status===status)&&(priority==="ALL"||i.priority===priority)&&(!q||[i.custom_id,i.patient_name,i.requesting_doctor_name,i.anatomical_site,i.clinical_diagnosis,i.icd_code].some(v=>String(v||"").toLowerCase().includes(q))))},[items,priority,search,status]);const visible=filtered.slice(0,limit);const urgent=items.filter(i=>i.priority==="URGENT"||i.priority==="STAT").length;const reported=items.filter(i=>i.status==="REPORTED").length;
+return <AppLayout requiredGroups={[GROUPS.ADMIN,GROUPS.RECEPCAO,GROUPS.LABORATORIO,GROUPS.MEDICINA]}><div className="w-full space-y-1.5 px-0.5"><header className={`${GLASS} relative overflow-hidden`}><span className="absolute inset-y-0 left-0 w-1 bg-fuchsia-500"/><div className="space-y-1.5 px-2.5 py-1.5 pl-4">
+<div className="flex flex-wrap items-center justify-between gap-1.5"><div className="flex items-center gap-1.5"><span className="flex h-8 w-8 items-center justify-center rounded-md bg-fuchsia-500/12 text-fuchsia-600"><ClipboardList size={18}/></span><div><h1 className="text-base font-bold">Pedidos de Patologia</h1><p className="text-[11px] text-muted-foreground">{loading?"A carregar...":`${visible.length} de ${filtered.length} pedidos`}</p></div></div><div className="flex gap-1"><Link href="/pathology" className="inline-flex h-7 items-center gap-1 rounded-md border border-border/70 bg-background/60 px-2 text-xs font-semibold text-muted-foreground"><ArrowLeft size={13}/>Voltar</Link><Link href="/pathology/requests/new" className="inline-flex h-7 items-center gap-1 rounded-md border border-fuchsia-400/50 bg-fuchsia-500/15 px-2 text-xs font-semibold text-fuchsia-700"><FilePlus2 size={13}/>Novo pedido</Link></div></div>
+<div className="flex flex-col gap-1.5 xl:flex-row"><div className="flex flex-1 flex-nowrap gap-1"><Metric icon={ClipboardList} label="Pedidos" value={items.length}/><Metric icon={AlertTriangle} label="Urgentes" value={urgent}/><Metric icon={Stethoscope} label="Laudados" value={reported}/></div><div className="flex min-w-0 gap-1.5 overflow-x-auto xl:w-[560px]"><div className="relative min-w-[220px] flex-1"><Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Pesquisar..." className="h-7 w-full rounded-md border border-border bg-background/70 pl-8 pr-8 text-xs outline-none"/>{search?<button onClick={()=>setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2"><X size={12}/></button>:null}</div><input type="number" min={1} max={500} value={limit} onChange={e=>setLimit(Math.max(1,Math.min(500,Number(e.target.value||1))))} className="h-7 w-16 rounded-md border border-border bg-background/70 text-center text-xs"/><select value={status} onChange={e=>setStatus(e.target.value)} className="h-7 max-w-32 rounded-md border border-border bg-background/70 px-2 text-xs"><option value="ALL">Estados</option>{Object.entries(STATUS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select><select value={priority} onChange={e=>setPriority(e.target.value)} className="h-7 max-w-28 rounded-md border border-border bg-background/70 px-2 text-xs"><option value="ALL">Prioridades</option>{Object.entries(PRIORITY).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></div></div>
+</div></header>{error?<div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>:null}{loading?<div className={`${GLASS} flex h-32 items-center justify-center`}><Loader2 className="animate-spin" size={20}/></div>:visible.length?<div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 xl:grid-cols-4">{visible.map(i=><Card key={i.id} item={i}/>)}</div>:<div className={`${GLASS} flex h-32 items-center justify-center text-sm text-muted-foreground`}>Nenhum pedido encontrado.</div>}</div></AppLayout>}

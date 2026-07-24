@@ -53,7 +53,7 @@ export type AutoFormProps = {
   initialValues?: Record<string, any>
   onSuccess?: (data: any) => void
   config?: ResourceFormConfig | null
-  presentation?: "default" | "modern-nursing" | "nursing-system"
+  presentation?: "default" | "modern-nursing" | "nursing-system" | "radiology"
   compactFields?: string[]
   initialRelationLabels?: Record<string, string | null | undefined>
   /** Sobrepõe as classes do cartão no fluxo nursing-system (ex.: superfície de fatura). */
@@ -1167,7 +1167,8 @@ export default function AutoForm({
     String(endpoint || "").split("?")[0].replace(/\/+$/, "")
   )
   // Apresentação translúcida com cores do sistema; botões de navegação ficam dentro do cartão do formulário.
-  const nursingSystemFlow = presentation === "nursing-system"
+  const radiologyFlow = presentation === "radiology"
+  const nursingSystemFlow = presentation === "nursing-system" || radiologyFlow
   const effectiveMethod = useMemo<Method>(() => {
     if (buildFormSpec(endpoint, method)) return method
     if (method === "put" && buildFormSpec(endpoint, "patch")) return "patch"
@@ -1673,7 +1674,9 @@ export default function AutoForm({
     const widget = config?.widgets?.[field.name] || (LONG_TEXT_FIELDS.has(field.name) ? "textarea" : undefined)
     const isReadOnly = somenteLeitura.has(field.name) || conditionReadOnly(field.name, values, config)
     const fieldClassName = renderAllStepCards
-      ? "space-y-0.5 rounded-md border border-white/[0.14] bg-white/[0.06] p-1.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-md dark:border-white/[0.08] dark:bg-white/[0.018] [&_input]:!min-h-9 [&_input]:!bg-white/[0.08] [&_input]:!px-2 [&_select]:!min-h-9 [&_select]:!bg-white/[0.08] [&_select]:!px-2 [&_textarea]:!min-h-[76px] [&_textarea]:!bg-white/[0.08] [&_textarea]:!px-2 dark:[&_input]:!bg-white/[0.03] dark:[&_select]:!bg-white/[0.03] dark:[&_textarea]:!bg-white/[0.03]"
+      ? radiologyFlow
+        ? "space-y-0.5 rounded-md border border-emerald-200/35 bg-white/25 p-1.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-md transition focus-within:border-emerald-400/60 focus-within:bg-white/45 focus-within:ring-2 focus-within:ring-emerald-500/15 dark:border-emerald-900/25 dark:bg-white/[0.025] dark:focus-within:bg-white/[0.05] [&_input]:!min-h-9 [&_input]:!bg-white/40 [&_input]:!px-2 [&_select]:!min-h-9 [&_select]:!bg-white/40 [&_select]:!px-2 [&_textarea]:!min-h-[76px] [&_textarea]:!bg-white/40 [&_textarea]:!px-2 dark:[&_input]:!bg-white/[0.04] dark:[&_select]:!bg-white/[0.04] dark:[&_textarea]:!bg-white/[0.04]"
+        : "space-y-0.5 rounded-md border border-white/[0.14] bg-white/[0.06] p-1.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-md dark:border-white/[0.08] dark:bg-white/[0.018] [&_input]:!min-h-9 [&_input]:!bg-white/[0.08] [&_input]:!px-2 [&_select]:!min-h-9 [&_select]:!bg-white/[0.08] [&_select]:!px-2 [&_textarea]:!min-h-[76px] [&_textarea]:!bg-white/[0.08] [&_textarea]:!px-2 dark:[&_input]:!bg-white/[0.03] dark:[&_select]:!bg-white/[0.03] dark:[&_textarea]:!bg-white/[0.03]"
       : modernNursingProcedureFlow
         ? "space-y-0.5 rounded-lg p-1.5 transition duration-150 focus-within:bg-white/[0.14] focus-within:ring-2 focus-within:ring-sky-400/40 dark:focus-within:bg-white/[0.05] text-sm text-[var(--gray-700)]"
         : "space-y-1 text-sm text-[var(--gray-700)]"
@@ -1781,14 +1784,16 @@ export default function AutoForm({
         ) : null}
 
         {renderAllStepCards ? (
-          <div className="grid gap-1.5 lg:grid-cols-3">
+          <div className={`grid gap-1.5 ${radiologyFlow ? "lg:grid-cols-2" : "lg:grid-cols-3"}`}>
             {stepCards.map(({ etapa, fields }, index) => (
               <section
                 key={`${etapa.titulo}-${index}`}
-                className="rounded-lg border border-white/[0.14] bg-white/[0.07] p-2 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.018]"
+                className={radiologyFlow
+                  ? "rounded-lg border border-emerald-200/40 bg-gradient-to-br from-white/45 via-white/20 to-emerald-100/15 p-2.5 shadow-md shadow-emerald-950/5 backdrop-blur-xl dark:border-emerald-900/25 dark:from-white/[0.055] dark:via-white/[0.025] dark:to-emerald-950/10"
+                  : "rounded-lg border border-white/[0.14] bg-white/[0.07] p-2 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.018]"}
               >
                 <div className="mb-1.5 flex items-center gap-2 border-b border-white/[0.14] pb-1.5 dark:border-white/[0.08]">
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-sky-500/15 text-[10px] font-semibold text-sky-700 dark:text-sky-300">
+                  <span className={`flex h-5 min-w-5 items-center justify-center rounded-md text-[10px] font-semibold ${radiologyFlow ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "bg-sky-500/15 text-sky-700 dark:text-sky-300"}`}>
                     {index + 1}
                   </span>
                   <h3 className="text-sm font-semibold text-foreground">{etapa.titulo}</h3>
@@ -1836,7 +1841,7 @@ export default function AutoForm({
             </button>
           </div>
         ) : null}
-        {nursingSystemFlow && etapas?.length ? (
+        {nursingSystemFlow && etapas?.length && !renderAllStepCards ? (
           <div className="mt-3 flex flex-nowrap items-center justify-between gap-2 border-t border-white/20 pt-3 dark:border-white/10">
             <button
               type="button"
@@ -1856,7 +1861,7 @@ export default function AutoForm({
             </button>
           </div>
         ) : null}
-        {nursingSystemFlow && !etapas?.length ? (
+        {nursingSystemFlow && (!etapas?.length || renderAllStepCards) ? (
           <div className="mt-3 flex justify-end border-t border-white/20 pt-3 dark:border-white/10">
             <button
               type="button"

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, Droplet, FlaskConical, HeartPulse, Landmark, Package2, Pencil, Plus, Receipt, Scale, Stethoscope, Trash2 } from "lucide-react"
+import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, Droplet, FlaskConical, HeartPulse, Landmark, Microscope, Package2, Pencil, Plus, Receipt, Scale, Stethoscope, Trash2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
@@ -28,6 +28,7 @@ import LedgerMovementListCard from "@/components/resources/LedgerMovementListCar
 import LedgerMovementDetails from "@/components/resources/LedgerMovementDetails"
 import FinancialReconciliationListCard from "@/components/resources/FinancialReconciliationListCard"
 import FinancialReconciliationDetails from "@/components/resources/FinancialReconciliationDetails"
+import PathologyResourceListCard from "@/components/resources/PathologyResourceListCard"
 import ResourceListPage from "@/components/resources/ResourceListPage"
 import PageHeader from "@/components/ui/PageHeader"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
@@ -220,6 +221,7 @@ export function GeneratedResourceListPage({
   const groupLabel = tr(ctx.groupLabel)
   const resourceLabel = tr(ctx.resourceLabel)
   const isInvoiceList = ctx.normalizedEndpoint === "/billing/invoice/"
+  const isPathology = ctx.normalizedEndpoint.startsWith("/pathology/")
 
   if (!canList) {
     return (
@@ -254,16 +256,18 @@ export function GeneratedResourceListPage({
       requiredGroups={ctx.requiredGroups}
       accessRestrictionMode={ADMIN_ONLY_ENDPOINTS.has(ctx.normalizedEndpoint) ? "page" : undefined}
       clientFullTextSearch={ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/") || isInvoiceList}
-      heroIcon={isInvoiceList ? <Receipt size={22} strokeWidth={2} /> : undefined}
-      heroClassName={isInvoiceList ? INVOICE_BANNER : undefined}
-      heroAccentClassName={isInvoiceList ? "bg-emerald-500" : undefined}
+      heroIcon={isInvoiceList ? <Receipt size={22} strokeWidth={2} /> : isPathology ? <Microscope size={22} strokeWidth={2} /> : undefined}
+      heroClassName={isInvoiceList ? INVOICE_BANNER : isPathology ? "border-fuchsia-200/40 bg-gradient-to-r from-fuchsia-500/15 via-white/30 to-violet-500/5 dark:border-fuchsia-900/30 dark:from-fuchsia-500/10 dark:via-white/5 dark:to-violet-500/5" : undefined}
+      heroAccentClassName={isInvoiceList ? "bg-emerald-500" : isPathology ? "bg-fuchsia-500" : undefined}
       cardGridClassName={
-        ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/") || isInvoiceList
+        ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/") || isInvoiceList || isPathology
           ? "grid gap-1.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
           : undefined
       }
       renderCard={
-        ctx.normalizedEndpoint === "/nursing/nursing_prescription/"
+        isPathology
+          ? (row, href) => <PathologyResourceListCard row={row} href={href} endpoint={ctx.normalizedEndpoint} />
+          : ctx.normalizedEndpoint === "/nursing/nursing_prescription/"
           ? (row, href) => <NursingPrescriptionListCard row={row} href={href} />
           : ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/"
             ? (row, href) => <NursingVitalSignListCard row={row} href={href} />
@@ -308,6 +312,7 @@ export function GeneratedResourceCreatePage({
   const isNursingMaterial = presentation === "nursing-material"
   const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
   const isInvoice = ctx.normalizedEndpoint === "/billing/invoice/"
+  const isPathology = ctx.normalizedEndpoint.startsWith("/pathology/")
 
   // Glass styles copied from procedure detail page
   const GLASS =
@@ -370,6 +375,25 @@ export function GeneratedResourceCreatePage({
                   href={basePath}
                   className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/25 bg-white/35 px-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10]"
                 >
+                  <ArrowLeft size={13} /> {t("Voltar", "Back")}
+                </Link>
+              </div>
+            </>
+          ) : isPathology ? (
+            <>
+              <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-fuchsia-500 to-violet-600" />
+              <div className="pointer-events-none absolute -right-10 -top-16 h-36 w-36 rounded-full bg-fuchsia-500/12 blur-3xl" />
+              <div className="relative flex min-h-[64px] flex-wrap items-center justify-between gap-2 px-3 py-2 pl-4">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-md shadow-fuchsia-500/20">
+                    <Microscope size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-bold uppercase tracking-[.12em] text-fuchsia-700 dark:text-fuchsia-300">Patologia</p>
+                    <h1 className="text-base font-bold leading-tight text-foreground">{createActionLabel}</h1>
+                  </div>
+                </div>
+                <Link href={basePath} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/30 bg-white/30 px-3 text-xs font-semibold backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:bg-white/[0.05]">
                   <ArrowLeft size={13} /> {t("Voltar", "Back")}
                 </Link>
               </div>
@@ -480,6 +504,8 @@ export function GeneratedResourceCreatePage({
                 ? "relative overflow-hidden rounded-xl border border-rose-200/40 bg-white/28 shadow-lg shadow-rose-950/5 backdrop-blur-2xl dark:border-rose-900/30 dark:bg-white/[0.05]"
               : isInvoice
                 ? ""
+                : isPathology
+                  ? ""
                 : GLASS
           }
         >
@@ -489,7 +515,7 @@ export function GeneratedResourceCreatePage({
               <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-emerald-400/10 blur-2xl" />
             </>
           ) : null}
-          <div className={isNursingProcedure || isInvoice ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : isBloodDonation ? "relative px-4 py-4 sm:px-5" : "p-4"}>
+          <div className={isNursingProcedure || isInvoice || isPathology ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : isBloodDonation ? "relative px-4 py-4 sm:px-5" : "p-4"}>
             {isBloodDonation ? (
               <>
                 <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-cyan-500" />
@@ -526,7 +552,7 @@ export function GeneratedResourceCreatePage({
               initialValues={initialValues}
               submitLabel={createActionLabel}
               config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
-              presentation={ctx.normalizedEndpoint === "/nursing/nursing_evolution/" || ctx.normalizedEndpoint === "/nursing/nursing_prescription/" || ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/" || ctx.normalizedEndpoint === "/accounting/bank_account/" || ctx.normalizedEndpoint === "/accounting/accounts/" || ctx.normalizedEndpoint === "/accounting/entry/" || ctx.normalizedEndpoint === "/accounting/movement/" || ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/" || ctx.normalizedEndpoint === "/billing/invoice/" ? "nursing-system" : "default"}
+              presentation={isPathology ? "radiology" : ctx.normalizedEndpoint === "/nursing/nursing_evolution/" || ctx.normalizedEndpoint === "/nursing/nursing_prescription/" || ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/" || ctx.normalizedEndpoint === "/accounting/bank_account/" || ctx.normalizedEndpoint === "/accounting/accounts/" || ctx.normalizedEndpoint === "/accounting/entry/" || ctx.normalizedEndpoint === "/accounting/movement/" || ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/" || ctx.normalizedEndpoint === "/billing/invoice/" ? "nursing-system" : "default"}
               surfaceClassName={isInvoice ? `rounded-xl border p-4 shadow-sm backdrop-blur-sm ${INVOICE_SURFACE}` : undefined}
               onSuccess={(data) => {
                 const id = primaryRecordId(data)
@@ -698,8 +724,9 @@ export function GeneratedResourceDetailPage({
   const isInvoice = ctx.normalizedEndpoint === "/billing/invoice/"
   const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
   const isOperatingRoom = ctx.normalizedEndpoint === "/surgery/centro_cirurgico/"
+  const isPathology = ctx.normalizedEndpoint.startsWith("/pathology/")
   const isNursingCard = isNursingEvolution || isNursingPrescription || isNursingVitalSign
-  const isCardDetail = isNursingCard || isAccount || isBankAccount || isLedgerEntry || isLedgerMovement || isReconciliation || isInvoice || isOperatingRoom
+  const isCardDetail = isNursingCard || isAccount || isBankAccount || isLedgerEntry || isLedgerMovement || isReconciliation || isInvoice || isOperatingRoom || isPathology
 
   const detailActions = (
     <div className="flex flex-wrap items-center gap-2">
@@ -833,6 +860,24 @@ export function GeneratedResourceDetailPage({
           </div>
         ) : null}
 
+        {isPathology ? (
+          <section className="relative overflow-hidden rounded-xl border border-fuchsia-200/40 bg-white/30 shadow-sm backdrop-blur-xl dark:border-fuchsia-900/30 dark:bg-white/[0.04]">
+            <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-fuchsia-500 to-violet-600" />
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 pl-4">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-md shadow-fuchsia-500/20">
+                  <Microscope size={17} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold uppercase tracking-[.12em] text-fuchsia-700 dark:text-fuchsia-300">Patologia</p>
+                  <h1 className="break-words text-base font-bold leading-tight text-foreground">{primary || `${resourceLabel} #${id}`}</h1>
+                </div>
+              </div>
+              {nursingCardActions}
+            </div>
+          </section>
+        ) : null}
+
         {notificationError ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {notificationError}
@@ -876,6 +921,14 @@ export function GeneratedResourceDetailPage({
             <FinancialReconciliationDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
           ) : isInvoice ? (
             <InvoiceDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isPathology ? (
+            <section className="relative overflow-hidden rounded-xl border border-fuchsia-200/35 bg-white/25 p-3 shadow-sm backdrop-blur-xl dark:border-fuchsia-900/25 dark:bg-white/[0.035]">
+              <div className="mb-2 border-b border-fuchsia-100/70 pb-2 dark:border-fuchsia-900/30">
+                <h2 className="text-sm font-bold text-foreground">Dados do registo</h2>
+                <p className="text-[10px] text-muted-foreground">Informação clínica e operacional organizada por secções.</p>
+              </div>
+              <ResourceDetailsCard endpoint={ctx.normalizedEndpoint} data={data} />
+            </section>
           ) : isBloodDonation ? (
             <section className="relative overflow-hidden rounded-xl border border-rose-200/40 bg-white/28 shadow-lg shadow-rose-950/5 backdrop-blur-2xl dark:border-rose-900/30 dark:bg-white/[0.05]">
               <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-cyan-500" />
@@ -1096,12 +1149,27 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
   const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
   const isInvoice = ctx.normalizedEndpoint === "/billing/invoice/"
   const isOperatingRoom = ctx.normalizedEndpoint === "/surgery/centro_cirurgico/"
+  const isPathology = ctx.normalizedEndpoint.startsWith("/pathology/")
   const isNursingCard = isNursingEvolution || isNursingPrescription || isNursingVitalSign || isBankAccount || isAccount || isLedgerEntry || isLedgerMovement || isReconciliation
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className={`mx-auto w-full space-y-4 ${isBloodDonation ? "max-w-[min(98vw,1280px)]" : isOperatingRoom ? "max-w-[95vw]" : "max-w-5xl"}`}>
-        {isOperatingRoom ? (
+        {isPathology ? (
+          <section className="relative overflow-hidden rounded-xl border border-fuchsia-200/40 bg-white/30 shadow-sm backdrop-blur-xl dark:border-fuchsia-900/30 dark:bg-white/[0.04]">
+            <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-fuchsia-500 to-violet-600" />
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 pl-4">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-md shadow-fuchsia-500/20"><Microscope size={17} /></span>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold uppercase tracking-[.12em] text-fuchsia-700 dark:text-fuchsia-300">Editar em Patologia</p>
+                  <h1 className="break-words text-base font-bold leading-tight">{pickPrimaryLabel(data) || `${resourceLabel} #${id}`}</h1>
+                </div>
+              </div>
+              <Link href={detailPath} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/30 px-3 text-xs font-semibold backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:bg-white/[0.05]"><ArrowLeft size={13} /> {t("Voltar", "Back")}</Link>
+            </div>
+          </section>
+        ) : isOperatingRoom ? (
           <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
             <span className="absolute left-0 top-0 h-full w-1 bg-teal-500" />
             <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
@@ -1252,7 +1320,7 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
             initialValues={data || {}}
             submitLabel={t("Guardar alterações", "Save changes")}
             config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
-            presentation={isOperatingRoom ? "modern-nursing" : isNursingCard || isInvoice ? "nursing-system" : "default"}
+            presentation={isPathology ? "radiology" : isOperatingRoom ? "modern-nursing" : isNursingCard || isInvoice ? "nursing-system" : "default"}
             surfaceClassName={isInvoice ? `rounded-xl border p-4 shadow-sm backdrop-blur-sm ${INVOICE_SURFACE}` : undefined}
             onSuccess={() => router.push(detailPath)}
           />
